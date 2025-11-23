@@ -1,0 +1,57 @@
+﻿{
+  "name": "jetstart",
+  "version": "0.1.0",
+  "description": "Fast, wireless Android development with Kotlin and Jetpack Compose",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present && rm -rf node_modules",
+    "bootstrap": "npm install",
+    "cli:dev": "npm run dev --workspace=packages/cli",
+    "core:dev": "npm run dev --workspace=packages/core",
+    "logs:dev": "npm run dev --workspace=packages/logs",
+    "web:dev": "npm run dev --workspace=packages/web",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phantom/jetstart.git"
+  },
+  "keywords": [
+    "android",
+    "kotlin",
+    "jetpack-compose",
+    "developer-tools",
+    "hot-reload",
+    "wireless-development",
+    "build-tool",
+    "mobile-development"
+  ],
+  "author": "Phantom",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/phantom/jetstart/issues"
+  },
+  "homepage": "https://github.com/phantom/jetstart#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.0"
+  }
+}
