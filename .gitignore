@@ -8,7 +8,8 @@ lerna-debug.log*
 
 # Build outputs
 dist/
-build/
+**/build/outputs/
+**/build/intermediates/
 *.tsbuildinfo
 .next/
 out/

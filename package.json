@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "jetstart",
   "version": "0.1.0",
   "description": "Fast, wireless Android development with Kotlin and Jetpack Compose",
@@ -7,7 +7,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "tsc --build && npm run build:web",
+    "build:packages": "tsc --build",
+    "build:shared": "npm run build --workspace=packages/shared",
+    "build:cli": "npm run build --workspace=packages/cli",
+    "build:core": "npm run build --workspace=packages/core",
+    "build:web": "npm run build --workspace=packages/web",
     "dev": "npm run dev --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
