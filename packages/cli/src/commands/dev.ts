@@ -33,10 +33,13 @@ export async function devCommand(options: DevOptions) {
     const projectName = path.basename(projectPath);
 
     // Create and start Core server
+    // Bind to 0.0.0.0 to accept connections on all interfaces,
+    // but pass the detected IP for display and client connections
     const server = new JetStartServer({
       httpPort: port,
       wsPort,
-      host: '0.0.0.0',
+      host: '0.0.0.0', // Bind to all interfaces for maximum compatibility
+      displayHost: host, // Use detected IP for display and client connections
       projectPath,
       projectName,
     });
@@ -67,13 +70,12 @@ export async function devCommand(options: DevOptions) {
         version: '0.1.0',
       };
 
-      console.log(chalk.bold('📱 Scan this QR code with JetStart Client app:'));
-      console.log();
+      console.log(chalk.bold('Scan QR or connect manually:'));
       qrcode.generate(JSON.stringify(qrData), { small: true });
       console.log();
-      info(`Session ID: ${chalk.dim(session.id)}`);
+      info(`IP: ${chalk.cyan(host)}`);
+      info(`Session: ${chalk.dim(session.id)}`);
       info(`Token: ${chalk.dim(session.token)}`);
-      console.log();
     }
 
     info('Watching for file changes...');
@@ -107,17 +109,30 @@ export async function devCommand(options: DevOptions) {
 
 function getLocalIP(): string {
   const interfaces = os.networkInterfaces();
+  const addresses: string[] = [];
 
   for (const name of Object.keys(interfaces)) {
     const iface = interfaces[name];
     if (!iface) continue;
 
     for (const alias of iface) {
-      if (alias.family === 'IPv4' && !alias.internal) {
-        return alias.address;
+      // Handle both 'IPv4' string (Node.js 18+) and numeric 4 (older versions)
+      const isIPv4 = alias.family === 'IPv4' || (alias.family as any) === 4;
+
+      if (isIPv4 && !alias.internal) {
+        // Prefer addresses starting with 192.168 (typical home/hotspot network)
+        if (alias.address.startsWith('192.168')) {
+          return alias.address;
+        }
+        addresses.push(alias.address);
       }
     }
   }
 
-  return '0.0.0.0';
+  // Return first non-internal IPv4 address found
+  if (addresses.length > 0) {
+    return addresses[0];
+  }
+
+  return 'localhost';
 }

@@ -12,6 +12,7 @@ import { log } from '../utils/logger';
 export interface HttpServerConfig {
   port: number;
   host: string;
+  getLatestApk?: () => string | null;
 }
 
 export async function createHttpServer(config: HttpServerConfig): Promise<Server> {
@@ -21,7 +22,7 @@ export async function createHttpServer(config: HttpServerConfig): Promise<Server
   setupMiddleware(app);
 
   // Setup routes
-  setupRoutes(app);
+  setupRoutes(app, config.getLatestApk);
 
   // Start server
   return new Promise((resolve, reject) => {

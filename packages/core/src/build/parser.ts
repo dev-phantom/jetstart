@@ -41,8 +41,8 @@ export class BuildOutputParser {
         continue;
       }
 
-      // Parse APK location
-      if (line.includes('.apk') && (line.includes('app/build/outputs') || line.includes('app\\build\\outputs'))) {
+      // Parse APK location (check both outputs and intermediates directories)
+      if (line.includes('.apk') && (line.includes('app/build/outputs') || line.includes('app\\build\\outputs') || line.includes('app/build/intermediates') || line.includes('app\\build\\intermediates'))) {
         const apkMatch = line.match(/([^\s]+\.apk)/);
         if (apkMatch) {
           apkPath = apkMatch[1];

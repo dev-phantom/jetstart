@@ -5,6 +5,7 @@
 
 import path from 'path';
 import fs from 'fs-extra';
+import { spawn } from 'child_process';
 import { TemplateOptions } from '../types';
 import { MIN_ANDROID_API_LEVEL, TARGET_ANDROID_API_LEVEL } from '@jetstart/shared';
 
@@ -18,11 +19,15 @@ export async function generateProjectTemplate(
   await createDirectoryStructure(projectPath);
 
   // Generate files
+  await generateRootBuildGradle(projectPath);
   await generateBuildGradle(projectPath, options);
   await generateSettingsGradle(projectPath, projectName);
   await generateGradleProperties(projectPath);
+  await generateGradleWrapper(projectPath);
   await generateMainActivity(projectPath, packageName);
-  await generateAndroidManifest(projectPath, packageName);
+  await generateAndroidManifest(projectPath, options);
+  await generateResourceFiles(projectPath, projectName);
+  await generateLocalProperties(projectPath);
   await generateJetStartConfig(projectPath, options);
   await generateGitignore(projectPath);
   await generateReadme(projectPath, projectName);
@@ -83,7 +88,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = '1.5.3'
+        kotlinCompilerExtensionVersion = '1.5.6'
     }
 }
 
@@ -186,16 +191,16 @@ fun AppContent() {
 
 async function generateAndroidManifest(
   projectPath: string,
-  _packageName: string
+  options: TemplateOptions
 ): Promise<void> {
+  const themeName = options.projectName.replace(/[^a-zA-Z0-9]/g, '');
   const content = `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/Theme.AppCompat.Light">
+        android:theme="@style/Theme.${themeName}">
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -297,4 +302,169 @@ ${projectName}/
 `;
 
   await fs.writeFile(path.join(projectPath, 'README.md'), content);
+}
+
+async function generateRootBuildGradle(projectPath: string): Promise<void> {
+  const content = `// Top-level build file
+buildscript {
+    ext {
+        kotlin_version = '1.9.21'
+        compose_version = '1.5.4'
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}`;
+
+  await fs.writeFile(path.join(projectPath, 'build.gradle'), content);
+}
+
+async function generateGradleWrapper(projectPath: string): Promise<void> {
+  // Use system Gradle to initialize proper wrapper
+  // This generates:
+  // - gradle/wrapper/gradle-wrapper.jar
+  // - gradle/wrapper/gradle-wrapper.properties
+  // - gradlew (Unix shell script)
+  // - gradlew.bat (Windows batch script)
+
+  return new Promise<void>((resolve) => {
+    // Try to use system gradle to generate wrapper
+    const gradleCmd = process.platform === 'win32' ? 'gradle.bat' : 'gradle';
+
+    const gradleProcess = spawn(gradleCmd, ['wrapper', '--gradle-version', '8.2'], {
+      cwd: projectPath,
+      shell: true,
+    });
+
+    gradleProcess.on('close', (code) => {
+      // Continue regardless of success/failure
+      // If gradle wrapper command fails, the build will fall back to system gradle
+      resolve();
+    });
+
+    gradleProcess.on('error', () => {
+      // Continue even if gradle command not found
+      resolve();
+    });
+
+    // Timeout after 30 seconds
+    setTimeout(() => {
+      gradleProcess.kill();
+      resolve();
+    }, 30000);
+  });
+}
+
+async function generateResourceFiles(
+  projectPath: string,
+  projectName: string
+): Promise<void> {
+  // Generate strings.xml
+  const stringsXml = `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">${projectName}</string>
+</resources>`;
+
+  await fs.writeFile(
+    path.join(projectPath, 'app/src/main/res/values/strings.xml'),
+    stringsXml
+  );
+
+  // Generate colors.xml
+  const colorsXml = `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>`;
+
+  await fs.writeFile(
+    path.join(projectPath, 'app/src/main/res/values/colors.xml'),
+    colorsXml
+  );
+
+  // Generate themes.xml
+  const themesXml = `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.${projectName.replace(/[^a-zA-Z0-9]/g, '')}" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>`;
+
+  await fs.writeFile(
+    path.join(projectPath, 'app/src/main/res/values/themes.xml'),
+    themesXml
+  );
+}
+
+async function generateLocalProperties(projectPath: string): Promise<void> {
+  // Auto-detect Android SDK location
+  let androidSdkPath: string | undefined;
+
+  // Check environment variables first
+  androidSdkPath = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+
+  // If not found, check common Windows locations
+  if (!androidSdkPath && process.platform === 'win32') {
+    const commonPaths = [
+      'C:\\Android',
+      path.join(require('os').homedir(), 'AppData', 'Local', 'Android', 'Sdk'),
+      'C:\\Android\\Sdk',
+      'C:\\Program Files (x86)\\Android\\android-sdk',
+    ];
+
+    for (const p of commonPaths) {
+      if (fs.existsSync(p)) {
+        androidSdkPath = p;
+        break;
+      }
+    }
+  }
+
+  // If not found on macOS/Linux, check common paths
+  if (!androidSdkPath && process.platform !== 'win32') {
+    const commonPaths = [
+      path.join(require('os').homedir(), 'Android', 'Sdk'),
+      path.join(require('os').homedir(), 'Library', 'Android', 'sdk'),
+      '/opt/android-sdk',
+    ];
+
+    for (const p of commonPaths) {
+      if (fs.existsSync(p)) {
+        androidSdkPath = p;
+        break;
+      }
+    }
+  }
+
+  if (!androidSdkPath) {
+    console.warn('[Warning] Android SDK not found. You may need to set ANDROID_HOME or create local.properties manually.');
+    return;
+  }
+
+  // Create local.properties with SDK path
+  const content = `# Auto-generated by JetStart
+sdk.dir=${androidSdkPath.replace(/\\/g, '\\\\')}
+`;
+
+  await fs.writeFile(path.join(projectPath, 'local.properties'), content);
+  console.log(`[JetStart] Created local.properties with SDK: ${androidSdkPath}`);
 }

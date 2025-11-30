@@ -5,13 +5,14 @@
 
 import { Express, Request, Response } from 'express';
 import path from 'path';
+import fs from 'fs';
 import { SessionManager } from '../utils/session';
 import { generateQRCode } from '../utils/qr';
 import { JETSTART_VERSION } from '@jetstart/shared';
 
 const sessionManager = new SessionManager();
 
-export function setupRoutes(app: Express): void {
+export function setupRoutes(app: Express, getLatestApk?: () => string | null): void {
   // Health check
   app.get('/health', (req: Request, res: Response) => {
     res.json({
@@ -81,20 +82,26 @@ export function setupRoutes(app: Express): void {
   });
 
   // Download APK
-  app.get('/download/:sessionId/:filename', async (req: Request, res: Response) => {
-    const { sessionId, filename } = req.params;
+  app.get('/download/:filename', async (req: Request, res: Response) => {
+    // Get latest built APK path
+    const apkPath = getLatestApk?.();
 
-    const session = sessionManager.getSession(sessionId);
-    if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
+    if (!apkPath) {
+      return res.status(404).json({ error: 'No APK available. Build the app first.' });
     }
 
-    // In real implementation, serve the actual APK file
-    const apkPath = path.join(session.projectPath, 'build', filename);
-    
-    res.download(apkPath, (err) => {
+    // Check if file exists
+    if (!fs.existsSync(apkPath)) {
+      return res.status(404).json({ error: 'APK file not found at expected location' });
+    }
+
+    // Send the APK file
+    res.download(apkPath, req.params.filename || 'app-debug.apk', (err) => {
       if (err) {
-        res.status(404).json({ error: 'APK not found' });
+        console.error(`Failed to send APK: ${err.message}`);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Failed to send APK file' });
+        }
       }
     });
   });
