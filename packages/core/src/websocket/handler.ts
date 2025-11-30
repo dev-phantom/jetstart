@@ -14,7 +14,14 @@ import { ConnectionManager } from './manager';
 import { log, error as logError } from '../utils/logger';
 
 export class WebSocketHandler {
-  constructor(private connectionManager: ConnectionManager) {}
+  private onClientConnected?: (sessionId: string) => void;
+
+  constructor(
+    private connectionManager: ConnectionManager,
+    options?: { onClientConnected?: (sessionId: string) => void }
+  ) {
+    this.onClientConnected = options?.onClientConnected;
+  }
 
   handleMessage(clientId: string, data: Buffer): void {
     try {
@@ -67,6 +74,12 @@ export class WebSocketHandler {
     };
 
     this.connectionManager.sendToClient(clientId, response);
+
+    // Trigger initial build for the client
+    if (this.onClientConnected) {
+      log(`Triggering initial build for session: ${message.sessionId}`);
+      this.onClientConnected(message.sessionId);
+    }
   }
 
   private handleDisconnect(clientId: string, message: ClientMessage & { type: 'client:disconnect' }): void {

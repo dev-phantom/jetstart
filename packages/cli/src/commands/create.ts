@@ -41,7 +41,7 @@ export async function createCommand(name: string, options: CreateOptions) {
     // Get package name
     let packageName = options.package;
     if (!packageName) {
-      const defaultPackage = `com.example.${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+      const defaultPackage = `com.jetstart.${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
       const answer = await prompt({
         type: 'input',
         name: 'packageName',

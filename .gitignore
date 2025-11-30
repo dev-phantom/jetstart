@@ -114,3 +114,5 @@ temp/
 *.session
 sessions/
 cache/
+.claude
+claude.md

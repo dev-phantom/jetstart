@@ -45,18 +45,22 @@ fun JetStartApp() {
             
             composable("scanner") {
                 ScannerScreen(
-                    onQRScanned = { qrData ->
-                        navController.navigate("connection/$qrData")
+                    onQRScanned = {
+                        navController.navigate("connection") {
+                            popUpTo("home")
+                        }
                     },
                     onBack = { navController.popBackStack() }
                 )
             }
-            
-            composable("connection/{qrData}") { backStackEntry ->
-                val qrData = backStackEntry.arguments?.getString("qrData") ?: ""
+
+            composable("connection") {
                 ConnectionScreen(
-                    qrData = qrData,
-                    onBack = { navController.popBackStack() }
+                    onBack = {
+                        navController.navigate("home") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    }
                 )
             }
             
