@@ -26,19 +26,17 @@ sharedPkg.version = newVersion;
 fs.writeFileSync(sharedPkgPath, JSON.stringify(sharedPkg, null, 2) + '\n');
 console.log(`✓ Updated packages/shared to ${newVersion}`);
 
-// Update packages/core (version + @jetstart/shared dependency)
+// Update packages/core (version only, workspace deps stay as workspace:*)
 const corePkgPath = path.join(__dirname, '../packages/core/package.json');
 const corePkg = JSON.parse(fs.readFileSync(corePkgPath, 'utf8'));
 corePkg.version = newVersion;
-corePkg.dependencies['@jetstart/shared'] = newVersion;
 fs.writeFileSync(corePkgPath, JSON.stringify(corePkg, null, 2) + '\n');
 console.log(`✓ Updated packages/core to ${newVersion}`);
 
-// Update packages/cli (version + @jetstart/shared dependency)
+// Update packages/cli (version only, workspace deps stay as workspace:*)
 const cliPkgPath = path.join(__dirname, '../packages/cli/package.json');
 const cliPkg = JSON.parse(fs.readFileSync(cliPkgPath, 'utf8'));
 cliPkg.version = newVersion;
-cliPkg.dependencies['@jetstart/shared'] = newVersion;
 fs.writeFileSync(cliPkgPath, JSON.stringify(cliPkg, null, 2) + '\n');
 console.log(`✓ Updated packages/cli to ${newVersion}`);
 

@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/dev-phantom/jetstart#readme",
   "dependencies": {
-    "@jetstart/shared": "1.0.0",
+    "@jetstart/shared": "workspace:*",
     "express": "^4.18.2",
     "ws": "^8.14.2",
     "chokidar": "^3.5.3",
