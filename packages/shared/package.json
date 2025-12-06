@@ -20,7 +20,16 @@
     "protocols"
   ],
   "author": "Phantom",
-  "license": "Apache-2.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dev-phantom/jetstart.git",
+    "directory": "packages/shared"
+  },
+  "bugs": {
+    "url": "https://github.com/dev-phantom/jetstart/issues"
+  },
+  "homepage": "https://github.com/dev-phantom/jetstart#readme",
   "devDependencies": {
     "@types/jest": "29.5.14",
     "@types/node": "^20.10.0",
