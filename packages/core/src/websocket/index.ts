@@ -12,15 +12,23 @@ import { log } from '../utils/logger';
 export interface WebSocketConfig {
   port: number;
   server?: Server;
+  onClientConnected?: (sessionId: string) => void;
 }
 
-export async function createWebSocketServer(config: WebSocketConfig): Promise<WebSocketServer> {
+export interface WebSocketServerResult {
+  server: WebSocketServer;
+  handler: WebSocketHandler;
+}
+
+export async function createWebSocketServer(config: WebSocketConfig): Promise<WebSocketServerResult> {
   const wss = new WebSocketServer({
     port: config.port,
   });
 
   const connectionManager = new ConnectionManager();
-  const handler = new WebSocketHandler(connectionManager);
+  const handler = new WebSocketHandler(connectionManager, {
+    onClientConnected: config.onClientConnected,
+  });
 
   wss.on('connection', (ws: WebSocket, _request) => {
     const clientId = connectionManager.addConnection(ws);
@@ -44,5 +52,5 @@ export async function createWebSocketServer(config: WebSocketConfig): Promise<We
   });
 
   log(`WebSocket server listening on port ${config.port}`);
-  return wss;
+  return { server: wss, handler };
 }

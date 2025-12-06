@@ -8,7 +8,8 @@ lerna-debug.log*
 
 # Build outputs
 dist/
-build/
+**/build/outputs/
+**/build/intermediates/
 *.tsbuildinfo
 .next/
 out/
@@ -113,3 +114,13 @@ temp/
 *.session
 sessions/
 cache/
+
+# Test/Example projects (don't commit test projects)
+my-app/
+my-awesome-app/
+test-app/
+
+# Claude Code
+.claude
+.claude-worktrees
+claude.md
