@@ -22,13 +22,14 @@
     [
       "@semantic-release/npm",
       {
-        "npmPublish": true
+        "npmPublish": false
       }
     ],
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "node scripts/update-versions.js ${nextRelease.version}"
+        "prepareCmd": "node scripts/update-versions.js ${nextRelease.version}",
+        "publishCmd": "node scripts/publish-packages.js"
       }
     ],
     [
