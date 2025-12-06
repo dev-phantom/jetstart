@@ -74,8 +74,11 @@ jobs:
 
       - name: Install Node dependencies
         run: |
-          rm -f package-lock.json
-          npm install
+          
+          cd packages/shared && npm install --legacy-peer-deps
+          cd ../core && npm install --legacy-peer-deps
+          cd ../cli && npm install --legacy-peer-deps
+          cd ../..
 
       - name: Build packages (only published packages)
         run: |
