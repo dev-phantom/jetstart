@@ -22,7 +22,16 @@
     "websocket"
   ],
   "author": "Phantom",
-  "license": "Apache-2.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dev-phantom/jetstart.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/dev-phantom/jetstart/issues"
+  },
+  "homepage": "https://github.com/dev-phantom/jetstart#readme",
   "dependencies": {
     "@jetstart/shared": "0.1.0",
     "express": "^4.18.2",

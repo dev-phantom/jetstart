@@ -28,7 +28,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/phantom/jetstart.git"
+    "url": "https://github.com/dev-phantom/jetstart.git"
   },
   "keywords": [
     "android",
@@ -41,11 +41,11 @@
     "mobile-development"
   ],
   "author": "Phantom",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/phantom/jetstart/issues"
+    "url": "https://github.com/dev-phantom/jetstart/issues"
   },
-  "homepage": "https://github.com/phantom/jetstart#readme",
+  "homepage": "https://github.com/dev-phantom/jetstart#readme",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
