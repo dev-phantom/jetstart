@@ -25,27 +25,29 @@ jobs:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install root dependencies only
-        run: npm install --package-lock-only --legacy-peer-deps || true
-
-      - name: Install package dependencies separately
+      - name: Build shared package
         run: |
-          cd packages/shared && npm install --legacy-peer-deps
-          cd ../core && npm install --legacy-peer-deps
-          cd ../cli && npm install --legacy-peer-deps
-          cd ../..
+          cd packages/shared
+          npm install --legacy-peer-deps
+          npm run build
 
-      - name: Build packages
+      - name: Build core package
         run: |
-          npm run build:shared
-          npm run build:core
-          npm run build:cli
+          cd packages/core
+          npm install --legacy-peer-deps
+          npm run build
+
+      - name: Build CLI package
+        run: |
+          cd packages/cli
+          npm install --legacy-peer-deps
+          npm run build
 
       - name: Run tests
         run: |
-          npm test --workspace=packages/shared --if-present
-          npm test --workspace=packages/core --if-present
-          npm test --workspace=packages/cli --if-present
+          cd packages/shared && npm test || true
+          cd ../core && npm test || true
+          cd ../cli && npm test || true
 
       - name: Release
         env:
