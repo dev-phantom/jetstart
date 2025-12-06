@@ -1,6 +1,6 @@
 {
   "name": "@jetstart/core",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Build server and orchestration for JetStart",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/dev-phantom/jetstart#readme",
   "dependencies": {
-    "@jetstart/shared": "0.1.0",
+    "@jetstart/shared": "1.0.0",
     "express": "^4.18.2",
     "ws": "^8.14.2",
     "chokidar": "^3.5.3",
