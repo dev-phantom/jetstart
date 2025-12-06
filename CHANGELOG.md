@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/dev-phantom/jetstart/compare/v1.1.1...v1.1.2) (2025-12-06)
+
+
+### Bug Fixes
+
+* **publish:** replace file: dependencies with version numbers before publishing ([56b8991](https://github.com/dev-phantom/jetstart/commit/56b89915552ff53e18b096ad03e13c7d860873a6))
+
 ## [1.1.1](https://github.com/dev-phantom/jetstart/compare/v1.1.0...v1.1.1) (2025-12-06)
 
 
