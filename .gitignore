@@ -51,6 +51,7 @@ pnpm-debug.log*
 *.dex
 *.class
 bin/
+!packages/cli/bin/
 gen/
 out/
 .gradle/
