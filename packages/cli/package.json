@@ -36,6 +36,7 @@
   },
   "homepage": "https://github.com/dev-phantom/jetstart#readme",
   "dependencies": {
+    "@jetstart/core": "file:../core",
     "@jetstart/shared": "file:../shared",
     "axios": "^1.6.2",
     "chalk": "^4.1.2",
