@@ -1,3 +1,25 @@
+# [1.1.0](https://github.com/dev-phantom/jetstart/compare/v1.0.0...v1.1.0) (2025-12-06)
+
+
+### Bug Fixes
+
+* **ci:** delete package-lock.json before npm install ([11545f8](https://github.com/dev-phantom/jetstart/commit/11545f8447c0e13a48a9cf48b77ac271a459b784))
+* **ci:** install dependencies per package to avoid workspace resolution ([22a0999](https://github.com/dev-phantom/jetstart/commit/22a0999066a6cd28e22e8c841f5243e4e435a230))
+* **ci:** resolve workspace dependency installation ([0fe91bc](https://github.com/dev-phantom/jetstart/commit/0fe91bc51a725fe3662865a3603ecf0f70e04a10))
+* **ci:** simplify workflow to build packages independently ([ccdce89](https://github.com/dev-phantom/jetstart/commit/ccdce89f25b3d2195ba01a1f41a80905bc77165e))
+* **ci:** use npm install instead of npm ci for monorepo ([f99c2da](https://github.com/dev-phantom/jetstart/commit/f99c2daf5c5329b5adec18550ab89ef3a008a0e6))
+* **ci:** use npm install instead of npm ci in CI workflow ([d6f9b9b](https://github.com/dev-phantom/jetstart/commit/d6f9b9b04516a3b426f8e3c6196bc3046b3e3575))
+* use * instead of workspace:* for npm compatibility ([1e32690](https://github.com/dev-phantom/jetstart/commit/1e32690759711df6aec8870a264f979c62d4e23c))
+* use file: protocol for local workspace dependencies ([d8f98a4](https://github.com/dev-phantom/jetstart/commit/d8f98a441496233a1ca66811fc6baab45258203a))
+* use workspace protocol for monorepo dependencies ([93dda09](https://github.com/dev-phantom/jetstart/commit/93dda09217941f649ab141297e25da2e53cf2ef5))
+* **workspace:** use file: protocol and fix workspace configuration ([00438a9](https://github.com/dev-phantom/jetstart/commit/00438a99d9537db11cb5863f24fd5bcfa684f5e3))
+
+
+### Features
+
+* **ci:** enable npm publishing in semantic-release ([a1e96b9](https://github.com/dev-phantom/jetstart/commit/a1e96b9af739990054042d16da2e75bb47ca02f7))
+* publishing to npm ([d2e790e](https://github.com/dev-phantom/jetstart/commit/d2e790eb54355131fc8c251c50724daf86ca9b5c))
+
 # 1.0.0 (2025-12-06)
 
 
