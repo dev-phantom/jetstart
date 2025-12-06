@@ -25,10 +25,15 @@ jobs:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
+      - name: Install root dependencies only
+        run: npm install --package-lock-only --legacy-peer-deps || true
+
+      - name: Install package dependencies separately
         run: |
-          rm -f package-lock.json
-          npm install
+          cd packages/shared && npm install --legacy-peer-deps
+          cd ../core && npm install --legacy-peer-deps
+          cd ../cli && npm install --legacy-peer-deps
+          cd ../..
 
       - name: Build packages
         run: |
