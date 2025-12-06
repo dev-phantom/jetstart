@@ -22,11 +22,9 @@
   },
   "files": [],
   "references": [
-    { "path": "./packages/cli" },
-    { "path": "./packages/core" },
-    { "path": "./packages/logs" },
     { "path": "./packages/shared" },
-    { "path": "./packages/web" }
+    { "path": "./packages/core" },
+    { "path": "./packages/cli" }
   ],
   "exclude": [
     "node_modules",
@@ -35,6 +33,7 @@
     "**/node_modules",
     "**/dist",
     "**/build",
-    "packages/client/**"
+    "packages/client/**",
+    "packages/web/**"
   ]
 }

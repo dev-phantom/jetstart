@@ -1,0 +1,208 @@
+.device-frame-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.device-frame {
+  width: 375px;
+  height: 667px;
+  background-color: #1a1a1a;
+  border-radius: 40px;
+  padding: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+              inset 0 0 6px rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.device-notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 30px;
+  background-color: #1a1a1a;
+  border-radius: 0 0 20px 20px;
+  z-index: 10;
+}
+
+.device-screen {
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  border-radius: 30px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.status-bar-phone {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #f8f9fa;
+  font-size: 0.75rem;
+  height: 30px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.status-bar-phone .time {
+  font-weight: 600;
+}
+
+.status-icons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.status-icons .icon {
+  font-size: 0.875rem;
+}
+
+.device-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: #ffffff;
+}
+
+.device-content-message {
+  text-align: center;
+  max-width: 100%;
+}
+
+.device-content-message h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.device-content-message p {
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.device-content-message.idle h3 {
+  color: var(--text-secondary);
+}
+
+.device-content-message.building h3 {
+  color: var(--info-color);
+}
+
+.device-content-message.success h3 {
+  color: var(--secondary-color);
+}
+
+.device-content-message.error h3 {
+  color: var(--error-color);
+}
+
+.device-content-message.error p {
+  color: var(--error-color);
+  font-size: 0.875rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--bg-tertiary);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.apk-info {
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin: 1rem 0;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.apk-info p {
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.apk-info strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.download-button {
+  display: inline-block;
+  margin: 1rem 0;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  text-decoration: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.download-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.install-instructions {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  margin-top: 1rem;
+}
+
+.project-name-display {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-top: 1rem;
+}
+
+.device-home-button {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 5px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.device-label {
+  margin-top: 1.5rem;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .device-frame {
+    width: 280px;
+    height: 500px;
+  }
+
+  .device-notch {
+    width: 150px;
+    height: 25px;
+  }
+}

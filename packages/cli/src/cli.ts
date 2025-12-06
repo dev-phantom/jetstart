@@ -34,7 +34,7 @@ program
   .command('dev')
   .description('Start development server')
   .option('-p, --port <port>', 'Port for dev server', '8765')
-  .option('-H, --host <host>', 'Host address', '0.0.0.0')
+  .option('-H, --host <host>', 'Host address (defaults to auto-detected network IP)')
   .option('--no-qr', 'Do not show QR code')
   .option('--no-open', 'Do not open browser')
   .action(devCommand);
