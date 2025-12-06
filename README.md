@@ -41,7 +41,6 @@ npx jetstart create my-app
    ```bash
    npx jetstart dev
    ```
-
 3. **Scan QR code** with your Android device or manually enter the connection details
 
 4. **Edit your code** in `MainActivity.kt` and watch it update instantly! ⚡

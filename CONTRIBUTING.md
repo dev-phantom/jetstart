@@ -163,6 +163,82 @@ fix(core): resolve WebSocket connection timeout issue
 docs(readme): update installation instructions
 ```
 
+### Automated Versioning & Releases
+
+JetStart uses **semantic-release** for automated versioning based on your commit messages. Understanding how this works will help you write better commits.
+
+#### How It Works
+
+When you push to `master`, semantic-release:
+1. Analyzes your commit messages
+2. Determines the version bump type
+3. Updates all package.json files
+4. Generates CHANGELOG.md
+5. Creates a git tag
+6. Creates a GitHub release
+7. Publishes to npm (for major/minor versions only)
+
+#### Version Bumping Rules
+
+Your commit message **automatically determines** the version bump:
+
+**Patch Release** (0.1.0 → 0.1.1) - Bug fixes:
+```bash
+fix(core): resolve memory leak in WebSocket handler
+fix: update dependencies to fix security issues
+```
+
+**Minor Release** (0.1.0 → 0.2.0) - New features:
+```bash
+feat(cli): add support for environment variables
+feat: implement hot reload for Kotlin files
+```
+
+**Major Release** (0.1.0 → 1.0.0) - Breaking changes:
+```bash
+feat!: redesign CLI interface
+
+# or with footer
+feat: redesign API endpoints
+
+BREAKING CHANGE: All API endpoints now use /v2/ prefix
+```
+
+#### Pre-release Versions
+
+We support pre-release channels for testing:
+
+- **Beta releases** - Push to `develop` branch
+  ```bash
+  git checkout develop
+  git commit -m "feat: experimental dark mode"
+  git push
+  # Creates: 0.2.0-beta.1
+  ```
+
+- **Alpha releases** - Push to `alpha` branch
+  ```bash
+  git checkout alpha
+  git commit -m "feat: bleeding edge feature"
+  git push
+  # Creates: 0.2.0-alpha.1
+  ```
+
+#### Important Notes
+
+- **Only major/minor versions are published to npm** - Patches update versions but don't trigger npm publish
+- **CHANGELOG is auto-generated** - Don't edit CHANGELOG.md manually
+- **Commits that don't follow conventions are ignored** - No version bump occurs
+- **Use `[skip ci]` to prevent releases** - Add to commit message if needed
+
+#### Best Practices
+
+1. **Write clear, descriptive commit messages** - They become your CHANGELOG
+2. **One logical change per commit** - Makes versioning more accurate
+3. **Use scopes to organize changes** - `feat(cli):`, `fix(core):`, etc.
+4. **Breaking changes require explanation** - Always add BREAKING CHANGE footer
+5. **Test before pushing to master** - Once pushed, versions are immutable
+
 ## Testing
 
 ### Running Tests
