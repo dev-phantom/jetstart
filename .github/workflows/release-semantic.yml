@@ -25,29 +25,20 @@ jobs:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Build shared package
-        run: |
-          cd packages/shared
-          npm install --legacy-peer-deps
-          npm run build
+      - name: Install dependencies
+        run: npm install
 
-      - name: Build core package
+      - name: Build packages
         run: |
-          cd packages/core
-          npm install --legacy-peer-deps
-          npm run build
-
-      - name: Build CLI package
-        run: |
-          cd packages/cli
-          npm install --legacy-peer-deps
-          npm run build
+          npm run build:shared
+          npm run build:core
+          npm run build:cli
 
       - name: Run tests
         run: |
-          cd packages/shared && npm test || true
-          cd ../core && npm test || true
-          cd ../cli && npm test || true
+          npm test --workspace=packages/shared --if-present || true
+          npm test --workspace=packages/core --if-present || true
+          npm test --workspace=packages/cli --if-present || true
 
       - name: Release
         env:
