@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/dev-phantom/jetstart/compare/v1.1.0...v1.1.1) (2025-12-06)
+
+
+### Bug Fixes
+
+* trigger npm package publishing ([f9889a1](https://github.com/dev-phantom/jetstart/commit/f9889a1847b1746ef9575301be2aecafe283a8ae))
+
 # [1.1.0](https://github.com/dev-phantom/jetstart/compare/v1.0.0...v1.1.0) (2025-12-06)
 
 
