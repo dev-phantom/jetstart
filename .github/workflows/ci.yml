@@ -85,10 +85,7 @@ jobs:
 
       - name: Create test project
         run: |
-          cd packages/cli
-          npm link
-          cd ../..
-          jetstart create test-ci-app --package com.jetstart.ci
+          node packages/cli/bin/jetstart.js create test-ci-app --package com.jetstart.ci
           cd test-ci-app
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
