@@ -83,16 +83,15 @@ jobs:
           npm run build:core
           npm run build:cli
 
-      - name: Create test project
+      - name: Build Android client
         run: |
-          node packages/cli/bin/jetstart.js create test-ci-app --package com.jetstart.ci
-          cd test-ci-app
+          cd packages/client
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: test-app-debug
-          path: test-ci-app/app/build/outputs/apk/debug/app-debug.apk
+          name: jetstart-client-debug
+          path: packages/client/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
