@@ -34,9 +34,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Install dependencies
-        run: npm ci
-
       - name: Bump version
         id: bump
         run: |
@@ -44,26 +41,39 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "Current version: $CURRENT_VERSION"
 
-          # Bump version based on input
-          npm version ${{ github.event.inputs.bump_type }} --no-git-tag-version
+          # Calculate new version using semver logic
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR="${VERSION_PARTS[0]}"
+          MINOR="${VERSION_PARTS[1]}"
+          PATCH="${VERSION_PARTS[2]}"
 
-          # Get new version
-          NEW_VERSION=$(node -p "require('./package.json').version")
+          if [ "${{ github.event.inputs.bump_type }}" == "major" ]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [ "${{ github.event.inputs.bump_type }}" == "minor" ]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
           echo "New version: $NEW_VERSION"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-          # Update all package versions
-          cd packages/shared
-          npm version $NEW_VERSION --no-git-tag-version
-          cd ../core
-          npm version $NEW_VERSION --no-git-tag-version
-          cd ../cli
-          npm version $NEW_VERSION --no-git-tag-version
-          cd ../..
+          # Update all package.json files directly
+          # Root package.json
+          node -e "const pkg = require('./package.json'); pkg.version = '$NEW_VERSION'; require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');"
 
-          # Update dependency versions in package.json files
-          sed -i "s/\"@jetstart\/shared\": \".*\"/\"@jetstart\/shared\": \"$NEW_VERSION\"/" packages/core/package.json
-          sed -i "s/\"@jetstart\/shared\": \".*\"/\"@jetstart\/shared\": \"$NEW_VERSION\"/" packages/cli/package.json
+          # packages/shared/package.json
+          node -e "const pkg = require('./packages/shared/package.json'); pkg.version = '$NEW_VERSION'; require('fs').writeFileSync('./packages/shared/package.json', JSON.stringify(pkg, null, 2) + '\n');"
+
+          # packages/core/package.json (update version and @jetstart/shared dependency)
+          node -e "const pkg = require('./packages/core/package.json'); pkg.version = '$NEW_VERSION'; pkg.dependencies['@jetstart/shared'] = '$NEW_VERSION'; require('fs').writeFileSync('./packages/core/package.json', JSON.stringify(pkg, null, 2) + '\n');"
+
+          # packages/cli/package.json (update version and @jetstart/shared dependency)
+          node -e "const pkg = require('./packages/cli/package.json'); pkg.version = '$NEW_VERSION'; pkg.dependencies['@jetstart/shared'] = '$NEW_VERSION'; require('fs').writeFileSync('./packages/cli/package.json', JSON.stringify(pkg, null, 2) + '\n');"
 
       - name: Commit version changes
         run: |
