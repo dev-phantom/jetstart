@@ -67,6 +67,7 @@ export type CoreMessage =
   | CoreBuildCompleteMessage
   | CoreBuildErrorMessage
   | CoreReloadMessage
+  | CoreUIUpdateMessage
   | CoreDisconnectMessage;
 
 export interface CoreConnectedMessage extends BaseMessage {
@@ -99,6 +100,13 @@ export interface CoreBuildErrorMessage extends BaseMessage {
 export interface CoreReloadMessage extends BaseMessage {
   type: 'core:reload';
   reloadType: 'full' | 'hot';
+}
+
+export interface CoreUIUpdateMessage extends BaseMessage {
+  type: 'core:ui-update';
+  dslContent: string;
+  screens?: string[];
+  hash?: string;
 }
 
 export interface CoreDisconnectMessage extends BaseMessage {

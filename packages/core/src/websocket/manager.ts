@@ -42,11 +42,14 @@ export class ConnectionManager {
 
   broadcast(message: CoreMessage): void {
     const data = JSON.stringify(message);
+    const connectionCount = Array.from(this.connections.values()).filter(ws => ws.readyState === WebSocket.OPEN).length;
+    console.log(`[ConnectionManager] Broadcasting ${message.type} to ${connectionCount} connected clients`);
 
     this.connections.forEach((ws, clientId) => {
       if (ws.readyState === WebSocket.OPEN) {
         try {
           ws.send(data);
+          console.log(`[ConnectionManager] Sent ${message.type} to client ${clientId}`);
         } catch (err) {
           console.error(`Failed to broadcast to ${clientId}:`, err);
         }

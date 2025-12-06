@@ -13,6 +13,8 @@ import { DEFAULT_CORE_PORT, DEFAULT_WS_PORT } from '@jetstart/shared';
 import { SessionManager } from '../utils/session';
 import { BuildService } from '../build';
 import { ServerSession } from '../types';
+import { DSLParser } from '../build/dsl-parser';
+import { injectBuildConfigFields } from '../build/gradle-injector';
 
 export interface ServerConfig {
   httpPort?: number;
@@ -65,6 +67,14 @@ export class JetStartServer {
         projectPath: this.config.projectPath,
       });
 
+      // Inject server URL into build.gradle for hot reload
+      const serverUrl = `ws://${this.config.displayHost}:${this.config.wsPort}`;
+      await injectBuildConfigFields(this.config.projectPath, [
+        { type: 'String', name: 'JETSTART_SERVER_URL', value: serverUrl },
+        { type: 'String', name: 'JETSTART_SESSION_ID', value: this.currentSession.id }
+      ]);
+      log(`Injected server URL: ${serverUrl}`);
+
       // Start HTTP server
       this.httpServer = await createHttpServer({
         port: this.config.httpPort,
@@ -88,9 +98,28 @@ export class JetStartServer {
       this.setupBuildListeners();
 
       // Start watching for file changes
-      this.buildService.startWatching(this.config.projectPath, async () => {
-        log('Files changed, rebuilding...');
-        await this.handleRebuild();
+      this.buildService.startWatching(this.config.projectPath, async (files) => {
+        log(`Files changed: ${files.map(f => path.basename(f)).join(', ')}`);
+
+        // Check if only UI files changed (MainActivity.kt, screens/, components/)
+        const uiFiles = files.filter(f =>
+          f.includes('MainActivity.kt') ||
+          f.includes('/screens/') ||
+          f.includes('\\screens\\') ||
+          f.includes('/components/') ||
+          f.includes('\\components\\')
+        );
+
+        // If ALL changed files are UI files, use DSL hot reload (FAST)
+        if (uiFiles.length > 0 && uiFiles.length === files.length) {
+          log('🚀 UI-only changes detected, using DSL hot reload');
+          this.handleUIUpdate(uiFiles[0]);
+        } else {
+          // Otherwise, full Gradle build
+          log('📦 Non-UI changes detected, triggering full Gradle build');
+          this.buildService.clearCache();
+          await this.handleRebuild();
+        }
       });
 
       console.log();
@@ -146,9 +175,10 @@ export class JetStartServer {
         // Store the APK path
         this.latestApkPath = result.apkPath || null;
 
-        // Send download URL to client
-        const downloadUrl = `/download/app.apk`;
+        // Send full download URL to client (not just relative path)
+        const downloadUrl = `http://${this.config.displayHost}:${this.config.httpPort}/download/app.apk`;
         this.wsHandler.sendBuildComplete(this.currentSession.id, downloadUrl);
+        log(`APK download URL: ${downloadUrl}`);
       }
     });
 
@@ -158,7 +188,8 @@ export class JetStartServer {
     });
 
     this.buildService.on('watch:change', (files) => {
-      log(`Files changed: ${files.length} file(s)`);
+      // This event is just for logging/monitoring
+      // Actual build logic is handled in startWatching callback
     });
   }
 
@@ -199,6 +230,43 @@ export class JetStartServer {
     } finally {
       // Always release mutex
       this.buildMutex = false;
+    }
+  }
+
+  /**
+   * Handle UI file updates using DSL hot reload (FAST)
+   */
+  private handleUIUpdate(filePath: string): void {
+    if (!this.currentSession || !this.wsHandler) {
+      return;
+    }
+
+    try {
+      log(`Parsing UI file: ${path.basename(filePath)}`);
+      const parseResult = DSLParser.parseFile(filePath);
+
+      if (parseResult.success && parseResult.dsl) {
+        const dslContent = JSON.stringify(parseResult.dsl);
+        log(`DSL generated: ${dslContent.length} bytes`);
+
+        // Send DSL update via WebSocket (instant hot reload!)
+        this.wsHandler.sendUIUpdate(
+          this.currentSession.id,
+          dslContent,
+          [path.basename(filePath)]
+        );
+
+        success(`UI hot reload sent in <100ms ⚡`);
+      } else {
+        error(`Failed to parse UI file: ${parseResult.errors?.join(', ')}`);
+        // Fallback to full build
+        log('Falling back to full Gradle build...');
+        this.handleRebuild();
+      }
+    } catch (err: any) {
+      error(`UI update failed: ${err.message}`);
+      // Fallback to full build
+      this.handleRebuild();
     }
   }
 }

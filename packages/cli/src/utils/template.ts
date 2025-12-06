@@ -25,6 +25,9 @@ export async function generateProjectTemplate(
   await generateGradleProperties(projectPath);
   await generateGradleWrapper(projectPath);
   await generateMainActivity(projectPath, packageName);
+  await generateHotReload(projectPath, packageName);
+  await generateDSLInterpreter(projectPath, packageName);
+  await generateDSLTypes(projectPath, packageName);
   await generateAndroidManifest(projectPath, options);
   await generateResourceFiles(projectPath, projectName);
   await generateLocalProperties(projectPath);
@@ -85,6 +88,7 @@ android {
 
     buildFeatures {
         compose true
+        buildConfig true  // Required for JetStart hot reload
     }
 
     composeOptions {
@@ -101,6 +105,10 @@ dependencies {
     implementation 'androidx.compose.ui:ui-graphics'
     implementation 'androidx.compose.ui:ui-tooling-preview'
     implementation 'androidx.compose.material3:material3'
+
+    // JetStart Hot Reload dependencies
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 }`;
 
   await fs.writeFile(path.join(projectPath, 'app/build.gradle'), content);
@@ -151,19 +159,48 @@ import androidx.compose.ui.unit.dp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Initialize hot reload - reads from BuildConfig injected by jetstart dev
+        try {
+            val serverUrl = BuildConfig.JETSTART_SERVER_URL
+            val sessionId = BuildConfig.JETSTART_SESSION_ID
+            HotReload.connect(this, serverUrl, sessionId)
+        } catch (e: Exception) {
+            // BuildConfig not available yet, hot reload will be disabled
+            android.util.Log.w("MainActivity", "Hot reload not configured: \${e.message}")
+        }
+
         setContent {
             MaterialTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppContent()
+                    // Check if we should render from DSL (hot reload mode)
+                    val dsl by DSLInterpreter.currentDSL.collectAsState()
+
+                    if (dsl != null) {
+                        // Hot reload mode: render from DSL sent by server
+                        DSLInterpreter.RenderDSL(dsl!!)
+                    } else {
+                        // Normal mode: render actual Compose code
+                        AppContent()
+                    }
                 }
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        HotReload.disconnect()
+    }
 }
 
+/**
+ * Main App Content - REAL Kotlin Compose Code!
+ * This gets parsed to DSL and sent via hot reload
+ */
 @Composable
 fun AppContent() {
     Column(
@@ -177,11 +214,22 @@ fun AppContent() {
             text = "Welcome to JetStart! 🚀",
             style = MaterialTheme.typography.headlineMedium
         )
+
         Spacer(modifier = Modifier.height(16.dp))
+
         Text(
-            text = "Edit this file and save to see hot reload in action",
+            text = "Edit this code and save to see hot reload!",
             style = MaterialTheme.typography.bodyMedium
         )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = { /* Handle click */ },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Click Me!")
+        }
     }
 }`;
 
@@ -197,10 +245,13 @@ async function generateAndroidManifest(
   const content = `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:label="@string/app_name"
-        android:theme="@style/Theme.${themeName}">
+        android:theme="@style/Theme.${themeName}"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -247,11 +298,17 @@ async function generateGitignore(projectPath: string): Promise<void> {
 /build
 /app/build
 .gradle
+*.hprof
 
 # IDE
 .idea
 *.iml
 .vscode
+.DS_Store
+
+# Claude Code
+.claude
+.claude-worktrees
 
 # JetStart
 .jetstart
@@ -259,7 +316,23 @@ async function generateGitignore(projectPath: string): Promise<void> {
 # Android
 local.properties
 *.apk
-*.aab`;
+*.aab
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+captures/
+.externalNativeBuild
+.cxx
+
+# Log files
+*.log
+
+# Keystore files
+*.jks
+*.keystore`;
 
   await fs.writeFile(path.join(projectPath, '.gitignore'), content);
 }
@@ -413,6 +486,22 @@ async function generateResourceFiles(
     path.join(projectPath, 'app/src/main/res/values/themes.xml'),
     themesXml
   );
+
+  // Generate network_security_config.xml for development (allows cleartext traffic)
+  const networkSecurityConfig = `<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>`;
+
+  await fs.ensureDir(path.join(projectPath, 'app/src/main/res/xml'));
+  await fs.writeFile(
+    path.join(projectPath, 'app/src/main/res/xml/network_security_config.xml'),
+    networkSecurityConfig
+  );
 }
 
 async function generateLocalProperties(projectPath: string): Promise<void> {
@@ -467,4 +556,80 @@ sdk.dir=${androidSdkPath.replace(/\\/g, '\\\\')}
 
   await fs.writeFile(path.join(projectPath, 'local.properties'), content);
   console.log(`[JetStart] Created local.properties with SDK: ${androidSdkPath}`);
+}
+async function generateHotReload(
+  projectPath: string,
+  packageName: string
+): Promise<void> {
+  const packagePath = packageName.replace(/\./g, '/');
+  const hotReloadPath = path.join(
+    projectPath,
+    'app/src/main/java',
+    packagePath,
+    'HotReload.kt'
+  );
+
+  // Copy from my-app template
+  const sourceFile = path.join(__dirname, '../../../../my-app/app/src/main/java/com/jetstart/myapp/HotReload.kt');
+  
+  try {
+    let content = await fs.readFile(sourceFile, 'utf-8');
+    // Replace package name
+    content = content.replace(/package com\.jetstart\.myapp/g, `package ${packageName}`);
+    
+    await fs.ensureDir(path.dirname(hotReloadPath));
+    await fs.writeFile(hotReloadPath, content);
+  } catch (error) {
+    console.warn('[Warning] Could not copy HotReload.kt from my-app. You may need to add it manually.');
+  }
+}
+
+async function generateDSLInterpreter(
+  projectPath: string,
+  packageName: string
+): Promise<void> {
+  const packagePath = packageName.replace(/\./g, '/');
+  const interpreterPath = path.join(
+    projectPath,
+    'app/src/main/java',
+    packagePath,
+    'DSLInterpreter.kt'
+  );
+
+  const sourceFile = path.join(__dirname, '../../../../my-app/app/src/main/java/com/jetstart/myapp/DSLInterpreter.kt');
+  
+  try {
+    let content = await fs.readFile(sourceFile, 'utf-8');
+    content = content.replace(/package com\.jetstart\.myapp/g, `package ${packageName}`);
+    
+    await fs.ensureDir(path.dirname(interpreterPath));
+    await fs.writeFile(interpreterPath, content);
+  } catch (error) {
+    console.warn('[Warning] Could not copy DSLInterpreter.kt from my-app. You may need to add it manually.');
+  }
+}
+
+async function generateDSLTypes(
+  projectPath: string,
+  packageName: string
+): Promise<void> {
+  const packagePath = packageName.replace(/\./g, '/');
+  const typesPath = path.join(
+    projectPath,
+    'app/src/main/java',
+    packagePath,
+    'DSLTypes.kt'
+  );
+
+  const sourceFile = path.join(__dirname, '../../../../my-app/app/src/main/java/com/jetstart/myapp/DSLTypes.kt');
+  
+  try {
+    let content = await fs.readFile(sourceFile, 'utf-8');
+    content = content.replace(/package com\.jetstart\.myapp/g, `package ${packageName}`);
+    
+    await fs.ensureDir(path.dirname(typesPath));
+    await fs.writeFile(typesPath, content);
+  } catch (error) {
+    console.warn('[Warning] Could not copy DSLTypes.kt from my-app. You may need to add it manually.');
+  }
 }

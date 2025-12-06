@@ -114,5 +114,13 @@ temp/
 *.session
 sessions/
 cache/
+
+# Test/Example projects (don't commit test projects)
+my-app/
+my-awesome-app/
+test-app/
+
+# Claude Code
 .claude
+.claude-worktrees
 claude.md

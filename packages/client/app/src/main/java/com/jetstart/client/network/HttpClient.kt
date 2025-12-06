@@ -68,14 +68,22 @@ class JetStartHttpClient(private val baseUrl: String) {
     }
 
     fun downloadFile(endpoint: String, onProgress: (Int) -> Unit, callback: (ByteArray?) -> Unit) {
-        val url = "$baseUrl$endpoint"
+        // Handle both relative and absolute URLs
+        val url = if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
+            endpoint  // Already a full URL
+        } else {
+            "$baseUrl$endpoint"  // Relative path, prepend base URL
+        }
+
+        Log.d(tag, "Downloading from: $url")
+
         val request = Request.Builder()
             .url(url)
             .build()
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                Log.e(tag, "Download failed: ${e.message}")
+                Log.e(tag, "Download failed: ${e.message}", e)
                 callback(null)
             }
 
@@ -83,11 +91,17 @@ class JetStartHttpClient(private val baseUrl: String) {
                 if (response.isSuccessful) {
                     response.body?.let { body ->
                         val totalSize = body.contentLength()
+                        Log.d(tag, "Downloading APK: ${totalSize / 1024 / 1024} MB")
                         val bytes = body.bytes()
                         onProgress(100)
+                        Log.d(tag, "Download complete")
                         callback(bytes)
-                    } ?: callback(null)
+                    } ?: run {
+                        Log.e(tag, "Response body is null")
+                        callback(null)
+                    }
                 } else {
+                    Log.e(tag, "Download failed with code: ${response.code}")
                     callback(null)
                 }
             }
