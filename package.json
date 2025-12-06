@@ -4,7 +4,10 @@
   "description": "Fast, wireless Android development with Kotlin and Jetpack Compose",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/shared",
+    "packages/core",
+    "packages/cli",
+    "packages/web"
   ],
   "scripts": {
     "build": "tsc --build && npm run build:web",
