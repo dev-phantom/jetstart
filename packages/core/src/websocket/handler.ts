@@ -9,6 +9,7 @@ import {
   CoreConnectedMessage,
   CoreBuildStartMessage,
   CoreBuildCompleteMessage,
+  CoreUIUpdateMessage,
 } from '@jetstart/shared';
 import { ConnectionManager } from './manager';
 import { log, error as logError } from '../utils/logger';
@@ -116,5 +117,34 @@ export class WebSocketHandler {
     };
 
     this.connectionManager.broadcast(message);
+  }
+
+  /**
+   * Send UI update (DSL-based hot reload)
+   */
+  sendUIUpdate(sessionId: string, dslContent: string, screens?: string[]): void {
+    const message: CoreUIUpdateMessage = {
+      type: 'core:ui-update',
+      timestamp: Date.now(),
+      sessionId,
+      dslContent,
+      screens,
+      hash: this.generateHash(dslContent),
+    };
+
+    log(`Sending UI update: ${dslContent.length} bytes`);
+    log(`DSL Content: ${dslContent}`);
+    this.connectionManager.broadcast(message);
+  }
+
+  private generateHash(content: string): string {
+    // Simple hash for caching (in production, use crypto.createHash)
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash.toString(16);
   }
 }

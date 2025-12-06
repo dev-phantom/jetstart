@@ -182,8 +182,9 @@ sdk.dir=${androidSdkPath.replace(/\\/g, '\\\\')}
     args.push('--build-cache');
     args.push('--configure-on-demand');
 
-    // Single ABI for faster builds (arm64-v8a is most common)
-    args.push('-Pandroid.injected.build.abi=arm64-v8a');
+    // Build universal APK for all architectures (removed single-ABI restriction)
+    // This ensures the APK works on all device architectures
+    // Note: This makes the APK larger but ensures compatibility
 
     // Daemon for faster subsequent builds
     args.push('--daemon');
