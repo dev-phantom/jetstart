@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/dev-phantom/jetstart/compare/v1.1.2...v1.1.3) (2025-12-06)
+
+
+### Bug Fixes
+
+* **cli:** add missing @jetstart/core dependency ([4abf755](https://github.com/dev-phantom/jetstart/commit/4abf7558efb6d093f28e0a008c9ab4f31086893b))
+
 ## [1.1.2](https://github.com/dev-phantom/jetstart/compare/v1.1.1...v1.1.2) (2025-12-06)
 
 
