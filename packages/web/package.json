@@ -22,7 +22,7 @@
   "author": "Phantom",
   "license": "Apache-2.0",
   "dependencies": {
-    "@jetstart/shared": "0.1.0",
+    "@jetstart/shared": "file:../shared",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
