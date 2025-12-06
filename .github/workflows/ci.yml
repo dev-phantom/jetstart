@@ -73,12 +73,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install Node dependencies
-        run: |
-          
-          cd packages/shared && npm install --legacy-peer-deps
-          cd ../core && npm install --legacy-peer-deps
-          cd ../cli && npm install --legacy-peer-deps
-          cd ../..
+        run: npm install
 
       - name: Build packages (only published packages)
         run: |
