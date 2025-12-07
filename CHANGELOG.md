@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/dev-phantom/jetstart/compare/v1.1.3...v1.1.4) (2025-12-07)
+
+
+### Bug Fixes
+
+* embed Kotlin template files directly in CLI ([77f81d9](https://github.com/dev-phantom/jetstart/commit/77f81d96c461b89064652ffa4d74705b40563b94))
+
 ## [1.1.3](https://github.com/dev-phantom/jetstart/compare/v1.1.2...v1.1.3) (2025-12-06)
 
 
