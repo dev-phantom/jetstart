@@ -5,12 +5,16 @@
 import { useState, useEffect } from 'react';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useLogs } from './hooks/useLogs';
+import { usePerformanceMetrics } from './hooks/usePerformanceMetrics';
 import { StatusBar } from './components/StatusBar';
 import { LogViewer } from './components/LogViewer';
 import { ConnectionPanel } from './components/ConnectionPanel';
 import { DeviceFrame } from './components/DeviceFrame';
+import { PerformancePanel } from './components/PerformancePanel';
+import { BuildProgress } from './components/BuildProgress';
 import { LogLevel, LogSource } from '@jetstart/shared';
 import './App.css';
+import './styles/material-typography.css';
 
 function App() {
   const [sessionId, setSessionId] = useState<string>('');
@@ -24,6 +28,8 @@ function App() {
     projectName,
     buildStatus,
     error,
+    currentDSL,
+    dslHash,
     connect,
   } = useWebSocket({
     sessionId,
@@ -33,6 +39,7 @@ function App() {
   });
 
   const { filteredLogs, addLog, clearLogs } = useLogs(1000);
+  const { metrics, onBuildStart, onBuildComplete, onUIUpdate } = usePerformanceMetrics();
 
   // Handle connection
   const handleConnect = (newSessionId: string, newToken: string, newWsUrl?: string) => {
@@ -113,6 +120,22 @@ function App() {
     }
   }, [error, addLog]);
 
+  // Track build performance
+  useEffect(() => {
+    if (buildStatus.isBuilding) {
+      onBuildStart();
+    } else if (buildStatus.apkInfo || buildStatus.error) {
+      onBuildComplete();
+    }
+  }, [buildStatus.isBuilding, buildStatus.apkInfo, buildStatus.error, onBuildStart, onBuildComplete]);
+
+  // Track UI updates (hot reload)
+  useEffect(() => {
+    if (currentDSL && dslHash) {
+      onUIUpdate();
+    }
+  }, [dslHash, onUIUpdate]);
+
   return (
     <div className="app">
       <StatusBar
@@ -123,10 +146,17 @@ function App() {
 
       <div className="app-content">
         <div className="main-panel">
-          <DeviceFrame buildStatus={buildStatus} projectName={projectName} />
+          <DeviceFrame
+            buildStatus={buildStatus}
+            projectName={projectName}
+            currentDSL={currentDSL}
+            dslHash={dslHash}
+          />
         </div>
 
         <div className="side-panel">
+          <PerformancePanel metrics={metrics} />
+          <BuildProgress buildStatus={buildStatus} />
           <LogViewer logs={filteredLogs} onClear={clearLogs} />
         </div>
       </div>
