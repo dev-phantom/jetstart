@@ -1,3 +1,11 @@
+# [1.2.0](https://github.com/dev-phantom/jetstart/compare/v1.1.4...v1.2.0) (2025-12-10)
+
+
+### Features
+
+* Enhance WebSocket connection management with session isolation and update deployment documentation ([a6b40d5](https://github.com/dev-phantom/jetstart/commit/a6b40d5805342a5dd3ffcb7768f7fc4c383c6555))
+* Implement DSL rendering components and performance metrics tracking ([c3cfb43](https://github.com/dev-phantom/jetstart/commit/c3cfb439df0fc6aa5b047f61599cef5e9e187fec))
+
 ## [1.1.4](https://github.com/dev-phantom/jetstart/compare/v1.1.3...v1.1.4) (2025-12-07)
 
 
