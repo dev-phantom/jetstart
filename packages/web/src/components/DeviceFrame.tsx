@@ -2,16 +2,55 @@
  * DeviceFrame - Simulated Android device frame for app preview
  */
 
+import { useState, useEffect, useCallback } from 'react';
 import { BuildStatusInfo } from '../hooks/useWebSocket';
+import { DSLRenderer } from './dsl';
+import { parseUIDefinition } from '../utils/dslParser';
+import { UIDefinition } from '../types/dsl';
 import './DeviceFrame.css';
 
 export interface DeviceFrameProps {
   buildStatus: BuildStatusInfo;
   projectName: string | null;
+  currentDSL: string | null;
+  dslHash: string | null;
 }
 
-export function DeviceFrame({ buildStatus, projectName }: DeviceFrameProps) {
+export function DeviceFrame({ buildStatus, projectName, currentDSL, dslHash }: DeviceFrameProps) {
+  const [uiDefinition, setUIDefinition] = useState<UIDefinition | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
+
+  // Parse DSL when it changes
+  useEffect(() => {
+    if (currentDSL) {
+      try {
+        const parsed = parseUIDefinition(currentDSL);
+        setUIDefinition(parsed);
+        setParseError(null);
+        console.log('DSL parsed successfully:', parsed);
+      } catch (error) {
+        console.error('Failed to parse DSL:', error);
+        setParseError((error as Error).message);
+        setUIDefinition(null);
+      }
+    }
+  }, [currentDSL, dslHash]);
+
+  const handleButtonClick = useCallback((action: string) => {
+    console.log('Button action:', action);
+    // TODO: Implement action handling (could send back to server)
+  }, []);
   const renderContent = () => {
+    // Error states first
+    if (parseError) {
+      return (
+        <div className="device-content-message error">
+          <h3>DSL Parse Error</h3>
+          <p>{parseError}</p>
+        </div>
+      );
+    }
+
     if (buildStatus.error) {
       return (
         <div className="device-content-message error">
@@ -21,6 +60,7 @@ export function DeviceFrame({ buildStatus, projectName }: DeviceFrameProps) {
       );
     }
 
+    // Building state
     if (buildStatus.isBuilding) {
       return (
         <div className="device-content-message building">
@@ -31,6 +71,19 @@ export function DeviceFrame({ buildStatus, projectName }: DeviceFrameProps) {
       );
     }
 
+    // DSL UI rendering (PRIORITY - show live preview)
+    if (uiDefinition) {
+      return (
+        <div className="dsl-preview-container">
+          <DSLRenderer
+            element={uiDefinition.screen}
+            onButtonClick={handleButtonClick}
+          />
+        </div>
+      );
+    }
+
+    // Build complete (fallback - show download option)
     if (buildStatus.apkInfo) {
       return (
         <div className="device-content-message success">
@@ -56,6 +109,7 @@ export function DeviceFrame({ buildStatus, projectName }: DeviceFrameProps) {
       );
     }
 
+    // Idle state
     return (
       <div className="device-content-message idle">
         <h3>Ready</h3>
@@ -86,6 +140,7 @@ export function DeviceFrame({ buildStatus, projectName }: DeviceFrameProps) {
       </div>
       <div className="device-label">
         JetStart Web Emulator
+        {dslHash && <span className="dsl-hash"> • {dslHash.slice(0, 8)}</span>}
       </div>
     </div>
   );
