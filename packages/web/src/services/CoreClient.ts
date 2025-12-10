@@ -26,6 +26,7 @@ export interface CoreClientConfig {
   onBuildComplete?: (apkInfo: any, downloadUrl: string) => void;
   onBuildError?: (error: string) => void;
   onBuildStatus?: (status: any) => void;
+  onUIUpdate?: (dslContent: string, screens?: string[], hash?: string) => void;
   onReload?: (reloadType: 'full' | 'hot') => void;
   onDisconnect?: (reason: string) => void;
   onLog?: (log: LogEntry) => void;
@@ -172,6 +173,14 @@ export class CoreClient {
 
         case 'core:build-error':
           this.config.onBuildError?.(message.error);
+          break;
+
+        case 'core:ui-update':
+          this.config.onUIUpdate?.(
+            message.dslContent,
+            message.screens,
+            message.hash
+          );
           break;
 
         case 'core:reload':
