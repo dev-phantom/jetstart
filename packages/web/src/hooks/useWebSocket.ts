@@ -19,6 +19,8 @@ export interface UseWebSocketReturn {
   projectName: string | null;
   buildStatus: BuildStatusInfo;
   error: Error | null;
+  currentDSL: string | null;
+  dslHash: string | null;
   connect: () => void;
   disconnect: () => void;
   sendStatus: (status: SessionStatus, message?: string) => void;
@@ -45,6 +47,8 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     apkInfo: null,
     downloadUrl: null,
   });
+  const [currentDSL, setCurrentDSL] = useState<string | null>(null);
+  const [dslHash, setDslHash] = useState<string | null>(null);
 
   const clientRef = useRef<CoreClient | null>(null);
 
@@ -104,6 +108,12 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
           apkInfo: null,
           downloadUrl: null,
         });
+      },
+
+      onUIUpdate: (dslContent, _screens, hash) => {
+        console.log('UI update received:', dslContent.length, 'bytes');
+        setCurrentDSL(dslContent);
+        setDslHash(hash || null);
       },
 
       onReload: (reloadType) => {
@@ -167,6 +177,8 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     projectName,
     buildStatus,
     error,
+    currentDSL,
+    dslHash,
     connect,
     disconnect,
     sendStatus,

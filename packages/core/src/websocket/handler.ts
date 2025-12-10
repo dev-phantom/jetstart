@@ -66,6 +66,9 @@ export class WebSocketHandler {
   private handleConnect(clientId: string, message: ClientMessage & { type: 'client:connect' }): void {
     log(`Client connecting with session: ${message.sessionId}`);
 
+    // Associate this client with the session for isolation
+    this.connectionManager.setClientSession(clientId, message.sessionId);
+
     // Send connected confirmation
     const response: CoreConnectedMessage = {
       type: 'core:connected',
@@ -95,7 +98,7 @@ export class WebSocketHandler {
       sessionId,
     };
 
-    this.connectionManager.broadcast(message);
+    this.connectionManager.broadcastToSession(sessionId, message);
   }
 
   sendBuildComplete(sessionId: string, apkUrl: string): void {
@@ -116,11 +119,11 @@ export class WebSocketHandler {
       downloadUrl: apkUrl,
     };
 
-    this.connectionManager.broadcast(message);
+    this.connectionManager.broadcastToSession(sessionId, message);
   }
 
   /**
-   * Send UI update (DSL-based hot reload)
+   * Send UI update (DSL-based hot reload) - SECURE, session-isolated
    */
   sendUIUpdate(sessionId: string, dslContent: string, screens?: string[]): void {
     const message: CoreUIUpdateMessage = {
@@ -132,9 +135,9 @@ export class WebSocketHandler {
       hash: this.generateHash(dslContent),
     };
 
-    log(`Sending UI update: ${dslContent.length} bytes`);
+    log(`Sending UI update to session ${sessionId}: ${dslContent.length} bytes`);
     log(`DSL Content: ${dslContent}`);
-    this.connectionManager.broadcast(message);
+    this.connectionManager.broadcastToSession(sessionId, message);
   }
 
   private generateHash(content: string): string {
