@@ -129,10 +129,13 @@ export class AndroidSDKManager {
   /**
    * Run sdkmanager command
    */
-  private async runSDKManager(args: string[]): Promise<string> {
+  private async runSDKManager(
+    args: string[],
+    onProgress?: (progress: number, message: string) => void
+  ): Promise<string> {
     const sdkmanagerPath = this.getSDKManagerPath();
 
-    if (!await fs.pathExists(sdkmanagerPath)) {
+    if (!(await fs.pathExists(sdkmanagerPath))) {
       throw new Error('sdkmanager not found. Install cmdline-tools first.');
     }
 
@@ -143,7 +146,9 @@ export class AndroidSDKManager {
           ANDROID_HOME: this.sdkRoot,
           ANDROID_SDK_ROOT: this.sdkRoot,
           // Accept licenses automatically
-          JAVA_OPTS: '-Dcom.android.sdkmanager.toolsdir=' + path.join(this.sdkRoot, 'cmdline-tools', 'latest'),
+          JAVA_OPTS:
+            '-Dcom.android.sdkmanager.toolsdir=' +
+            path.join(this.sdkRoot, 'cmdline-tools', 'latest'),
         },
         shell: true,
       });
@@ -155,8 +160,31 @@ export class AndroidSDKManager {
         output += data.toString();
       });
 
+      // Parse stderr for progress updates
       proc.stderr?.on('data', (data) => {
-        errorOutput += data.toString();
+        const text = data.toString();
+        errorOutput += text;
+
+        if (onProgress) {
+          // Parse progress percentage: "10% ▋...................."
+          const progressMatch = text.match(/(\d+)%/);
+          if (progressMatch) {
+            const percent = parseInt(progressMatch[1], 10);
+
+            // Extract current operation
+            const lines = text.split('\n');
+            const currentOp =
+              lines.find(
+                (l: string) =>
+                  l.includes('Downloading') ||
+                  l.includes('Installing') ||
+                  l.includes('Extracting') ||
+                  l.includes('Unzipping')
+              ) || 'Processing...';
+
+            onProgress(percent, currentOp.trim());
+          }
+        }
       });
 
       proc.on('close', (code) => {
@@ -182,25 +210,56 @@ export class AndroidSDKManager {
     try {
       const sdkmanagerPath = this.getSDKManagerPath();
 
+      // Add path validation (like runSDKManager does)
+      if (!(await fs.pathExists(sdkmanagerPath))) {
+        throw new Error('sdkmanager not found. Install cmdline-tools first.');
+      }
+
       await new Promise<void>((resolve, reject) => {
         const proc = spawn(sdkmanagerPath, ['--licenses'], {
           env: {
             ...process.env,
             ANDROID_HOME: this.sdkRoot,
             ANDROID_SDK_ROOT: this.sdkRoot,
+            // ADD MISSING JAVA_OPTS (critical fix)
+            JAVA_OPTS:
+              '-Dcom.android.sdkmanager.toolsdir=' +
+              path.join(this.sdkRoot, 'cmdline-tools', 'latest'),
           },
+          // ADD explicit stdio configuration
+          stdio: ['pipe', 'pipe', 'pipe'],
           shell: true,
         });
 
-        // Auto-accept all licenses by sending 'y' repeatedly
-        proc.stdin?.write('y\n'.repeat(100));
-        proc.stdin?.end();
+        // Check if stdin is writable before writing
+        if (proc.stdin) {
+          const success = proc.stdin.write('y\n'.repeat(100));
+          if (!success) {
+            // Handle backpressure - wait for drain
+            proc.stdin.once('drain', () => {
+              proc.stdin?.end();
+            });
+          } else {
+            proc.stdin.end();
+          }
+        } else {
+          reject(new Error('stdin not available'));
+          return;
+        }
+
+        // Collect stderr for debugging
+        let errorOutput = '';
+        proc.stderr?.on('data', (data) => {
+          errorOutput += data.toString();
+        });
 
         proc.on('close', (code) => {
           if (code === 0 || code === null) {
             resolve();
           } else {
-            reject(new Error(`Failed to accept licenses: exit code ${code}`));
+            reject(
+              new Error(`Failed to accept licenses: exit code ${code}\n${errorOutput}`)
+            );
           }
         });
 
@@ -227,8 +286,11 @@ export class AndroidSDKManager {
       // Accept licenses first
       await this.acceptLicenses();
 
-      // Install component
-      await this.runSDKManager(['--install', component]);
+      // Install component with progress updates
+      await this.runSDKManager(['--install', component], (percent, message) => {
+        // Update spinner text with progress
+        spinner.text = `${label} (${percent}%) - ${message}`;
+      });
 
       stopSpinner(spinner, true, `${component} installed`);
     } catch (error) {
@@ -305,9 +367,12 @@ export class AndroidSDKManager {
     info('Installing required Android SDK components...');
     console.log();
 
-    for (const component of REQUIRED_SDK_COMPONENTS) {
+    for (let i = 0; i < REQUIRED_SDK_COMPONENTS.length; i++) {
+      const component = REQUIRED_SDK_COMPONENTS[i];
+      const overallProgress = `[${i + 1}/${REQUIRED_SDK_COMPONENTS.length}]`;
+
       try {
-        await this.installComponent(component);
+        await this.installComponent(component, `${overallProgress} Installing ${component}`);
       } catch (error) {
         warning(`Failed to install ${component}: ${(error as Error).message}`);
       }
