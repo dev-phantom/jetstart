@@ -18,13 +18,18 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "jsx": "react-jsx"
   },
   "files": [],
   "references": [
     { "path": "./packages/shared" },
     { "path": "./packages/core" },
     { "path": "./packages/cli" }
+  ],
+  "include": [
+    "src",
+    "docs"
   ],
   "exclude": [
     "node_modules",

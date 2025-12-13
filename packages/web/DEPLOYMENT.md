@@ -11,13 +11,22 @@
 3. Done! ✅
 
 ### Option 2: Deploy from Git (Recommended)
-1. Push your code to GitHub
-2. Go to [Netlify](https://app.netlify.com)
-3. Click "Add new site" → "Import an existing project"
-4. Connect to GitHub and select your repo
-5. Netlify will auto-detect the `netlify.toml` config
-6. Click "Deploy site"
-7. Done! Auto-deploys on every push 🚀
+1. **IMPORTANT**: Move `netlify.toml` to the **root** of your repo:
+   ```bash
+   mv packages/web/netlify.toml netlify.toml
+   ```
+2. Push your code to GitHub
+3. Go to [Netlify](https://app.netlify.com)
+4. Click "Add new site" → "Import an existing project"
+5. Connect to GitHub and select your repo
+6. Netlify will auto-detect the `netlify.toml` config
+7. Click "Deploy site"
+8. Done! Auto-deploys on every push 🚀
+
+**Why move netlify.toml to root?**
+- JetStart is a monorepo (multiple packages)
+- Web package depends on `@jetstart/shared`
+- Netlify needs to build from the root to resolve workspace dependencies
 
 ### Option 3: Netlify CLI
 1. Install Netlify CLI:

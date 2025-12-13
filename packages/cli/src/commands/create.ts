@@ -6,16 +6,120 @@
 import path from 'path';
 import fs from 'fs-extra';
 import chalk from 'chalk';
-import { log, success, error } from '../utils/logger';
+import inquirer from 'inquirer';
+import { log, success, error, info, warning } from '../utils/logger';
 import { startSpinner, stopSpinner } from '../utils/spinner';
 import { prompt } from '../utils/prompt';
 import { generateProjectTemplate } from '../utils/template';
 import { isValidProjectName, isValidPackageName } from '@jetstart/shared';
+import { CreateOptions } from '../types';
+import { detectJava, installJava, isJavaCompatible } from '../utils/java';
+import { createSDKManager, REQUIRED_SDK_COMPONENTS } from '../utils/android-sdk';
+import { findAndroidSDK } from '../utils/system-tools';
 
-interface CreateOptions {
-  package?: string;
-  template?: string;
-  skipInstall?: boolean;
+/**
+ * Run full installation (automated mode)
+ */
+async function runFullInstallation(): Promise<void> {
+  info('Starting full automated installation...');
+  console.log();
+
+  // 1. Check and install Java
+  const java = await detectJava();
+  if (!java || !(await isJavaCompatible(java.version))) {
+    await installJava();
+  } else {
+    success(`Java ${java.version} already installed`);
+  }
+
+  // 2. Check and install Android SDK
+  const sdkManager = createSDKManager();
+  const sdkRoot = await findAndroidSDK();
+
+  if (!sdkRoot) {
+    info('Installing Android SDK components...');
+    await sdkManager.installCmdlineTools();
+  } else {
+    success(`Android SDK found at ${sdkRoot}`);
+  }
+
+  // 3. Install required SDK components
+  for (const component of REQUIRED_SDK_COMPONENTS) {
+    await sdkManager.installComponent(component);
+  }
+
+  console.log();
+  success('All dependencies installed successfully!');
+  console.log();
+}
+
+/**
+ * Run interactive installation
+ */
+async function runInteractiveInstallation(): Promise<void> {
+  info('Checking dependencies...');
+  console.log();
+
+  // Check Java
+  const java = await detectJava();
+  if (!java || !(await isJavaCompatible(java.version))) {
+    const { shouldInstall } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'shouldInstall',
+        message: 'Java 17+ not found. Would you like to install it?',
+        default: true,
+      },
+    ]);
+
+    if (shouldInstall) {
+      await installJava();
+    } else {
+      warning('Java installation skipped. You may need to install it manually.');
+    }
+  } else {
+    success(`Java ${java.version} detected`);
+  }
+
+  // Check Android SDK
+  const sdkRoot = await findAndroidSDK();
+  if (!sdkRoot) {
+    const { shouldInstall } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'shouldInstall',
+        message: 'Android SDK not found. Would you like to install it?',
+        default: true,
+      },
+    ]);
+
+    if (shouldInstall) {
+      const sdkManager = createSDKManager();
+      await sdkManager.installCmdlineTools();
+
+      // Ask about components
+      const { installComponents } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'installComponents',
+          message: 'Install required SDK components?',
+          default: true,
+        },
+      ]);
+
+      if (installComponents) {
+        for (const component of REQUIRED_SDK_COMPONENTS) {
+          await sdkManager.installComponent(component);
+        }
+      }
+    } else {
+      warning('Android SDK installation skipped. Project creation may fail without SDK.');
+    }
+  } else {
+    success(`Android SDK found at ${sdkRoot}`);
+  }
+
+  console.log();
 }
 
 export async function createCommand(name: string, options: CreateOptions) {
@@ -37,6 +141,25 @@ export async function createCommand(name: string, options: CreateOptions) {
 
     log(`Creating JetStart project: ${chalk.cyan(name)}`);
     console.log();
+
+    // Run installation if requested
+    if (options.fullInstall) {
+      await runFullInstallation();
+    } else {
+      // Interactive mode: ask user
+      const { shouldCheckDeps } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'shouldCheckDeps',
+          message: 'Check and install dependencies?',
+          default: true,
+        },
+      ]);
+
+      if (shouldCheckDeps) {
+        await runInteractiveInstallation();
+      }
+    }
 
     // Get package name
     let packageName = options.package;

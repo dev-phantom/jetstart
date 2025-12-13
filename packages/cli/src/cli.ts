@@ -11,14 +11,16 @@ import { createCommand } from './commands/create';
 import { devCommand } from './commands/dev';
 import { buildCommand } from './commands/build';
 import { logsCommand } from './commands/logs';
+import { installAuditCommand } from './commands/install-audit';
+import { androidEmulatorCommand } from './commands/android-emulator';
 import { JETSTART_VERSION } from '@jetstart/shared';
-
+import {version} from '../package.json';
 const program = new Command();
 
 program
   .name('jetstart')
   .description('Fast, wireless Android development with Kotlin and Jetpack Compose')
-  .version(JETSTART_VERSION);
+  .version(version || JETSTART_VERSION);
 
 // Create command
 program
@@ -27,6 +29,7 @@ program
   .option('-p, --package <name>', 'Package name (e.g., com.example.app)')
   .option('-t, --template <name>', 'Template to use', 'default')
   .option('--skip-install', 'Skip npm install')
+  .option('--full-install', 'Automatically install all required Android dependencies')
   .action(createCommand);
 
 // Dev command
@@ -57,6 +60,19 @@ program
   .option('-s, --source <source>', 'Filter by log source')
   .option('-n, --lines <number>', 'Number of lines to show', '100')
   .action(logsCommand);
+
+// Install audit command
+program
+  .command('install-audit')
+  .description('Audit installation of required tools and dependencies')
+  .option('--json', 'Output results in JSON format')
+  .action(installAuditCommand);
+
+// Android emulator command
+program
+  .command('android-emulator')
+  .description('Manage Android emulators (AVDs)')
+  .action(androidEmulatorCommand);
 
 // Error handling
 program.on('command:*', (operands) => {
