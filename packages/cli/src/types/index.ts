@@ -20,3 +20,23 @@ export interface CommandContext {
   cwd: string;
   config?: ProjectConfig;
 }
+
+// Create command options
+export interface CreateOptions {
+  package?: string;
+  template?: string;
+  skipInstall?: boolean;
+  fullInstall?: boolean;
+}
+
+// Install audit command options
+export interface AuditOptions {
+  json?: boolean;
+}
+
+// Install action enum
+export enum InstallAction {
+  SKIP = 'skip',
+  UPDATE = 'update',
+  REPLACE = 'replace',
+}

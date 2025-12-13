@@ -1,0 +1,67 @@
+/* ===== Hero Banner ===== */
+.heroBanner {
+  padding: 8rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(ellipse at top, rgba(250, 143, 20, 0.2) 0%, transparent 60%),
+              radial-gradient(ellipse at bottom right, rgba(240, 64, 35, 0.15) 0%, transparent 60%),
+              radial-gradient(ellipse at bottom left, rgba(108, 92, 231, 0.1) 0%, transparent 60%),
+              linear-gradient(180deg, #0a0520 0%, #160E36 100%);
+}
+
+.heroBanner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(250, 143, 20, 0.15) 0%, transparent 70%);
+  animation: rotate 40s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.heroLogo {
+  margin-bottom: 3rem;
+  animation: float 4s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+.logoImage {
+  max-width: 500px;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0 60px rgba(250, 143, 20, 0.6)) drop-shadow(0 20px 40px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.heroDescription {
+  font-size: 2rem;
+  color: #fff;
+  margin: 2rem 0 3rem;
+  font-weight: 400;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.7);
+  position: relative;
+  z-index: 1;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
