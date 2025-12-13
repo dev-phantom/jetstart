@@ -126,3 +126,5 @@ test-app/
 .claude-worktrees
 claude.md
 test-consolidation
+# Kotlin / Android build output
+packages/client/app/build/

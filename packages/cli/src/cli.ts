@@ -40,6 +40,8 @@ program
   .option('-H, --host <host>', 'Host address (defaults to auto-detected network IP)')
   .option('--no-qr', 'Do not show QR code')
   .option('--no-open', 'Do not open browser')
+  .option('--emulator', 'Deploy to running Android emulator')
+  .option('--avd <name>', 'Target specific emulator by name')
   .action(devCommand);
 
 // Build command

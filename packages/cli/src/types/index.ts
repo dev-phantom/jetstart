@@ -34,6 +34,16 @@ export interface AuditOptions {
   json?: boolean;
 }
 
+// Dev command options
+export interface DevOptions {
+  port?: string;
+  host?: string;
+  qr?: boolean;
+  open?: boolean;
+  emulator?: boolean;
+  avd?: string;
+}
+
 // Install action enum
 export enum InstallAction {
   SKIP = 'skip',
