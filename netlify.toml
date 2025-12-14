@@ -1,10 +1,7 @@
-# Netlify Configuration for JetStart (Monorepo)
-
-# Default build - Documentation site
 [build]
   base = "docs"
   command = "npm install && npm run build"
-  publish = "docs/build"
+  publish = "build"
 
 [[redirects]]
   from = "/*"
@@ -14,7 +11,6 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# Web Emulator build context
 [context.web]
   base = "."
   command = "npm install && npm run build --workspace=@jetstart/shared && npm run build --workspace=@jetstart/web"
