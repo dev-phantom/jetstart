@@ -5,6 +5,7 @@
 
 import * as path from 'path';
 import * as os from 'os';
+import { EventEmitter } from 'events';
 import { createHttpServer } from './http';
 import { createWebSocketServer } from '../websocket';
 import { WebSocketHandler } from '../websocket/handler';
@@ -25,7 +26,7 @@ export interface ServerConfig {
   projectName?: string;
 }
 
-export class JetStartServer {
+export class JetStartServer extends EventEmitter {
   private httpServer: any;
   private wsServer: any;
   private wsHandler: WebSocketHandler | null = null;
@@ -37,6 +38,7 @@ export class JetStartServer {
   private latestApkPath: string | null = null;  // Store latest built APK path
 
   constructor(config: ServerConfig = {}) {
+    super();
     const bindHost = config.host || '0.0.0.0';
     const displayHost = config.displayHost || bindHost;
     
@@ -167,6 +169,8 @@ export class JetStartServer {
       if (this.wsHandler && this.currentSession) {
         this.wsHandler.sendBuildStart(this.currentSession.id);
       }
+      // Re-emit for external listeners (e.g., dev command)
+      this.emit('build:start');
     });
 
     this.buildService.on('build:complete', (result) => {
@@ -180,16 +184,21 @@ export class JetStartServer {
         this.wsHandler.sendBuildComplete(this.currentSession.id, downloadUrl);
         log(`APK download URL: ${downloadUrl}`);
       }
+      // Re-emit for external listeners (e.g., dev command) with result
+      this.emit('build:complete', result);
     });
 
     this.buildService.on('build:error', (errorMsg, details) => {
       error(`Build failed: ${errorMsg}`);
       // TODO: Send build-error message via WebSocket
+      // Re-emit for external listeners
+      this.emit('build:error', errorMsg, details);
     });
 
     this.buildService.on('watch:change', (files) => {
       // This event is just for logging/monitoring
       // Actual build logic is handled in startWatching callback
+      this.emit('watch:change', files);
     });
   }
 

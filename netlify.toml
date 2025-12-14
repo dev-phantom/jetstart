@@ -1,0 +1,21 @@
+[build]
+  base = "docs"
+  command = "npm install && npm run build"
+  publish = "build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[context.web]
+  base = "."
+  command = "npm install && npm run build --workspace=@jetstart/shared && npm run build --workspace=@jetstart/web"
+  publish = "packages/web/dist"
+
+[context.web.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"

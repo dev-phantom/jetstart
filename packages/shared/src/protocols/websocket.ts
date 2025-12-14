@@ -28,7 +28,8 @@ export type ClientMessage =
   | ClientStatusMessage
   | ClientLogMessage
   | ClientHeartbeatMessage
-  | ClientDisconnectMessage;
+  | ClientDisconnectMessage
+  | ClientClickEventMessage;
 
 export interface ClientConnectMessage extends BaseMessage {
   type: 'client:connect';
@@ -55,6 +56,13 @@ export interface ClientHeartbeatMessage extends BaseMessage {
 export interface ClientDisconnectMessage extends BaseMessage {
   type: 'client:disconnect';
   reason?: string;
+}
+
+export interface ClientClickEventMessage extends BaseMessage {
+  type: 'client:click';
+  action: string;
+  elementType: string;
+  elementText?: string;
 }
 
 /**

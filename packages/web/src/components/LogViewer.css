@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
   background-color: var(--bg-primary);
   border-left: 1px solid var(--border-color);
 }
@@ -43,12 +44,14 @@
 }
 
 .log-container {
+  width: 100%;
   flex: 1;
   overflow-y: auto;
   font-family: 'Courier New', monospace;
   font-size: 0.875rem;
   line-height: 1.6;
   padding: 0.5rem;
+  overflow-x: auto;
 }
 
 .log-empty {
@@ -120,7 +123,7 @@
 .log-level {
   font-weight: 600;
   flex-shrink: 0;
-  min-width: 55px;
+  min-width: 100px;
 }
 
 .log-level-error .log-level,
@@ -152,8 +155,7 @@
 
 .log-message {
   color: var(--text-primary);
-  word-break: break-word;
-  flex: 1;
+ width: 100%;
 }
 
 /* Scrollbar styling */
