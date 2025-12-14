@@ -12,7 +12,7 @@
   status = 200
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
 
 # Web Emulator build context
 [context.web]
@@ -21,5 +21,5 @@
   publish = "packages/web/dist"
 
 [context.web.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
