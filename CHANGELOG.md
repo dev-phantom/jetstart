@@ -1,3 +1,18 @@
+# [1.3.0](https://github.com/dev-phantom/jetstart/compare/v1.2.0...v1.3.0) (2025-12-14)
+
+
+### Bug Fixes
+
+* fix tserrors ([af0ee10](https://github.com/dev-phantom/jetstart/commit/af0ee10118bf81e1aaa87a346a36fe29be594c06))
+* fixed emulator issue ([75932b3](https://github.com/dev-phantom/jetstart/commit/75932b3853b01d3de02550c55db5f2bb7dfae2fc))
+* fixed netlify node version compactibility ([ea37148](https://github.com/dev-phantom/jetstart/commit/ea371482f39b36abf495dad58d6844f85db0bf6b))
+* fixed netlify node version compactibility ([52a0934](https://github.com/dev-phantom/jetstart/commit/52a0934760d736d676f5270fa6f25b2119f8d667))
+
+
+### Features
+
+* a whole lot ([14b8cf9](https://github.com/dev-phantom/jetstart/commit/14b8cf9648b2b2efc6486bfacffd52753d55ad9d))
+
 # [1.2.0](https://github.com/dev-phantom/jetstart/compare/v1.1.4...v1.2.0) (2025-12-10)
 
 
