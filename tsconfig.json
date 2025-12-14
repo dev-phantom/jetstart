@@ -25,11 +25,13 @@
   "references": [
     { "path": "./packages/shared" },
     { "path": "./packages/core" },
-    { "path": "./packages/cli" }
+    { "path": "./packages/cli" },
+    { "path": "./docs" }
   ],
   "include": [
     "src",
-    "docs"
+    "docs",
+    "global.d.ts"
   ],
   "exclude": [
     "node_modules",
