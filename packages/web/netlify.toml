@@ -1,8 +1,7 @@
-# Default build - Web Emulator (for jetstart-web.netlify.app)
+# Web Emulator configuration
 [build]
-  base = "."
-  command = "npm install && npm run build --workspace=@jetstart/shared && npm run build --workspace=@jetstart/web"
-  publish = "packages/web/dist"
+  command = "cd ../.. && npm install && npm run build --workspace=@jetstart/shared && npm run build --workspace=@jetstart/web"
+  publish = "dist"
 
 [[redirects]]
   from = "/*"
