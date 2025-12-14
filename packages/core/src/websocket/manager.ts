@@ -36,7 +36,9 @@ export class ConnectionManager {
     const connection = this.connections.get(clientId);
     if (connection) {
       connection.sessionId = sessionId;
-      console.log(`[ConnectionManager] Client ${clientId} joined session ${sessionId}`);
+      if (process.env.DEBUG) {
+        console.log(`[ConnectionManager] Client ${clientId} joined session ${sessionId}`);
+      }
     }
   }
 
@@ -78,14 +80,18 @@ export class ConnectionManager {
         try {
           connection.ws.send(data);
           sentCount++;
-          console.log(`[ConnectionManager] Sent ${message.type} to client ${clientId} in session ${sessionId}`);
+          if (process.env.DEBUG) {
+            console.log(`[ConnectionManager] Sent ${message.type} to client ${clientId} in session ${sessionId.slice(0, 8)}...`);
+          }
         } catch (err) {
           console.error(`Failed to send to ${clientId}:`, err);
         }
       }
     });
 
-    console.log(`[ConnectionManager] Broadcasted ${message.type} to ${sentCount} clients in session ${sessionId}`);
+    if (process.env.DEBUG) {
+      console.log(`[ConnectionManager] Broadcasted ${message.type} to ${sentCount} clients in session ${sessionId.slice(0, 8)}...`);
+    }
   }
 
   /**

@@ -5,18 +5,14 @@
 
 import * as path from 'path';
 import * as os from 'os';
+import * as fs from 'fs-extra';
 import chalk from 'chalk';
 import qrcode from 'qrcode-terminal';
-import { log, success, error, info } from '../utils/logger';
+import { log, success, error, info, warning } from '../utils/logger';
 import { JetStartServer } from '@jetstart/core';
 import { DEFAULT_CORE_PORT, DEFAULT_WS_PORT } from '@jetstart/shared';
-
-interface DevOptions {
-  port?: string;
-  host?: string;
-  qr?: boolean;
-  open?: boolean;
-}
+import { DevOptions } from '../types';
+import { EmulatorDeployer } from '../utils/emulator-deployer';
 
 export async function devCommand(options: DevOptions) {
   try {
@@ -32,6 +28,40 @@ export async function devCommand(options: DevOptions) {
     const projectPath = process.cwd();
     const projectName = path.basename(projectPath);
 
+    // Setup emulator deployment if requested
+    let deployer: EmulatorDeployer | null = null;
+    let packageName: string | null = null;
+
+    if (options.emulator) {
+      try {
+        deployer = await EmulatorDeployer.findOrSelectEmulator(options.avd);
+
+        // Try to read package name from build.gradle (modern Android)
+        const buildGradlePath = path.join(projectPath, 'app/build.gradle');
+        info(`Looking for build.gradle at: ${buildGradlePath}`);
+        if (await fs.pathExists(buildGradlePath)) {
+          const buildGradleContent = await fs.readFile(buildGradlePath, 'utf8');
+          // Match both applicationId "..." and applicationId '...'
+          const packageMatch = buildGradleContent.match(/applicationId\s+["']([^"']+)["']/);
+          packageName = packageMatch ? packageMatch[1] : null;
+          info(`Package name: ${packageName || 'NOT FOUND'}`);
+        } else {
+          warning('build.gradle not found - emulator deployment requires package name');
+        }
+
+        if (packageName) {
+          success('Emulator deployment enabled');
+        } else {
+          warning('Emulator deployment disabled: package name not found');
+        }
+        console.log();
+      } catch (err: any) {
+        error(`Emulator setup failed: ${err.message}`);
+        info('Continuing without emulator deployment...');
+        console.log();
+      }
+    }
+
     // Create and start Core server
     // Bind to 0.0.0.0 to accept connections on all interfaces,
     // but pass the detected IP for display and client connections
@@ -45,6 +75,35 @@ export async function devCommand(options: DevOptions) {
     });
 
     const session = await server.start();
+
+    // Listen for build completion and deploy to emulator
+    if (deployer && packageName) {
+      info(`Setting up build:complete listener for package: ${packageName}`);
+      let hasDeployed = false; // Track if we've already deployed to prevent reinstall loops
+
+      server.on('build:complete', async (result: any) => {
+        info(`Build complete event received! APK: ${result.apkPath || 'NO APK PATH'}`);
+
+        // Only deploy if this is the first time OR if it's a file-change build (not initial client connection)
+        if (!hasDeployed && result.apkPath && deployer) {
+          try {
+            info('Deploying to emulator (initial deployment)...');
+            await deployer.installAPK(result.apkPath, packageName!);
+            await deployer.launchApp(packageName!);
+            hasDeployed = true; // Mark as deployed to prevent reinstall loop
+            success('Initial deployment complete. Future builds will be sent via hot reload.');
+          } catch (err: any) {
+            warning(`Emulator deployment failed: ${err.message}`);
+          }
+        } else if (hasDeployed) {
+          info('Skipping deployment (app already installed, using hot reload)');
+        } else {
+          warning(`Skipping deployment: apkPath=${result.apkPath}, deployer=${!!deployer}`);
+        }
+      });
+    } else {
+      info(`Emulator deployment not configured: deployer=${!!deployer}, packageName=${packageName}`);
+    }
 
     // Get URLs
     const serverUrl = `http://${host}:${port}`;

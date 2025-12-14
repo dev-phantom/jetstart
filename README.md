@@ -1,13 +1,19 @@
-# JetStart
+<div align="center">
+  <img src="assets/logos/jetstart-logo-4-primary.png" alt="JetStart Logo" width="400"/>
 
-[![CI](https://github.com/YOUR_USERNAME/JetStart/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/JetStart/actions/workflows/ci.yml)
-[![Release](https://github.com/YOUR_USERNAME/JetStart/actions/workflows/release.yml/badge.svg)](https://github.com/YOUR_USERNAME/JetStart/actions/workflows/release.yml)
-[![npm version](https://badge.fury.io/js/@jetstart%2Fcli.svg)](https://www.npmjs.com/package/@jetstart/cli)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  <h3>Launch Android apps at warp speed</h3>
 
-> 🚀 Blazing fast hot reload for Android Jetpack Compose apps
+  [![CI](https://github.com/dev-phantom/jetstart/actions/workflows/ci.yml/badge.svg)](https://github.com/dev-phantom/jetstart/actions/workflows/ci.yml)
+  [![Release](https://github.com/dev-phantom/jetstart/actions/workflows/release.yml/badge.svg)](https://github.com/dev-phantom/jetstart/actions/workflows/release.yml)
+  [![npm version](https://badge.fury.io/js/@jetstart%2Fcli.svg)](https://www.npmjs.com/package/@jetstart/cli)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-orange.svg)](https://opensource.org/licenses/MIT)
+</div>
 
-JetStart is a development tool that brings **instant hot reload** to Android Jetpack Compose development. Edit your Compose UI code and see changes reflect on your device in **under 100ms** - no rebuild, no reinstall!
+---
+
+## What is JetStart?
+
+JetStart is a blazing-fast development tool that brings **instant hot reload** to Android Jetpack Compose. Edit your UI code and see changes on your device in **under 100ms** - no rebuild, no reinstall required!
 
 ## ✨ Features
 
@@ -17,6 +23,12 @@ JetStart is a development tool that brings **instant hot reload** to Android Jet
 - **🔄 Automatic Builds** - Gradle integration with smart caching
 - **🌐 WebSocket Communication** - Real-time updates via WebSocket
 - **🛠️ CLI Tools** - Create, dev, and build with simple commands
+
+## 📚 Documentation
+
+**[View Full Documentation →](https://jetstart.dev)** (Coming soon!)
+
+For now, see the guides below to get started.
 
 ## 📦 Installation
 

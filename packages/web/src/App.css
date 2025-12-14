@@ -22,7 +22,7 @@
   width: 400px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 @media (max-width: 1024px) {
