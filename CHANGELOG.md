@@ -1,3 +1,11 @@
+## [1.3.1](https://github.com/dev-phantom/jetstart/compare/v1.3.0...v1.3.1) (2025-12-14)
+
+
+### Bug Fixes
+
+* fixed netlify deployment issue ([0a0266c](https://github.com/dev-phantom/jetstart/commit/0a0266c1bb69a5f45c39172473e4d43ee8e7ee65))
+* fixed netlify deployment issue ([95a5290](https://github.com/dev-phantom/jetstart/commit/95a52901ed24b2fc81a15de43e2aa4fc8c2be9f7))
+
 # [1.3.0](https://github.com/dev-phantom/jetstart/compare/v1.2.0...v1.3.0) (2025-12-14)
 
 
