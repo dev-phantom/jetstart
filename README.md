@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logos/jetstart-logo-4-primary.png" alt="JetStart Logo" width="400"/>
+  <img src="assets\client\readme.png" alt="JetStart Logo" width="400"/>
 
   <h3>Launch Android apps at warp speed</h3>
 
@@ -86,4 +86,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**Made with ❤️ by the JetStart team**
+**Made with ❤️ by phantom**
