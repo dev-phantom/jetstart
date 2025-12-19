@@ -1,3 +1,51 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --jetstart-bg: #222222;
+  --jetstart-alt-bg: #1E1E1E;
+  --jetstart-secondary: #B86709;
+  --jetstart-primary: #25FF79;
+  --jetstart-orange: #CC4C0C;
+  --jetstart-text: #FFFFFF;
+
+  /* Override Docusaurus default colors */
+  --ifm-color-primary: #25FF79;
+  --ifm-color-primary-dark: #0eff5e;
+  --ifm-color-primary-darker: #00ff4d;
+  --ifm-color-primary-darkest: #00d940;
+  --ifm-color-primary-light: #3cff8c;
+  --ifm-color-primary-lighter: #4dff97;
+  --ifm-color-primary-lightest: #70ffad;
+
+  --ifm-background-color: #222222;
+  --ifm-navbar-background-color: #222222;
+  --ifm-footer-background-color: #1E1E1E;
+  --ifm-code-background: #1E1E1E;
+
+  --ifm-heading-color: #FFFFFF;
+  --ifm-font-color-base: #FFFFFF;
+  --ifm-link-color: #25FF79;
+  --ifm-menu-color: #FFFFFF;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #25FF79;
+  --ifm-color-primary-dark: #0eff5e;
+  --ifm-color-primary-darker: #00ff4d;
+  --ifm-color-primary-darkest: #00d940;
+  --ifm-color-primary-light: #3cff8c;
+  --ifm-color-primary-lighter: #4dff97;
+  --ifm-color-primary-lightest: #70ffad;
+
+  --ifm-background-color: #222222;
+  --ifm-navbar-background-color: #222222;
+  --ifm-footer-background-color: #1E1E1E;
+  --ifm-code-background: #1E1E1E;
+
+  --ifm-heading-color: #FFFFFF;
+  --ifm-font-color-base: #FFFFFF;
+  --ifm-link-color: #25FF79;
+  --ifm-menu-color: #FFFFFF;
+}
