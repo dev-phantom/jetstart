@@ -6,13 +6,14 @@ import GradientBorderWrapper from '../components/gradientBorderWrapper';
 export default function JetStartLanding() {
   const [activeTab, setActiveTab] = useState(0);
 
+  // Using CSS variables from custom.css and Tailwind config
   const colors = {
-    bgColor: "#222222",
-    altBg: "#1E1E1E",
-    secondary: "#B86709",
-    primary: "#25FF79",
-    orange: "#CC4C0C",
-    textColor: "#FFFFFF"
+    bgColor: "var(--jetstart-bg)",
+    altBg: "var(--jetstart-alt-bg)",
+    secondary: "var(--jetstart-secondary)",
+    primary: "var(--jetstart-primary)",
+    orange: "var(--jetstart-orange)",
+    textColor: "var(--jetstart-text)"
   };
 
   return (

@@ -7,6 +7,14 @@ module.exports = {
   darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
+      colors: {
+        'jetstart-bg': '#222222',
+        'jetstart-alt-bg': '#1E1E1E',
+        'jetstart-secondary': '#B86709',
+        'jetstart-primary': '#25FF79',
+        'jetstart-orange': '#CC4C0C',
+        'jetstart-text': '#FFFFFF',
+      },
       keyframes: {
         rotate: {
           '0%': { transform: 'rotate(0deg)' },
