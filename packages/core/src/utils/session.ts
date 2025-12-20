@@ -15,7 +15,7 @@ export class SessionManager {
     projectPath: string;
   }): Promise<ServerSession> {
     const session: ServerSession = {
-      id: uuidv4(),
+      id: this.generateShortId(),
       token: this.generateToken(),
       projectName: data.projectName,
       projectPath: data.projectPath,
@@ -52,7 +52,24 @@ export class SessionManager {
     }
   }
 
+  private generateShortId(): string {
+    // Generate a short random ID (8 chars) for QR code efficiency
+    // Use base62 (alphanumeric) for better QR code density
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
   private generateToken(): string {
-    return uuidv4().replace(/-/g, '');
+    // Generate a short random token (12 chars) for QR code efficiency
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 12; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
   }
 }
