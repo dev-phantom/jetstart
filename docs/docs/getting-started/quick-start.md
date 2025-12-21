@@ -97,32 +97,53 @@ You have three ways to connect your Android device:
 
 ### Option A: QR Code (Recommended)
 
-1. Build and install the app on your device first:
-   ```bash
-   # In a new terminal, while dev server is running
-   cd my-awesome-app
-   npx jetstart build
-   ```
+**First, install the JetStart Client app on your Android device:**
 
-2. Install the generated APK on your device:
-   ```bash
-   # The APK is in app/build/outputs/apk/debug/
-   adb install app/build/outputs/apk/debug/app-debug.apk
-   ```
+1. **Download the JetStart Client APK:**
+   - Visit [https://github.com/dev-phantom/jetstart/releases](https://github.com/dev-phantom/jetstart/releases)
+   - Download the latest release APK (e.g., `jetstart-client-v1.2.0.apk`)
 
-3. Open the app on your device
-4. Scan the QR code displayed in your terminal
+2. **Disable Play Protect** (required for now):
+   :::warning Important
+   Since the JetStart Client app is not yet on the Play Store, you'll need to disable Play Protect temporarily.
+   :::
+   - Settings → Security → Google Play Protect
+   - Tap Settings (gear icon) → Toggle off "Scan apps with Play Protect"
+   - See [Client Documentation](../packages/client.md#disabling-play-protect) for detailed steps
+
+3. **Install the APK:**
+   - Tap the downloaded APK file
+   - Tap "Install" when prompted
+   - Grant permissions (Camera, Install packages)
+
+4. **Connect to dev server:**
+   - Open the JetStart Client app on your device
+   - Tap "Scan QR Code"
+   - Point camera at the QR code displayed in your terminal
+   - Connection established automatically!
+
+5. **Your app installs automatically:**
+   - Once connected, JetStart Client triggers the initial build
+   - The APK downloads and installs automatically
+   - Your app launches and is ready for hot reload!
 
 ### Option B: Manual Connection
 
 If QR scanning doesn't work:
 
-1. Open the app on your device
-2. Tap "Manual Connect"
-3. Enter the connection details shown in your terminal:
-   - Server URL: `http://192.168.1.100:8765`
-   - Session ID: (from terminal output)
-   - Token: (from terminal output)
+1. **Install JetStart Client app** (see Option A, steps 1-3)
+
+2. **Open JetStart Client app** on your device
+
+3. **Tap "Manual Connection"** (if available) or enter details manually
+
+4. **Enter connection details** from your terminal:
+   - Host: `192.168.1.100` (your computer's IP)
+   - Port: `8765`
+   - Session ID: (from terminal output, e.g., `a1b2c3`)
+   - Token: (from terminal output, e.g., `xyz789`)
+
+5. **Tap "Connect"**
 
 ### Option C: Web Emulator
 
@@ -134,6 +155,10 @@ Don't have an Android device? Use the web emulator:
 
 :::tip Network Connection
 Make sure your computer and Android device are on the same Wi-Fi network!
+:::
+
+:::info Platform Support
+The JetStart Client app is available as an **Android APK** only. It supports Android 7.0+ (API 24+). iOS support is not available.
 :::
 
 ## Step 5: Make Your First Hot Reload Change
