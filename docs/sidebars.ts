@@ -38,7 +38,6 @@ const sidebars: SidebarsConfig = {
         'cli/logs',
         'cli/install-audit',
         'cli/android-emulator',
-        'cli/configuration',
       ],
     },
     {
