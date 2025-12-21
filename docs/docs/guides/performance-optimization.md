@@ -6,7 +6,7 @@ description: Optimize JetStart development workflow and app performance
 
 # Performance Optimization
 
-Comprehensive guide to optimizing every aspect of JetStart development - from <50ms hot reload to production app performance and developer experience improvements.
+Comprehensive guide to optimizing every aspect of JetStart development - from \<50ms hot reload to production app performance and developer experience improvements.
 
 ## Optimization Areas
 
@@ -26,7 +26,7 @@ Comprehensive guide to optimizing every aspect of JetStart development - from <5
 
 ### Maximize DSL Usage
 
-**Goal:** <100ms updates instead of 20s Gradle builds
+**Goal:** \<100ms updates instead of 20s Gradle builds
 
 **Strategy:** Keep UI and logic separate
 
@@ -106,7 +106,7 @@ Build completed in 18,432ms
 
 **Metrics to track:**
 - DSL reload percentage (target: >80%)
-- Average DSL reload time (target: <100ms)
+- Average DSL reload time (target: \<100ms)
 - Gradle build frequency (minimize)
 
 ## Build Performance
@@ -582,10 +582,10 @@ Total: 23ms (well under 100ms target)
 
 | Scenario | Time | Target | Status |
 |----------|------|--------|--------|
-| DSL reload (simple Text) | 65ms | <100ms | ✓ |
-| DSL reload (complex layout) | 95ms | <100ms | ✓ |
-| Gradle build (small change) | 12s | <20s | ✓ |
-| Gradle build (full rebuild) | 25s | <30s | ✓ |
+| DSL reload (simple Text) | 65ms | \<100ms | ✓ |
+| DSL reload (complex layout) | 95ms | \<100ms | ✓ |
+| Gradle build (small change) | 12s | \<20s | ✓ |
+| Gradle build (full rebuild) | 25s | \<30s | ✓ |
 
 ### Network Performance
 

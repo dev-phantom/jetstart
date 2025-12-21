@@ -101,7 +101,7 @@ jetstart logs --source build --lines 50
 
 **Symptoms:**
 - Save file, no update appears
-- Or full Gradle build triggers (20s) instead of DSL reload (<100ms)
+- Or full Gradle build triggers (20s) instead of DSL reload (\<100ms)
 
 **Diagnosis:**
 ```bash

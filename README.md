@@ -26,7 +26,7 @@ JetStart is a blazing-fast development tool that brings **instant hot reload** t
 
 ## 📚 Documentation
 
-**[View Full Documentation →](https://jetstart.dev)** (Coming soon!)
+**[View Full Documentation →](https://jetstart.dev)**
 
 For now, see the guides below to get started.
 
