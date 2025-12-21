@@ -239,31 +239,54 @@ Press Ctrl+C to stop
 
 **Prerequisites:**
 - Phone and computer on **same WiFi network**
-- JetStart Android app installed
+- Android 7.0+ device
+- JetStart Client app installed
 
 **Steps:**
 
-1. **Install JetStart Android app** (from releases or build from source)
+1. **Download and Install JetStart Client app:**
+
+   **Download:**
+   - Visit [https://github.com/dev-phantom/jetstart/releases](https://github.com/dev-phantom/jetstart/releases)
+   - Download the latest release APK (e.g., `jetstart-client-v1.2.0.apk`)
+
+   **Disable Play Protect** (required):
+   :::warning Important
+   Since the JetStart Client app is not yet on the Play Store, you'll need to temporarily disable Play Protect.
+   :::
+   - Settings → Security → Google Play Protect
+   - Tap Settings (gear icon) → Toggle off "Scan apps with Play Protect"
+   - See [Client Documentation](../packages/client.md#disabling-play-protect) for detailed steps
+
+   **Install:**
+   - Tap the downloaded APK file
+   - Tap "Install" when prompted
+   - Grant permissions (Camera, Install packages)
 
 2. **Ensure same network:**
    - Connect phone to same WiFi as your computer
    - Or create WiFi hotspot on computer
 
 3. **Scan QR code:**
-   - Open JetStart app
+   - Open JetStart Client app
    - Tap "Scan QR Code"
    - Point camera at terminal QR code
    - Connection established automatically!
+   - Your app will build and install automatically
 
 4. **Manual connection (if QR fails):**
-   - Open JetStart app
-   - Tap "Manual Connection"
+   - Open JetStart Client app
+   - Tap "Manual Connection" (if available)
    - Enter details from dev server output:
      - Host: 192.168.1.100
      - Port: 8765
      - Session ID: a1b2c3
      - Token: xyz789
    - Tap "Connect"
+
+:::info Platform Support
+The JetStart Client app is available as an **Android APK** only. It supports Android 7.0+ (API 24+). iOS support is not available. See [Client Documentation](../packages/client.md) for more details.
+:::
 
 ### Option B: Android Emulator
 
