@@ -6,7 +6,7 @@ description: Deep dive into JetStart's two-tier hot reload system
 
 # Hot Reload Explained
 
-Understanding JetStart's blazing-fast hot reload system and how it achieves <100ms UI updates without compromising on development experience.
+Understanding JetStart's blazing-fast hot reload system and how it achieves \<100ms UI updates without compromising on development experience.
 
 ## The Two-Tier System
 
@@ -31,7 +31,7 @@ File Change Detected
 └──────┘  └──────────┘
 ```
 
-### Tier 1: DSL Hot Reload (<100ms)
+### Tier 1: DSL Hot Reload (\<100ms)
 
 **When:** UI-only changes (layouts, text, colors, styling)
 
@@ -42,7 +42,7 @@ File Change Detected
 4. Sends JSON via WebSocket to client
 5. Client re-renders UI instantly
 
-**Performance:** <100ms from save to screen update
+**Performance:** \<100ms from save to screen update
 
 ### Tier 2: Full Gradle Build (10-30s)
 
@@ -428,7 +428,7 @@ app/src/main/java/com/myapp/
 
 **Symptoms:**
 - Every change triggers 20s Gradle build
-- Never see "UI hot reload sent in <100ms"
+- Never see "UI hot reload sent in \<100ms"
 
 **Causes:**
 1. File not in watched directories

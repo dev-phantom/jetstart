@@ -322,7 +322,7 @@ Text(
 )
 ```
 
-**Save the file** → Changes appear in <100ms! 🚀
+**Save the file** → Changes appear in \<100ms! 🚀
 
 ### Watch the Logs
 

@@ -50,7 +50,7 @@ egrep -c '(vmx|svm)' /proc/cpuinfo
 
 ### Hardware Acceleration
 
-**Required for acceptable performance** (<1s boot vs 5+ minutes)
+**Required for acceptable performance** (\<1s boot vs 5+ minutes)
 
 **Windows:**
 - **Intel:** Install [Intel HAXM](https://github.com/intel/haxm/releases)
@@ -633,7 +633,7 @@ adb -s emulator-5556 install app.apk
 | **Setup time** | 5 min (one-time) | Instant (if you have one) |
 | **Deployment** | Automatic | QR code scan |
 | **Boot time** | 2-10 seconds | N/A (always on) |
-| **Hot reload speed** | Same (<100ms) | Same (<100ms) |
+| **Hot reload speed** | Same (\<100ms) | Same (\<100ms) |
 | **Hardware sensors** | Simulated | Real |
 | **Performance** | 70-90% native | 100% native |
 | **Screen sizes** | Any | Fixed |
