@@ -8,6 +8,7 @@ console.log('📦 Publishing JetStart packages to npm...\n');
 
 const packages = [
   { name: '@jetstart/shared', dir: 'packages/shared' },
+  { name: '@jetstart/logs', dir: 'packages/logs' },
   { name: '@jetstart/core', dir: 'packages/core' },
   { name: '@jetstart/cli', dir: 'packages/cli' }
 ];
