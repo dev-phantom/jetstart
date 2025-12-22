@@ -309,7 +309,13 @@ export PATH=~/.npm-global/bin:$PATH
 
 ### Command Not Found
 
-**Issue:** `jetstart: command not found` after installation
+**Issue:** `jetstart: command not found` or `The term 'jetstart' is not recognized`
+
+:::note PowerShell Users
+If you see **"The command jetstart was not found, but does exist in the current location"**, it means you are in the project folder but the global command is not in your PATH. You can:
+- Run the local script: `.\jetstart`
+- Or fix your PATH to use the global command (recommended below)
+:::
 
 **Solution:**
 1. **Find your npm global path:**
