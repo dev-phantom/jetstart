@@ -2,7 +2,7 @@ name: Deploy to cPanel
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
@@ -23,6 +23,10 @@ jobs:
       # ------------------------------------------------------------------
       # BUILD STEPS
       # ------------------------------------------------------------------
+
+      # 0. Build Shared Packages (required for apps)
+      - name: Build Shared Packages
+        run: npm run build:packages
       
       # 1. Build Docs (Docusaurus)
       - name: Build Docs
