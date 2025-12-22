@@ -80,11 +80,11 @@ fun HomeScreen(
                     Box(
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Bolt,
+                        // Use the new logo image
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = com.jetstart.client.R.drawable.logo),
                             contentDescription = "JetStart",
-                            modifier = Modifier.size(56.dp),
-                            tint = MaterialTheme.colorScheme.background
+                            modifier = Modifier.size(70.dp) // Adjusted size for image
                         )
                     }
                 }
@@ -111,7 +111,7 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(56.dp))
 
-                // Primary Action - Scan QR
+                // Primary Action - Create Connection
                 Button(
                     onClick = onScanQR,
                     modifier = Modifier
@@ -130,7 +130,7 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        "Scan QR Code",
+                        "Create Connection",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )

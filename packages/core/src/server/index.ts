@@ -9,7 +9,7 @@ import { EventEmitter } from 'events';
 import { createHttpServer } from './http';
 import { createWebSocketServer } from '../websocket';
 import { WebSocketHandler } from '../websocket/handler';
-import { log, success, error } from '../utils/logger';
+import { log, success, error, loggerEvents } from '../utils/logger';
 import { DEFAULT_CORE_PORT, DEFAULT_WS_PORT } from '@jetstart/shared';
 import { SessionManager } from '../utils/session';
 import { BuildService } from '../build';
@@ -26,9 +26,12 @@ export interface ServerConfig {
   projectName?: string;
 }
 
+import { LogsServer } from '@jetstart/logs';
+
 export class JetStartServer extends EventEmitter {
   private httpServer: any;
   private wsServer: any;
+  private logsServer: LogsServer;
   private wsHandler: WebSocketHandler | null = null;
   private config: Required<ServerConfig> & { displayHost: string };
   private sessionManager: SessionManager;
@@ -52,16 +55,36 @@ export class JetStartServer extends EventEmitter {
     };
 
     this.sessionManager = new SessionManager();
+    this.logsServer = new LogsServer();
     this.buildService = new BuildService({
       cacheEnabled: true,
       cachePath: path.join(os.tmpdir(), 'jetstart-cache'),
       watchEnabled: true,
     });
+
+    // Hook into logger events
+    // This creates a circular import if we import logger here, but we imported 'log' etc.
+    // We need to import loggerEvents.
+    // The previous tool replacement added loggerEvents export.
   }
 
   async start(): Promise<ServerSession> {
     try {
       log('Starting JetStart Core server...');
+
+      // Start Logs Server
+      await this.logsServer.start();
+
+      // Subscribe to internal logs
+      loggerEvents.on('log', (entry) => {
+        // Forward to Logs Server (for CLI)
+        this.logsServer.addLog(entry);
+
+        // Broadcast to Dashboard/Client
+        if (this.currentSession && this.wsHandler) {
+           this.wsHandler.sendLogBroadcast(this.currentSession.id, entry);
+        }
+      });
 
       // Create development session
       this.currentSession = await this.sessionManager.createSession({
@@ -87,6 +110,7 @@ export class JetStartServer extends EventEmitter {
       // Start WebSocket server
       const wsResult = await createWebSocketServer({
         port: this.config.wsPort,
+        logsServer: this.logsServer,
         onClientConnected: async (sessionId: string) => {
           // Trigger initial build when client connects
           log(`Triggering initial build for connected client (session: ${sessionId})`);
@@ -154,6 +178,10 @@ export class JetStartServer extends EventEmitter {
       await new Promise<void>((resolve) => {
         this.httpServer.close(() => resolve());
       });
+    }
+
+    if (this.logsServer) {
+      await this.logsServer.stop();
     }
 
     success('Server stopped');

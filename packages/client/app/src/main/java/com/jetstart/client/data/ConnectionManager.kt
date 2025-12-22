@@ -44,6 +44,9 @@ object ConnectionManager {
     private val _buildStatus = MutableStateFlow<BuildStatus>(BuildStatus.Waiting)
     val buildStatus: StateFlow<BuildStatus> = _buildStatus.asStateFlow()
 
+    private val _logs = MutableStateFlow<List<com.jetstart.client.data.models.LogEntry>>(emptyList())
+    val logs: StateFlow<List<com.jetstart.client.data.models.LogEntry>> = _logs.asStateFlow()
+
     private var webSocketClient: JetStartWebSocketClient? = null
 
     fun parseAndSetConnection(qrData: String): Boolean {
@@ -211,6 +214,23 @@ object ConnectionManager {
                     // TODO: Handle reload
                 }
 
+                "core:log" -> {
+                    try {
+                        val logJson = json.getJSONObject("log")
+                        val logEntry = com.jetstart.client.data.models.LogEntry(
+                            id = logJson.optString("id", System.currentTimeMillis().toString()),
+                            timestamp = logJson.optLong("timestamp", System.currentTimeMillis()),
+                            level = logJson.optString("level", "INFO"),
+                            tag = logJson.optString("tag", "Core"),
+                            message = logJson.optString("message", ""),
+                            source = logJson.optString("source", "CORE")
+                        )
+                        _logs.value = (_logs.value + logEntry).takeLast(100) // Keep last 100 logs
+                    } catch (e: Exception) {
+                        Log.e(tag, "Failed to parse log entry", e)
+                    }
+                }
+
                 else -> {
                     Log.w(tag, "Unknown message type: $type")
                 }
@@ -228,5 +248,6 @@ object ConnectionManager {
         _isConnected.value = false
         _connectionInfo.value = null
         _buildStatus.value = BuildStatus.Waiting
+        _logs.value = emptyList()
     }
 }
