@@ -186,6 +186,10 @@ export class CoreClient {
         case 'core:reload':
           this.config.onReload?.(message.reloadType);
           break;
+        
+        case 'core:log':
+          this.config.onLog?.(message.log);
+          break;
 
         case 'core:disconnect':
           this.config.onDisconnect?.(message.reason);

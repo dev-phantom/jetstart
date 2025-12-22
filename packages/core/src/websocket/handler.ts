@@ -14,14 +14,21 @@ import {
 import { ConnectionManager } from './manager';
 import { log, error as logError } from '../utils/logger';
 
+import { LogsServer } from '@jetstart/logs';
+
 export class WebSocketHandler {
   private onClientConnected?: (sessionId: string) => void;
+  private logsServer?: LogsServer;
 
   constructor(
     private connectionManager: ConnectionManager,
-    options?: { onClientConnected?: (sessionId: string) => void }
+    options?: { 
+      onClientConnected?: (sessionId: string) => void;
+      logsServer?: LogsServer;
+    }
   ) {
     this.onClientConnected = options?.onClientConnected;
+    this.logsServer = options?.logsServer;
   }
 
   handleMessage(clientId: string, data: Buffer): void {
@@ -52,7 +59,20 @@ export class WebSocketHandler {
         log(`Client ${clientId} status: ${message.status}`);
         break;
       case 'client:log':
-        // Forward to logs service
+        // Add to Logs Server (for CLI/Web Dashboard)
+        if (this.logsServer) {
+          this.logsServer.addLog(message.log);
+        }
+        
+        // Broadcast log to all clients in the session (e.g. Logs Viewer in App)
+        if (message.sessionId) {
+          this.connectionManager.broadcastToSession(message.sessionId, {
+            type: 'core:log',
+            timestamp: Date.now(),
+            sessionId: message.sessionId,
+            log: message.log
+          });
+        }
         break;
       case 'client:heartbeat':
         // Update last activity
@@ -149,5 +169,15 @@ export class WebSocketHandler {
       hash = hash & hash; // Convert to 32bit integer
     }
     return hash.toString(16);
+  }
+
+  // Broadcast any log entry to the session
+  sendLogBroadcast(sessionId: string, logEntry: any): void {
+      this.connectionManager.broadcastToSession(sessionId, {
+          type: 'core:log',
+          timestamp: Date.now(),
+          sessionId: sessionId,
+          log: logEntry
+      });
   }
 }

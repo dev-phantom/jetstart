@@ -22,11 +22,16 @@ This intelligent approach gives you the speed of instant reload when possible, w
 - **⚡ Sub-100ms Hot Reload** - See UI changes instantly on your device
 - **🎨 Real Kotlin Compose** - Write actual Compose code, not configuration files
 - **📱 QR Code Setup** - Connect your device by scanning a QR code
+- **📡 Completely Wireless** - No USB cables or ADB required. Works effortlessly over WiFi and Hotspot
 - **🔄 Automatic Builds** - Smart Gradle integration with build caching
 - **🌐 WebSocket Communication** - Real-time updates via WebSocket protocol
 - **🛠️ CLI Tools** - Simple command-line interface with 6 powerful commands
 - **🔒 Session Isolation** - Secure, isolated development sessions
 - **🌍 Web Emulator** - Preview your app in the browser
+
+:::tip No Cables Utility
+JetStart is designed to be **completely wireless**. You don't need Android Studio, ADB, or USB drivers installed. Just connect your phone and computer to the same **WiFi** or **Hotspot**, scan the QR code, and start building!
+:::
 
 ## How It Works
 

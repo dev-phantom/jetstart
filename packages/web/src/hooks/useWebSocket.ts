@@ -11,6 +11,7 @@ export interface UseWebSocketOptions {
   token: string;
   wsUrl?: string;
   autoConnect?: boolean;
+  onLog?: (log: any) => void;
 }
 
 export interface UseWebSocketReturn {
@@ -135,6 +136,8 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
         console.error('WebSocket error:', err);
         setError(err);
       },
+
+      onLog: options.onLog,
     };
 
     clientRef.current = new CoreClient(config);
