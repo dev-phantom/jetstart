@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/dev-phantom/jetstart/compare/v1.5.1...v1.5.2) (2025-12-22)
+
+
+### Bug Fixes
+
+* **ci:** fix ssh auth persistence and include logs package in release scripts ([391b64b](https://github.com/dev-phantom/jetstart/commit/391b64ba707c3d04542ea8079ba5fe7466f55b53))
+
 ## [1.5.1](https://github.com/dev-phantom/jetstart/compare/v1.5.0...v1.5.1) (2025-12-22)
 
 
