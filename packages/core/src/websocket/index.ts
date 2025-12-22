@@ -9,9 +9,12 @@ import { WebSocketHandler } from './handler';
 import { ConnectionManager } from './manager';
 import { log } from '../utils/logger';
 
+import { LogsServer } from '@jetstart/logs';
+
 export interface WebSocketConfig {
   port: number;
   server?: Server;
+  logsServer?: LogsServer;
   onClientConnected?: (sessionId: string) => void;
 }
 
@@ -27,6 +30,7 @@ export async function createWebSocketServer(config: WebSocketConfig): Promise<We
 
   const connectionManager = new ConnectionManager();
   const handler = new WebSocketHandler(connectionManager, {
+    logsServer: config.logsServer,
     onClientConnected: config.onClientConnected,
   });
 

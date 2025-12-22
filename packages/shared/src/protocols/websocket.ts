@@ -76,7 +76,8 @@ export type CoreMessage =
   | CoreBuildErrorMessage
   | CoreReloadMessage
   | CoreUIUpdateMessage
-  | CoreDisconnectMessage;
+  | CoreDisconnectMessage
+  | CoreLogMessage;
 
 export interface CoreConnectedMessage extends BaseMessage {
   type: 'core:connected';
@@ -120,6 +121,11 @@ export interface CoreUIUpdateMessage extends BaseMessage {
 export interface CoreDisconnectMessage extends BaseMessage {
   type: 'core:disconnect';
   reason: string;
+}
+
+export interface CoreLogMessage extends BaseMessage {
+  type: 'core:log';
+  log: LogEntry;
 }
 
 /**

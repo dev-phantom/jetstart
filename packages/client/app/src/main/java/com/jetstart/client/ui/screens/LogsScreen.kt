@@ -18,45 +18,7 @@ import com.jetstart.client.ui.components.LogItem
 fun LogsScreen(
     onBack: () -> Unit
 ) {
-    // Sample logs for demonstration
-    val sampleLogs = remember {
-        listOf(
-            LogEntry(
-                id = "1",
-                timestamp = System.currentTimeMillis(),
-                level = "INFO",
-                tag = "JetStart",
-                message = "Connected to development server",
-                source = "CLIENT"
-            ),
-            LogEntry(
-                id = "2",
-                timestamp = System.currentTimeMillis(),
-                level = "INFO",
-                tag = "Build",
-                message = "Build started",
-                source = "BUILD"
-            ),
-            LogEntry(
-                id = "3",
-                timestamp = System.currentTimeMillis(),
-                level = "WARN",
-                tag = "Network",
-                message = "Connection timeout, retrying...",
-                source = "NETWORK"
-            ),
-            LogEntry(
-                id = "4",
-                timestamp = System.currentTimeMillis(),
-                level = "ERROR",
-                tag = "Build",
-                message = "Compilation failed: Syntax error",
-                source = "BUILD"
-            )
-        )
-    }
-
-    var logs by remember { mutableStateOf(sampleLogs) }
+    val logs by com.jetstart.client.data.ConnectionManager.logs.collectAsState()
 
     Scaffold(
         topBar = {
@@ -68,9 +30,9 @@ fun LogsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { logs = emptyList() }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Clear Logs")
-                    }
+                    // IconButton(onClick = { /* Clear logs logic needed in ConnectionManager */ }) {
+                    //     Icon(Icons.Default.Delete, contentDescription = "Clear Logs")
+                    // }
                 }
             )
         }

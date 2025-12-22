@@ -36,6 +36,7 @@ function App() {
     token,
     wsUrl,
     autoConnect: false,
+    onLog: (log) => addLog(log),
   });
 
   const { filteredLogs, addLog, clearLogs } = useLogs(1000);
@@ -56,19 +57,12 @@ function App() {
     }
   }, [isConfigured, isConnected, connect]);
 
-  // Add mock logs for demonstration
+  // Removed mock logs
   useEffect(() => {
     if (isConnected && projectName) {
-      addLog({
-        id: `log-${Date.now()}-1`,
-        timestamp: Date.now(),
-        level: LogLevel.INFO,
-        tag: 'jetstart:web',
-        message: `Connected to project: ${projectName}`,
-        source: LogSource.CLIENT,
-      });
+        // Optional: Manual log if needed
     }
-  }, [isConnected, projectName, addLog]);
+  }, [isConnected, projectName]);
 
   // Add build status logs
   useEffect(() => {
