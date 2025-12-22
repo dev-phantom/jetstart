@@ -325,6 +325,14 @@ export PATH=~/.npm-global/bin:$PATH
 2. Check JAVA_HOME: `echo $JAVA_HOME`
 3. Set JAVA_HOME to JDK installation directory
 
+## Recommended Tools
+ 
+### Kotlin Language Server for VS Code
+ 
+If you are developing your Android client using VS Code, we highly recommend installing the **Kotlin Language Server** extension for syntax highlighting, code completion, and diagnostics.
+ 
+[**Download Kotlin VS Code Extension**](https://github.com/Kotlin/kotlin-lsp)
+ 
 ## Next Steps
 
 Now that JetStart is installed, you're ready to:
