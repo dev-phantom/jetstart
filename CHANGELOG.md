@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/dev-phantom/jetstart/compare/v1.5.0...v1.5.1) (2025-12-22)
+
+
+### Bug Fixes
+
+* **ci:** build shared packages before building apps in deploy workflow ([20340e4](https://github.com/dev-phantom/jetstart/commit/20340e4611983d981776a03b5f6fd9272f759568))
+
 # [1.5.0](https://github.com/dev-phantom/jetstart/compare/v1.4.0...v1.5.0) (2025-12-22)
 
 
