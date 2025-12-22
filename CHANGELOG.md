@@ -1,3 +1,21 @@
+# [1.5.0](https://github.com/dev-phantom/jetstart/compare/v1.4.0...v1.5.0) (2025-12-22)
+
+
+### Bug Fixes
+
+* **ci:** pre-build shared package to resolve types during testing ([a798046](https://github.com/dev-phantom/jetstart/commit/a7980467c3f174784ed44246bf40365f1bc87549))
+* **ci:** reorder build steps and use root orchestration in build-and-test ([cd3cafc](https://github.com/dev-phantom/jetstart/commit/cd3cafc818caa2495b0eb3233756b5a99f3ab426))
+* **client:** update app icon, optimize assets, and standardise splash screen ([7e8ff4d](https://github.com/dev-phantom/jetstart/commit/7e8ff4d3794c1916f85966e6e0a8a8a67f09558d))
+* **test:** configure vitest to pass with no tests and resolve shared path in logs ([5beb6e1](https://github.com/dev-phantom/jetstart/commit/5beb6e14b4585832c1bebbff410a80d1403ce558))
+* **web:** remove redundant try-catch to resolve lint error ([9a3612a](https://github.com/dev-phantom/jetstart/commit/9a3612af179b0c7a205d681a8d7288667c254f59))
+
+
+### Features
+
+* add cPanel deployment workflow and fix build configuration ([06981cc](https://github.com/dev-phantom/jetstart/commit/06981cc1811f872a6343a9fad06e17bff0903367))
+* **client:** implement premium splash screen and refine branding ([24fb15a](https://github.com/dev-phantom/jetstart/commit/24fb15a0de35fcdc5d54f28c61f315b076528ea7))
+* restore logs system, update client UI, fix build errors, and config sanity ([a1b7694](https://github.com/dev-phantom/jetstart/commit/a1b7694d246d04c3abd3f69e7052903b92803e48))
+
 # [1.4.0](https://github.com/dev-phantom/jetstart/compare/v1.3.1...v1.4.0) (2025-12-22)
 
 
