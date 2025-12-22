@@ -4,7 +4,7 @@
 
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import { createAVDManager, AVDInfo } from '../utils/emulator';
+import { createAVDManager } from '../utils/emulator';
 import { error as logError, success, info, warning } from '../utils/logger';
 
 /**

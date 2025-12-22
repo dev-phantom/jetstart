@@ -38,7 +38,6 @@ const sidebars: SidebarsConfig = {
         'cli/logs',
         'cli/install-audit',
         'cli/android-emulator',
-        'cli/configuration',
       ],
     },
     {
@@ -47,23 +46,16 @@ const sidebars: SidebarsConfig = {
       items: [
         'architecture/overview',
         'architecture/hot-reload-system',
-        'architecture/dsl-rendering',
         'architecture/websocket-protocol',
-        'architecture/session-management',
         'architecture/build-system',
-        'architecture/file-watching',
-        'architecture/package-structure',
       ],
     },
     {
       type: 'category',
       label: 'API Reference',
       items: [
-        'api/core-api',
-        'api/websocket-protocol',
         'api/rest-endpoints',
         'api/cli-api',
-        'api/types-reference',
       ],
     },
     {
@@ -74,6 +66,7 @@ const sidebars: SidebarsConfig = {
         'packages/core',
         'packages/shared',
         'packages/web',
+        'packages/client',
       ],
     },
     {

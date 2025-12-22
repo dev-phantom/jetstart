@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'JetStart',
   tagline: 'Launch Android apps at warp speed',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/logos/logo.png',
 
   // Set the production url of your site here
   url: 'https://jetstart.dev',
@@ -39,24 +39,28 @@ const config: Config = {
           showLastUpdateTime: true,
           showLastUpdateAuthor: true,
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          // Please change this to your repo.
-          editUrl:
-            'https://github.com/dev-phantom/jetstart/tree/main/docs/',
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
+        blog: false, // Disable the static blog plugin
         theme: {
           customCss: './src/css/custom.css',
         },
       } satisfies Preset.Options,
     ],
+  ],
+
+  plugins: [
+    async function myPlugin(context, options) {
+      return {
+        name: 'docusaurus-plugin-sanity-blog',
+        async contentLoaded({content, actions}) {
+          const {addRoute} = actions;
+          addRoute({
+            path: '/blog/:slug',
+            component: '@site/src/components/BlogPost.tsx',
+            exact: true,
+          });
+        },
+      };
+    },
   ],
 
   themeConfig: {
@@ -66,7 +70,7 @@ const config: Config = {
       title: 'JetStart',
       logo: {
         alt: 'JetStart Logo',
-        src: 'img/logos/jetstart-logo-4-primary.png',
+        src: 'img/logos/logo.png',
       },
       items: [
         {
@@ -75,7 +79,7 @@ const config: Config = {
           position: 'left',
           label: 'Docs',
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
+        {to: '/blogs', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/dev-phantom/jetstart',
           label: 'GitHub',
@@ -121,7 +125,7 @@ const config: Config = {
           items: [
             {
               label: 'Blog',
-              to: '/blog',
+              to: '/blogs',
             },
             {
               label: 'npm',
@@ -130,6 +134,10 @@ const config: Config = {
             {
               label: 'Contributing',
               to: '/docs/contributing/getting-started',
+            },
+            {
+              label: 'Changelog',
+              href: 'https://github.com/dev-phantom/jetstart/blob/master/CHANGELOG.md',
             },
           ],
         },
