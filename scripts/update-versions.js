@@ -26,6 +26,13 @@ sharedPkg.version = newVersion;
 fs.writeFileSync(sharedPkgPath, JSON.stringify(sharedPkg, null, 2) + '\n');
 console.log(`✓ Updated packages/shared to ${newVersion}`);
 
+// Update packages/logs
+const logsPkgPath = path.join(__dirname, '../packages/logs/package.json');
+const logsPkg = JSON.parse(fs.readFileSync(logsPkgPath, 'utf8'));
+logsPkg.version = newVersion;
+fs.writeFileSync(logsPkgPath, JSON.stringify(logsPkg, null, 2) + '\n');
+console.log(`✓ Updated packages/logs to ${newVersion}`);
+
 // Update packages/core (version only, workspace deps stay as workspace:*)
 const corePkgPath = path.join(__dirname, '../packages/core/package.json');
 const corePkg = JSON.parse(fs.readFileSync(corePkgPath, 'utf8'));
