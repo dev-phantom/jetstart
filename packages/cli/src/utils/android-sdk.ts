@@ -111,7 +111,42 @@ export class AndroidSDKManager {
   }
 
   /**
-   * Get path to sdkmanager executable
+   * Resolve sdkmanager path and tools root
+   * Checks multiple standard paths:
+   * 1. cmdline-tools/latest/bin (Standard)
+   * 2. cmdline-tools/bin (Alternative)
+   * 3. tools/bin (Legacy)
+   */
+  private async resolveSDKToolsPath(): Promise<{ binPath: string | null; toolsRoot: string }> {
+    const sdkmanagerName = os.platform() === 'win32' ? 'sdkmanager.bat' : 'sdkmanager';
+    
+    // Potential paths to check (in order of preference)
+    const candidates = [
+      {
+        bin: path.join(this.sdkRoot, 'cmdline-tools', 'latest', 'bin', sdkmanagerName),
+        root: path.join(this.sdkRoot, 'cmdline-tools', 'latest')
+      },
+      {
+        bin: path.join(this.sdkRoot, 'cmdline-tools', 'bin', sdkmanagerName),
+        root: path.join(this.sdkRoot, 'cmdline-tools')
+      },
+      {
+        bin: path.join(this.sdkRoot, 'tools', 'bin', sdkmanagerName),
+        root: path.join(this.sdkRoot, 'tools')
+      }
+    ];
+
+    for (const candidate of candidates) {
+      if (await fs.pathExists(candidate.bin)) {
+        return { binPath: candidate.bin, toolsRoot: candidate.root };
+      }
+    }
+
+    return { binPath: null, toolsRoot: '' };
+  }
+
+  /**
+   * Get path to sdkmanager executable (Legacy method, kept for reference but unused internally now)
    */
   private getSDKManagerPath(): string {
     const sdkmanagerName = os.platform() === 'win32' ? 'sdkmanager.bat' : 'sdkmanager';
@@ -133,22 +168,22 @@ export class AndroidSDKManager {
     args: string[],
     onProgress?: (progress: number, message: string) => void
   ): Promise<string> {
-    const sdkmanagerPath = this.getSDKManagerPath();
+    // Resolve proper sdkmanager path and tools root
+    const { binPath, toolsRoot } = await this.resolveSDKToolsPath();
 
-    if (!(await fs.pathExists(sdkmanagerPath))) {
+    if (!binPath) {
       throw new Error('sdkmanager not found. Install cmdline-tools first.');
     }
 
     return new Promise((resolve, reject) => {
-      const proc = spawn(sdkmanagerPath, args, {
+      const proc = spawn(binPath, args, {
         env: {
           ...process.env,
           ANDROID_HOME: this.sdkRoot,
           ANDROID_SDK_ROOT: this.sdkRoot,
           // Accept licenses automatically
           JAVA_OPTS:
-            '-Dcom.android.sdkmanager.toolsdir=' +
-            path.join(this.sdkRoot, 'cmdline-tools', 'latest'),
+            '-Dcom.android.sdkmanager.toolsdir=' + toolsRoot,
         },
         shell: true,
       });
@@ -208,23 +243,22 @@ export class AndroidSDKManager {
     const spinner = startSpinner('Accepting SDK licenses...');
 
     try {
-      const sdkmanagerPath = this.getSDKManagerPath();
+      // Resolve tools path
+      const { binPath, toolsRoot } = await this.resolveSDKToolsPath();
 
-      // Add path validation (like runSDKManager does)
-      if (!(await fs.pathExists(sdkmanagerPath))) {
+      if (!binPath) {
         throw new Error('sdkmanager not found. Install cmdline-tools first.');
       }
 
       await new Promise<void>((resolve, reject) => {
-        const proc = spawn(sdkmanagerPath, ['--licenses'], {
+        const proc = spawn(binPath, ['--licenses'], {
           env: {
             ...process.env,
             ANDROID_HOME: this.sdkRoot,
             ANDROID_SDK_ROOT: this.sdkRoot,
             // ADD MISSING JAVA_OPTS (critical fix)
             JAVA_OPTS:
-              '-Dcom.android.sdkmanager.toolsdir=' +
-              path.join(this.sdkRoot, 'cmdline-tools', 'latest'),
+              '-Dcom.android.sdkmanager.toolsdir=' + toolsRoot,
           },
           // ADD explicit stdio configuration
           stdio: ['pipe', 'pipe', 'pipe'],
