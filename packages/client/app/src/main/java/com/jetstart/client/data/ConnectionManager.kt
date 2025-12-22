@@ -49,15 +49,59 @@ object ConnectionManager {
     fun parseAndSetConnection(qrData: String): Boolean {
         return try {
             Log.d(tag, "Parsing QR data...")
-            val json = JSONObject(qrData)
-            val info = ConnectionInfo(
-                sessionId = json.getString("sessionId"),
-                token = json.getString("token"),
-                serverUrl = json.getString("serverUrl"),
-                wsUrl = json.getString("wsUrl"),
-                projectName = json.getString("projectName"),
-                version = json.getString("version")
-            )
+
+            val info = if (qrData.contains("|")) {
+                // Ultra-compact pipe-delimited format: host|port|wsPort|sessionId|token|projectName
+                val parts = qrData.split("|")
+                if (parts.size < 5) {
+                    Log.e(tag, "Invalid compact format: expected at least 5 parts, got ${parts.size}")
+                    return false
+                }
+
+                val host = parts[0]
+                val port = parts[1].toInt()
+                val wsPort = parts[2].toInt()
+                val sessionId = parts[3]
+                val token = parts[4]
+                val projectName = if (parts.size > 5) parts[5] else "JetStart"
+
+                ConnectionInfo(
+                    sessionId = sessionId,
+                    token = token,
+                    serverUrl = "http://$host:$port",
+                    wsUrl = "ws://$host:$wsPort",
+                    projectName = projectName,
+                    version = "0.1.0"
+                )
+            } else {
+                // Try JSON format (old formats)
+                val json = JSONObject(qrData)
+                if (json.has("h")) {
+                    // Compact JSON format
+                    val host = json.getString("h")
+                    val port = json.getInt("p")
+                    val wsPort = json.getInt("w")
+                    ConnectionInfo(
+                        sessionId = json.getString("s"),
+                        token = json.getString("t"),
+                        serverUrl = "http://$host:$port",
+                        wsUrl = "ws://$host:$wsPort",
+                        projectName = json.optString("n", "JetStart"),
+                        version = json.optString("v", "0.1.0")
+                    )
+                } else {
+                    // Original verbose JSON format
+                    ConnectionInfo(
+                        sessionId = json.getString("sessionId"),
+                        token = json.getString("token"),
+                        serverUrl = json.getString("serverUrl"),
+                        wsUrl = json.getString("wsUrl"),
+                        projectName = json.getString("projectName"),
+                        version = json.getString("version")
+                    )
+                }
+            }
+
             _connectionInfo.value = info
             Log.d(tag, "Connection info set: wsUrl=${info.wsUrl}, sessionId=${info.sessionId}")
             true

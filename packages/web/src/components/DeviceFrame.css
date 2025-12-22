@@ -5,7 +5,7 @@
   justify-content: center;
   height: 100%;
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: var(--jetstart-bg);
 }
 
 .device-frame {
@@ -67,6 +67,7 @@
   padding: 0.5rem 1rem;
   padding-top: 0.75rem; /* Extra padding for notch */
   background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+  color: #000000;
   font-size: 0.7rem;
   height: 35px;
   z-index: 5;

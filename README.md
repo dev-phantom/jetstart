@@ -1,10 +1,8 @@
 <div align="center">
-  <img src="assets/logos/jetstart-logo-4-primary.png" alt="JetStart Logo" width="400"/>
+  <img src="assets\client\readme.png" alt="JetStart Logo" width="400"/>
 
   <h3>Launch Android apps at warp speed</h3>
 
-  [![CI](https://github.com/dev-phantom/jetstart/actions/workflows/ci.yml/badge.svg)](https://github.com/dev-phantom/jetstart/actions/workflows/ci.yml)
-  [![Release](https://github.com/dev-phantom/jetstart/actions/workflows/release.yml/badge.svg)](https://github.com/dev-phantom/jetstart/actions/workflows/release.yml)
   [![npm version](https://badge.fury.io/js/@jetstart%2Fcli.svg)](https://www.npmjs.com/package/@jetstart/cli)
   [![License: MIT](https://img.shields.io/badge/License-MIT-orange.svg)](https://opensource.org/licenses/MIT)
 </div>
@@ -26,7 +24,7 @@ JetStart is a blazing-fast development tool that brings **instant hot reload** t
 
 ## 📚 Documentation
 
-**[View Full Documentation →](https://jetstart.dev)** (Coming soon!)
+**[View Full Documentation →](https://jetstart.dev)**
 
 For now, see the guides below to get started.
 
@@ -86,4 +84,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**Made with ❤️ by the JetStart team**
+**Made with ❤️ by phantom**

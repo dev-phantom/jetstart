@@ -7,7 +7,8 @@
     "packages/shared",
     "packages/core",
     "packages/cli",
-    "packages/web"
+    "packages/web",
+    "packages/sanity-studio"
   ],
   "scripts": {
     "build": "tsc --build && npm run build:web",

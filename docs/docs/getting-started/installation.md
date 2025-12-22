@@ -144,6 +144,78 @@ export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 ```
 
+## Install Mobile Client App
+
+To connect your Android device to the JetStart development server, you'll need to install the JetStart Client app on your device.
+
+### Download from GitHub Releases
+
+The JetStart Client app is available as an Android APK from GitHub Releases:
+
+1. **Visit GitHub Releases:**
+   - Go to [https://github.com/dev-phantom/jetstart/releases](https://github.com/dev-phantom/jetstart/releases)
+   - Find the latest release (e.g., v1.2.0)
+   - Download the APK file (e.g., `jetstart-client-v1.2.0.apk`)
+
+2. **Transfer to Device:**
+   - Download directly on your Android device, or
+   - Transfer the APK file from your computer to your device
+
+### Installation Steps
+
+1. **Enable Unknown Sources** (if needed):
+   - Settings → Security → Enable "Install unknown apps" or "Unknown sources"
+   - Or allow your browser/file manager to install apps
+
+2. **Disable Play Protect** (required):
+   :::warning Important
+   Since the JetStart Client app is not yet available on the Google Play Store, Android's Play Protect may block the installation. You'll need to temporarily disable Play Protect.
+   :::
+
+   **Quick Steps:**
+   - Settings → Security → Google Play Protect
+   - Tap Settings (gear icon)
+   - Toggle off "Scan apps with Play Protect"
+   - Confirm the change
+
+   See [Client App Documentation](../packages/client.md#disabling-play-protect) for detailed instructions.
+
+3. **Install the APK:**
+   - Tap the downloaded APK file
+   - Tap "Install" when prompted
+   - Grant permissions (Camera, Install packages) when requested
+
+4. **Re-enable Play Protect** (optional but recommended):
+   - After installation, you can re-enable Play Protect for security
+
+### Platform Support
+
+**Supported:**
+- ✅ Android 7.0+ (API 24+)
+- ✅ Android APK format
+
+**Not Supported:**
+- ❌ iOS devices
+- ❌ Android versions below 7.0
+
+### Troubleshooting Installation
+
+**Issue: "Install blocked" or "App not installed"**
+
+**Solutions:**
+- Ensure Play Protect is disabled (see above)
+- Enable "Install from unknown sources" in Settings
+- Check device storage space
+- Try downloading the APK again
+
+**Issue: "Play Protect warning"**
+
+**Solution:**
+- The app is safe - it's open source and distributed via GitHub
+- Follow the Play Protect disabling steps above
+
+For more details, see the [Client App Documentation](../packages/client.md).
+
 ## Installation Modes
 
 JetStart offers different installation modes based on your needs:
@@ -253,6 +325,14 @@ export PATH=~/.npm-global/bin:$PATH
 2. Check JAVA_HOME: `echo $JAVA_HOME`
 3. Set JAVA_HOME to JDK installation directory
 
+## Recommended Tools
+ 
+### Kotlin Language Server for VS Code
+ 
+If you are developing your Android client using VS Code, we highly recommend installing the **Kotlin Language Server** extension for syntax highlighting, code completion, and diagnostics.
+ 
+[**Download Kotlin VS Code Extension**](https://github.com/Kotlin/kotlin-lsp)
+ 
 ## Next Steps
 
 Now that JetStart is installed, you're ready to:

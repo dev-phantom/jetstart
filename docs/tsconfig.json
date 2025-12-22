@@ -1,14 +1,6 @@
 {
   "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
-    "composite": true,
-    "baseUrl": ".",
-    "paths": {
-      "@site/*": ["./*"],
-      "@docusaurus/*": ["node_modules/@docusaurus/*"],
-      "@theme/*": ["node_modules/@docusaurus/theme-classic/lib/*"]
-    },
     "jsx": "react-jsx"
-  },
-  "include": ["src"]
+  }
 }

@@ -26,7 +26,6 @@
     { "path": "./packages/shared" },
     { "path": "./packages/core" },
     { "path": "./packages/cli" },
-    { "path": "./docs" }
   ],
   "include": [
     "src",

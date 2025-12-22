@@ -58,25 +58,36 @@ fun ConnectionScreen(
     val showInstallButton = buildStatus is BuildStatus.Complete
     val apkDownloadUrl = (buildStatus as? BuildStatus.Complete)?.apkUrl
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Connection") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Custom header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Connection",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
             // Connection Status
             StatusCard(
                 title = "Connection",

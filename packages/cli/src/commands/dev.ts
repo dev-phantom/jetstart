@@ -107,7 +107,6 @@ export async function devCommand(options: DevOptions) {
 
     // Get URLs
     const serverUrl = `http://${host}:${port}`;
-    const wsUrl = `ws://${host}:${wsPort}`;
     const localUrl = `http://localhost:${port}`;
 
     console.log();
@@ -120,17 +119,12 @@ export async function devCommand(options: DevOptions) {
 
     // Generate QR code for mobile connection
     if (showQR) {
-      const qrData = {
-        serverUrl,
-        wsUrl,
-        sessionId: session.id,
-        token: session.token,
-        projectName,
-        version: '0.1.0',
-      };
+      // Ultra-compact format: host|port|wsPort|sessionId|token|projectName
+      // Using short alphanumeric IDs for minimal QR code size
+      const qrData = `${host}|${port}|${wsPort}|${session.id}|${session.token}|${projectName}`;
 
       console.log(chalk.bold('Scan QR or connect manually:'));
-      qrcode.generate(JSON.stringify(qrData), { small: true });
+      qrcode.generate(qrData, { small: true });
       console.log();
       info(`IP: ${chalk.cyan(host)}`);
       info(`Session: ${chalk.dim(session.id)}`);
