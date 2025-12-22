@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/dev-phantom/jetstart/compare/v1.5.2...v1.5.3) (2025-12-22)
+
+
+### Bug Fixes
+
+* **cli:** improve android sdk and sdkmanager detection ([65edaf4](https://github.com/dev-phantom/jetstart/commit/65edaf445d8fc1475b04b3504107856bb7e82faa))
+
 ## [1.5.2](https://github.com/dev-phantom/jetstart/compare/v1.5.1...v1.5.2) (2025-12-22)
 
 
