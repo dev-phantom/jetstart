@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build shared (required for tests)
+        run: npm run build:shared
+
       - name: Run tests
         run: npm test
 
