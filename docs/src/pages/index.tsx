@@ -667,7 +667,7 @@ export default function JetStartLanding() {
             {[
               { icon: Zap, title: 'Lightning Fast', desc: '<100ms hot reload' },
               { icon: Code2, title: 'Real Compose', desc: 'Actual Kotlin code' },
-              { icon: Smartphone, title: 'QR Setup', desc: 'Instant connection' },
+              { icon: Smartphone, title: 'Completely Wireless', desc: 'WiFi & Hotspot Support' },
               { icon: Terminal, title: 'Simple CLI', desc: '6 core commands' },
               { icon: Package, title: 'Open Source', desc: 'Fully extensible' },
               { icon: Rocket, title: 'Fast Builds', desc: 'Optimized workflow' },
