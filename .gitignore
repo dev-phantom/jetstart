@@ -128,3 +128,5 @@ claude.md
 test-consolidation
 # Kotlin / Android build output
 packages/client/app/build/
+*.d.ts.map
+*.js.map

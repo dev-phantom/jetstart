@@ -1,4 +1,4 @@
-export function urlFor(source) {
+export function urlFor(source: any) {
   if (!source || !source.asset || !source.asset._ref) return ''
   const ref = source.asset._ref
   const parts = ref.split('-')

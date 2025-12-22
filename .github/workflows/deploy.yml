@@ -1,0 +1,93 @@
+name: Deploy to cPanel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # ------------------------------------------------------------------
+      # BUILD STEPS
+      # ------------------------------------------------------------------
+      
+      # 1. Build Docs (Docusaurus)
+      - name: Build Docs
+        run: npm run build --workspace=jetstart-docs
+
+      # 2. Build Web App (Vite)
+      - name: Build Web App
+        run: npm run build:web
+
+      # 3. Build Sanity Studio
+      - name: Build Sanity Studio
+        run: npm run build --workspace=packages/sanity-studio
+
+      # ------------------------------------------------------------------
+      # DEPLOYMENT STEPS (Rsync)
+      # ------------------------------------------------------------------
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+          # Setup SSH Agent with Passphrase using ASKPASS script
+          eval $(ssh-agent -s)
+          echo 'echo "${{ secrets.CPANEL_PASSPHRASE }}"' > ~/.ssh/askpass
+          chmod +x ~/.ssh/askpass
+          export SSH_ASKPASS=~/.ssh/askpass
+          export DISPLAY=:0 # Trick to make ssh-add use SSH_ASKPASS
+          setsid ssh-add ~/.ssh/id_rsa
+          
+          cat >>~/.ssh/config <<END
+          Host cpanel
+            HostName $SSH_HOST
+            User $SSH_USER
+            Port $SSH_PORT
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.CPANEL_USERNAME }}
+          SSH_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+          SSH_HOST: ${{ secrets.CPANEL_HOST }}
+          SSH_PORT: ${{ secrets.CPANEL_PORT }}
+
+      # Deploy Docs -> Root (public_html/)
+      - name: Deploy Docs
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p ${{ secrets.CPANEL_PORT }}" \
+            ./docs/build/ \
+            ${{ secrets.CPANEL_USERNAME }}@${{ secrets.CPANEL_HOST }}:~/public_html/
+
+      # Deploy Web App -> /app (public_html/app/)
+      - name: Deploy Web App
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p ${{ secrets.CPANEL_PORT }}" \
+            ./packages/web/dist/ \
+            ${{ secrets.CPANEL_USERNAME }}@${{ secrets.CPANEL_HOST }}:~/public_html/app/
+
+      # Deploy Sanity Studio -> /studio (public_html/studio/)
+      - name: Deploy Sanity Studio
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p ${{ secrets.CPANEL_PORT }}" \
+            ./packages/sanity-studio/dist/ \
+            ${{ secrets.CPANEL_USERNAME }}@${{ secrets.CPANEL_HOST }}:~/public_html/studio/

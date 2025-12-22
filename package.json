@@ -9,7 +9,8 @@
     "packages/cli",
     "packages/web",
     "packages/sanity-studio",
-    "packages/logs"
+    "packages/logs",
+    "docs"
   ],
   "scripts": {
     "build": "tsc --build && npm run build:web",
