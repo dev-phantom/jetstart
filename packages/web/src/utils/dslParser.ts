@@ -85,7 +85,6 @@ function parseDSLElement(obj: any): DSLElement {
 
   // Parse children recursively
   if (obj.children && Array.isArray(obj.children)) {
-    try {
       element.children = obj.children.map((child: any, index: number) => {
         try {
           return parseDSLElement(child);
@@ -95,9 +94,6 @@ function parseDSLElement(obj: any): DSLElement {
           );
         }
       });
-    } catch (error) {
-      throw error; // Re-throw with context already added
-    }
   }
 
   return element;
