@@ -1,6 +1,6 @@
 {
   "name": "@jetstart/core",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Build server and orchestration for JetStart",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
