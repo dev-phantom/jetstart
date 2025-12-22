@@ -1,3 +1,18 @@
+# [1.4.0](https://github.com/dev-phantom/jetstart/compare/v1.3.1...v1.4.0) (2025-12-22)
+
+
+### Bug Fixes
+
+* changed the ui for the client ([208a4b5](https://github.com/dev-phantom/jetstart/commit/208a4b5676b1dd82563ba7e23dc88a6eb80f325f))
+* reduced qr code ([08da272](https://github.com/dev-phantom/jetstart/commit/08da272180dc2ea2360c11e668277cc1bddf8f28))
+
+
+### Features
+
+* added new jetstart theme color for web ([44772de](https://github.com/dev-phantom/jetstart/commit/44772de2f4f6af88106a05e02ab7e31c08b4f475))
+* migrate to client-side blog, update branding, and config deployment ([308a7f9](https://github.com/dev-phantom/jetstart/commit/308a7f91ba864b69643cf558669614c54dd1bab2))
+* working on landing page ([ec6c9a4](https://github.com/dev-phantom/jetstart/commit/ec6c9a4efe657d0e74c30ca4c2b5c08c76711afa))
+
 ## [1.3.1](https://github.com/dev-phantom/jetstart/compare/v1.3.0...v1.3.1) (2025-12-14)
 
 

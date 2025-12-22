@@ -1,6 +1,6 @@
 {
   "name": "@jetstart/shared",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Shared types, protocols, and utilities for JetStart",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
