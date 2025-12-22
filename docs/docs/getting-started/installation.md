@@ -312,9 +312,27 @@ export PATH=~/.npm-global/bin:$PATH
 **Issue:** `jetstart: command not found` after installation
 
 **Solution:**
-1. Check npm global bin path: `npm bin -g`
-2. Add it to your PATH environment variable
-3. Restart your terminal
+1. **Find your npm global path:**
+   ```bash
+   npm config get prefix
+   ```
+   - **Windows:** Usually `%APPDATA%\npm` (e.g., `C:\Users\<User>\AppData\Roaming\npm`)
+   - **macOS/Linux:** Often `/usr/local` or `~/.npm-global`
+
+2. **Add to PATH:**
+   - **Windows:**
+     - Search for "Edit the system environment variables"
+     - Click "Environment Variables"
+     - Under "User variables", find `Path` and click "Edit"
+     - Click "New" and add the path from step 1
+     - Click OK to save
+   - **macOS/Linux:**
+     - Add this to your shell config (`.zshrc` or `.bashrc`):
+       ```bash
+       export PATH=$PATH:$(npm config get prefix)/bin
+       ```
+
+3. **Restart your terminal** for changes to take effect.
 
 ### Java Not Detected
 
