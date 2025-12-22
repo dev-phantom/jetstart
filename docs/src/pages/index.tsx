@@ -20,9 +20,20 @@ import { client } from '../services/sanity/sanityClient';
 import { urlFor } from '../services/sanity/imageUrl';
 import Link from '@docusaurus/Link';
 
+
+interface BlogPost {
+  title: string;
+  slug: string;
+  publishedAt: string;
+  mainImage: any;
+  author: {
+    name: string;
+  };
+}
+
 export default function JetStartLanding() {
   const [activeTab, setActiveTab] = useState(0);
-  const [latestPosts, setLatestPosts] = useState([]);
+  const [latestPosts, setLatestPosts] = useState<BlogPost[]>([]);
 
   useEffect(() => {
     client

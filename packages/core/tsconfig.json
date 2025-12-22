@@ -18,7 +18,8 @@
     "rootDir": "./src"
   },
   "references": [
-    { "path": "../shared" }
+    { "path": "../shared" },
+    { "path": "../logs" }
   ],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"]
