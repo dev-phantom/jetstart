@@ -72,22 +72,13 @@ fun HomeScreen(
                 }
 
                 // App Icon
-                Surface(
-                    modifier = Modifier.size(100.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    color = JetStartPrimary
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Use the new logo image
-                        androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(id = com.jetstart.client.R.drawable.logo),
-                            contentDescription = "JetStart",
-                            modifier = Modifier.size(70.dp) // Adjusted size for image
-                        )
-                    }
-                }
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(id = com.jetstart.client.R.drawable.logo),
+                    contentDescription = "JetStart",
+                    modifier = Modifier.size(120.dp)
+        .clip(RoundedCornerShape(16.dp))
+
+                )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
