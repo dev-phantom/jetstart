@@ -60,6 +60,9 @@
       "src/**/*.ts",
       "!src/**/*.d.ts",
       "!src/**/index.ts"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^@jetstart/shared$": "<rootDir>/../shared/src"
+    }
   }
 }
