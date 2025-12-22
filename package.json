@@ -8,7 +8,8 @@
     "packages/core",
     "packages/cli",
     "packages/web",
-    "packages/sanity-studio"
+    "packages/sanity-studio",
+    "packages/logs"
   ],
   "scripts": {
     "build": "tsc --build && npm run build:web",
@@ -16,6 +17,7 @@
     "build:shared": "npm run build --workspace=packages/shared",
     "build:cli": "npm run build --workspace=packages/cli",
     "build:core": "npm run build --workspace=packages/core",
+    "build:logs": "npm run build --workspace=packages/logs",
     "build:web": "npm run build --workspace=packages/web",
     "dev": "npm run dev --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
