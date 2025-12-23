@@ -53,11 +53,28 @@ const config: Config = {
         name: 'docusaurus-plugin-sanity-blog',
         async contentLoaded({content, actions}) {
           const {addRoute} = actions;
-          addRoute({
-            path: '/blog/:slug',
-            component: '@site/src/components/BlogPost.tsx',
-            exact: true,
-          });
+          const {createClient} = require('@sanity/client');
+          
+          try {
+            const client = createClient({
+              projectId: 's89mi5lk',
+              dataset: 'production',
+              useCdn: false, // Ensure fresh data at build time
+              apiVersion: '2023-05-03',
+            });
+
+            const posts = await client.fetch('*[_type == "post"]{ "slug": slug.current }');
+            
+            posts.forEach((post: any) => {
+              addRoute({
+                path: `/blog/${post.slug}`,
+                component: '@site/src/components/BlogPost.tsx',
+                exact: true,
+              });
+            });
+          } catch (error) {
+            console.error('Error fetching blog posts:', error);
+          }
         },
       };
     },

@@ -40,6 +40,7 @@ export interface DevOptions {
   host?: string;
   qr?: boolean;
   open?: boolean;
+  web?: boolean;
   emulator?: boolean;
   avd?: string;
 }

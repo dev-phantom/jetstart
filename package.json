@@ -25,6 +25,12 @@
     "lint": "npm run lint --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present && rm -rf node_modules",
     "bootstrap": "npm install",
+    "deploy:docs": "node scripts/deploy-ftps.mjs docs",
+    "deploy:web": "node scripts/deploy-ftps.mjs web",
+    "deploy:sanity": "node scripts/deploy-ftps.mjs sanity",
+    "deploy:all": "npm run deploy:docs && npm run deploy:web && npm run deploy:sanity",
+    "build:docs": "npm run build --workspace=docs",
+    "build:sanity": "npm run build --workspace=packages/sanity-studio",
     "cli:dev": "npm run dev --workspace=packages/cli",
     "core:dev": "npm run dev --workspace=packages/core",
     "logs:dev": "npm run dev --workspace=packages/logs",
@@ -65,11 +71,16 @@
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
+    "basic-ftp": "5.0.5",
+    "dotenv": "17.2.3",
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.0.0",
     "prettier": "^3.1.0",
     "semantic-release": "25.0.2",
     "semantic-release-monorepo": "8.0.2",
     "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "ssh2-sftp-client": "12.0.1"
   }
 }

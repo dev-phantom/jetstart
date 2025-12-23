@@ -8,11 +8,55 @@ import path from 'path';
 import fs from 'fs';
 import { SessionManager } from '../utils/session';
 import { generateQRCode } from '../utils/qr';
-import { JETSTART_VERSION } from '@jetstart/shared';
+import { JETSTART_VERSION, DEFAULT_WS_PORT } from '@jetstart/shared';
+import { ServerSession } from '../types';
 
 const sessionManager = new SessionManager();
 
-export function setupRoutes(app: Express, getLatestApk?: () => string | null): void {
+export function setupRoutes(
+  app: Express, 
+  getLatestApk?: () => string | null,
+  getCurrentSession?: () => ServerSession | null
+): void {
+  // Root Redirect -> Web Emulator
+  app.get('/', (req: Request, res: Response) => {
+    try {
+      const session = getCurrentSession?.();
+      
+      // If no session active, just show simple status
+      if (!session) {
+        return res.send(`
+          <h1>JetStart Core Running</h1>
+          <p>No active session found. Please restart 'jetstart dev'.</p>
+        `);
+      }
+
+      // Construct redirect URL
+      const webUrl = 'https://web.jetstart.site';
+      const host = req.hostname;
+      const port = req.socket.localPort || 8765;
+      const wsPort = DEFAULT_WS_PORT;
+      
+      const queryParams = new URLSearchParams({
+        host: host,
+        port: String(port),
+        wsPort: String(wsPort), // Typically 8766
+        sessionId: session.id,
+        token: session.token,
+        version: JETSTART_VERSION,
+        projectName: session.projectName || 'JetStart Project'
+      });
+
+      const redirectUrl = `${webUrl}?${queryParams.toString()}`;
+      
+      // Redirect to web emulator
+      res.redirect(redirectUrl);
+      
+    } catch (err: any) {
+      console.error('Redirect error:', err);
+      res.status(500).send('Failed to redirect to emulator');
+    }
+  });
   // Health check
   app.get('/health', (req: Request, res: Response) => {
     res.json({
