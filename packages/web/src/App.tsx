@@ -50,6 +50,29 @@ function App() {
     setIsConfigured(true);
   };
 
+  // Auto-connect from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paramSessionId = params.get('sessionId');
+    const paramToken = params.get('token');
+    const paramHost = params.get('host');
+    const paramWsPort = params.get('wsPort');
+
+    if (paramSessionId && paramToken) {
+      // Construct WebSocket URL if host/port provided, otherwise use default
+      let newWsUrl: string | undefined;
+      if (paramHost && paramWsPort) {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        newWsUrl = `${protocol}//${paramHost}:${paramWsPort}`;
+      }
+
+      handleConnect(paramSessionId, paramToken, newWsUrl);
+      
+      // Clear URL params to clean up address bar
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   // Auto-connect when configured
   useEffect(() => {
     if (isConfigured && !isConnected) {

@@ -8,11 +8,13 @@ import { Server } from 'http';
 import { setupMiddleware } from './middleware';
 import { setupRoutes } from './routes';
 import { log } from '../utils/logger';
+import { ServerSession } from '../types';
 
 export interface HttpServerConfig {
   port: number;
   host: string;
   getLatestApk?: () => string | null;
+  getCurrentSession?: () => ServerSession | null;
 }
 
 export async function createHttpServer(config: HttpServerConfig): Promise<Server> {
@@ -22,7 +24,7 @@ export async function createHttpServer(config: HttpServerConfig): Promise<Server
   setupMiddleware(app);
 
   // Setup routes
-  setupRoutes(app, config.getLatestApk);
+  setupRoutes(app, config.getLatestApk, config.getCurrentSession);
 
   // Start server
   return new Promise((resolve, reject) => {

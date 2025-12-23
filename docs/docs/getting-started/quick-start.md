@@ -147,11 +147,30 @@ If QR scanning doesn't work:
 
 ### Option C: Web Emulator
 
-Don't have an Android device? Use the web emulator:
+### Option C: Web Emulator
+ 
+ Don't have an Android device? Use the web emulator:
+ 
+ 1. Open a new terminal window
+ 2. Run explicit web emulator command:
+    ```bash
+    npx jetstart dev --web
+    ```
+ 3. JetStart automatically opens your browser to `http://localhost:8765`
+ 4. This will redirect you to the JetStart Web Emulator with your session
+ 
+ Alternatively, if `jetstart dev` is already running:
+ 1. Manually open `http://localhost:8765` in your browser
+ 2. It will redirect and connect automatically
 
-1. JetStart automatically opens your browser to `http://localhost:8765`
-2. The web emulator will connect automatically
-3. You'll see a preview of your app in the browser
+### Option D: Android Emulator
+
+If you have Android Studio installed:
+
+1. Open a new terminal window
+2. Run `jetstart android-emulator`
+3. Select an available emulator from the list
+4. JetStart will launch the emulator and install the app automatically
 
 :::tip Network Connection
 Make sure your computer and Android device are on the same Wi-Fi network!
