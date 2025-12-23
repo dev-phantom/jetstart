@@ -105,6 +105,7 @@ export class JetStartServer extends EventEmitter {
         port: this.config.httpPort,
         host: this.config.host,
         getLatestApk: () => this.latestApkPath,
+        getCurrentSession: () => this.currentSession,
       });
 
       // Start WebSocket server

@@ -7,7 +7,9 @@ import { urlFor } from '../services/sanity/imageUrl';
 import { PortableText } from '@portabletext/react';
 
 export default function BlogPost() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug: paramSlug } = useParams<{ slug: string }>();
+  // Fallback for static routes where slug param is not captured by router but present in URL
+  const slug = paramSlug || (typeof window !== 'undefined' ? window.location.pathname.replace(/\/$/, '').split('/').pop() : '');
   const [post, setPost] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

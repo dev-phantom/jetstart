@@ -9,7 +9,7 @@ module.exports = {
       {
         assets: [
           {
-            path: 'packages/client/app/build/outputs/apk/debug/app-debug.apk',
+            path: 'packages/client/app/build/outputs/apk/debug/*.apk',
             label: 'Android Client (Debug)',
           },
         ],

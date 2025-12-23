@@ -13,6 +13,7 @@ import { JetStartServer } from '@jetstart/core';
 import { DEFAULT_CORE_PORT, DEFAULT_WS_PORT } from '@jetstart/shared';
 import { DevOptions } from '../types';
 import { EmulatorDeployer } from '../utils/emulator-deployer';
+import { openBrowser } from '../utils/open';
 
 export async function devCommand(options: DevOptions) {
   try {
@@ -129,6 +130,12 @@ export async function devCommand(options: DevOptions) {
       info(`IP: ${chalk.cyan(host)}`);
       info(`Session: ${chalk.dim(session.id)}`);
       info(`Token: ${chalk.dim(session.token)}`);
+    }
+
+    // Auto-open browser for Web Emulator if requested
+    if (options.web) {
+      info('Opening Web Emulator...');
+      openBrowser(localUrl);
     }
 
     info('Watching for file changes...');
