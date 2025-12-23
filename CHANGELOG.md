@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/dev-phantom/jetstart/compare/v1.5.3...v1.6.0) (2025-12-23)
+
+
+### Features
+
+* implement cPanel deployment scripts and fix Docusaurus blog routes ([9a36931](https://github.com/dev-phantom/jetstart/commit/9a36931e35908d9916f73f39bc3f2a6f1f7ab6a7))
+
 ## [1.5.3](https://github.com/dev-phantom/jetstart/compare/v1.5.2...v1.5.3) (2025-12-22)
 
 

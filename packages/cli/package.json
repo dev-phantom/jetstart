@@ -1,6 +1,6 @@
 {
   "name": "@jetstart/cli",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "description": "Command-line interface for JetStart",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
