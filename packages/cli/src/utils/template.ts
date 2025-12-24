@@ -964,9 +964,6 @@ async function generateGitignore(projectPath: string): Promise<void> {
 .vscode
 .DS_Store
 
-# Claude Code
-.claude
-.claude-worktrees
 
 # JetStart
 .jetstart

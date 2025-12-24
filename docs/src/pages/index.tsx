@@ -13,6 +13,8 @@ import {
   Package,
   Play,
   Settings,
+  Menu,
+  X,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import GradientBorderWrapper from '../components/gradientBorderWrapper';
@@ -34,6 +36,7 @@ interface BlogPost {
 export default function JetStartLanding() {
   const [activeTab, setActiveTab] = useState(0);
   const [latestPosts, setLatestPosts] = useState<BlogPost[]>([]);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     client
@@ -88,14 +91,16 @@ export default function JetStartLanding() {
               <span className="font-semibold text-lg">JetStart</span>
             </motion.div>
 
+            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
               <a
                 href="/docs/getting-started/introduction"
                 className="text-sm text-gray-400 hover:text-white transition-colors"
+                style={{ color: colors.textColor }}
               >
                 Docs
               </a>
-              <a href="/blogs" className="text-sm text-gray-400 hover:text-white transition-colors">
+              <a href="/blogs" className="text-sm text-gray-400 hover:text-white transition-colors" style={{ color: colors.textColor }}>
                 Blog
               </a>
               <a
@@ -103,6 +108,7 @@ export default function JetStartLanding() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-gray-400 hover:text-white transition-colors"
+                style={{ color: colors.textColor }}
               >
                 GitHub
               </a>
@@ -118,15 +124,78 @@ export default function JetStartLanding() {
                 Get Started
               </motion.button>
             </div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2"
+                style={{ color: colors.textColor }}
+              >
+                {isMobileMenuOpen ? <X /> : <Menu />}
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Dropdown */}
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="md:hidden border-t"
+            style={{
+              backgroundColor: colors.bgColor,
+              borderColor: 'rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <div className="px-6 py-4 space-y-4 flex flex-col">
+              <a
+                href="/docs/getting-started/introduction"
+                className="block text-base font-medium"
+                style={{ color: colors.textColor }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Docs
+              </a>
+              <a
+                href="/blogs"
+                className="block text-base font-medium"
+                style={{ color: colors.textColor }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Blog
+              </a>
+              <a
+                href="https://github.com/dev-phantom/jetstart"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-base font-medium"
+                style={{ color: colors.textColor }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                GitHub
+              </a>
+              <motion.button
+                className="w-full text-center px-4 py-3 rounded-lg font-medium"
+                style={{
+                  backgroundColor: colors.primary,
+                  color: colors.bgColor,
+                }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Get Started
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
       </nav>
 
       {/* Hero */}
-      <section className="relative pt-32 pb-20 px-6">
-        <div className="max-w-6xl mx-auto flex justify-between items-center gap-16">
+      <section className="relative pt-24 md:pt-32 pb-20 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12 md:gap-16">
           <motion.div
-            className="max-w-xl"
+            className="max-w-xl text-center md:text-left"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -148,17 +217,17 @@ export default function JetStartLanding() {
               Android development reimagined
             </motion.div>
 
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">
               Build Android apps
               <br />
               in <span style={{ color: colors.primary }}>VS Code</span>
             </h1>
 
-            <p className="text-xl text-gray-400 mb-10 leading-relaxed max-w-xl">
+            <p className="text-lg md:text-xl text-gray-400 mb-10 leading-relaxed max-w-xl mx-auto md:mx-0">
               Develop with Kotlin + Jetpack Compose. Preview on mobile, desktop, or web—instantly.
             </p>
 
-            <div className="flex flex-wrap gap-4 mb-16">
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-16">
               <Link to="https://www.npmjs.com/package/@jetstart/cli">
                 <motion.button
                   className="px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-all"
@@ -190,7 +259,7 @@ export default function JetStartLanding() {
 
           {/* Right Side - Code Editor */}
           <motion.div
-            className="relative"
+            className="relative w-full max-w-[520px]"
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -215,19 +284,18 @@ export default function JetStartLanding() {
             >
               <GradientBorderWrapper>
                 <div
-                  className="rounded-lg overflow-hidden border"
+                  className="rounded-lg overflow-hidden border w-full"
                   style={{
                     backgroundColor: '#252526',
                     borderColor: colors.primary,
                     transform: 'rotateY(-8deg) rotateX(2deg)',
                     transformStyle: 'preserve-3d',
-                    width: '520px',
                   }}
                 >
                   <img
                     src="https://res.cloudinary.com/phantom1245/image/upload/v1765933925/jetstart/Screenshot_739_rzg81g.png"
                     alt="vscode editor"
-                    className="w-full h-max object-cover"
+                    className="w-full h-auto object-cover"
                     style={{ maxHeight: '350px', objectFit: 'contain' }}
                   />
                 </div>
@@ -300,7 +368,7 @@ export default function JetStartLanding() {
                 transition={{ delay: i * 0.1 }}
               >
                 {/* Step Card */}
-                <div className="flex gap-6">
+                <div className="flex flex-col md:flex-row gap-6">
                   {/* Step Number Badge */}
                   <div className="flex-shrink-0">
                     <div
@@ -384,7 +452,7 @@ export default function JetStartLanding() {
 
           {/* Tab Navigation */}
           <motion.div
-            className="flex justify-center gap-2 mb-12 p-1 max-w-2xl mx-auto rounded-xl"
+            className="flex flex-wrap md:flex-nowrap justify-center gap-2 mb-12 p-1 max-w-2xl mx-auto rounded-xl"
             style={{ backgroundColor: colors.altBg }}
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -398,7 +466,7 @@ export default function JetStartLanding() {
               <motion.button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all"
+                className="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all"
                 style={{
                   backgroundColor: activeTab === tab.id ? colors.primary : 'transparent',
                   color: activeTab === tab.id ? colors.bgColor : colors.textColor,
@@ -425,13 +493,13 @@ export default function JetStartLanding() {
           >
             {activeTab === 0 && (
               <motion.div
-                className="grid md:grid-cols-2 gap-12 items-center"
+                className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <div>
-                  <h3 className="text-3xl font-bold mb-4">Mobile Client</h3>
+                <div className="order-2 md:order-1">
+                  <h3 className="text-2xl md:text-3xl font-bold mb-4">Mobile Client</h3>
                   <p className="text-gray-400 mb-6 leading-relaxed">
                     Scan a QR code and instantly stream your app to your phone. Like Expo Go, but
                     for native Android with Kotlin & Compose.
