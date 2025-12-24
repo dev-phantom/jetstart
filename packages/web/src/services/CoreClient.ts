@@ -299,8 +299,12 @@ export class CoreClient {
   }
 
   private getDefaultWsUrl(): string {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const hostname = window.location.hostname || 'localhost';
+    
+    // Force ws: for localhost development as the core server typically doesn't support SSL locally
+    // This allows connecting from https:// (e.g. hosted web emulator) to a local server if the browser permits mixed content for localhost
+    const protocol = (window.location.protocol === 'https:' && hostname !== 'localhost' && hostname !== '127.0.0.1') ? 'wss:' : 'ws:';
+    
     return `${protocol}//${hostname}:${DEFAULT_WS_PORT}`;
   }
 

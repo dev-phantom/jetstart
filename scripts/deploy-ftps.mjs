@@ -61,12 +61,13 @@ async function deploy() {
       host: config.host,
       user: config.user,
       password: config.password,
+      secure: secure,
       secureOptions: { rejectUnauthorized: false },
     }); // Let basic-ftp verify the certificate
 
-    // Try Active Mode
-    client.ftp.active = true;
-    client.ftp.ipFamily = 4;
+    // Try Active Mode - DISABLED, using Passive (default) which is better for NAT
+    // client.ftp.active = true;
+    // client.ftp.ipFamily = 4;
 
 
 
