@@ -1,3 +1,12 @@
+# [1.7.0](https://github.com/dev-phantom/jetstart/compare/v1.6.0...v1.7.0) (2025-12-27)
+
+
+### Features
+
+* add JetStart Client APK download to docs ([cfe1d3d](https://github.com/dev-phantom/jetstart/commit/cfe1d3d97320bcfca20de512face22fda6f5b7b8))
+* add mobile responsiveness to landing page and blog ([2ae128f](https://github.com/dev-phantom/jetstart/commit/2ae128fe2d608ab8c9d7159a216f48efce4082c6))
+* added --web to the dev ([25b8aff](https://github.com/dev-phantom/jetstart/commit/25b8aff6c2063b246d6ee60ca9c564aa80f7c5c6))
+
 # [1.6.0](https://github.com/dev-phantom/jetstart/compare/v1.5.3...v1.6.0) (2025-12-23)
 
 
