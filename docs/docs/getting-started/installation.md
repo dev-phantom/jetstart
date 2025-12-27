@@ -154,7 +154,7 @@ To connect your Android device to the JetStart development server, you'll need t
 
 Download the latest JetStart Client APK directly:
 
-<a href="/downloads/jetstart-client.apk" download className="button button--primary button--lg">
+<a href="/downloads/jetstart-client.apk" download className="">
   📥 Download JetStart Client APK
 </a>
 

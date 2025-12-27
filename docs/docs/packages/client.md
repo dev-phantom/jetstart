@@ -36,7 +36,7 @@ The JetStart Client is a Jetpack Compose Android app that serves as the bridge b
 
 Download the latest JetStart Client APK directly:
 
-<a href="/downloads/jetstart-client.apk" download className="button button--primary button--lg">
+<a href="/downloads/jetstart-client.apk" download className="w-10 h-auto">
   📥 Download JetStart Client APK
 </a>
 
