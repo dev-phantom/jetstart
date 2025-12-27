@@ -40,10 +40,10 @@ export default function Blogs() {
 
   return (
     <Layout title="Blog" description="JetStart Blog">
-      <div className="container margin-vert--lg">
-        <div className="text--center margin-bottom--xl">
-          <h1>Latest Articles</h1>
-          <p>Insights, tutorials, and updates from the JetStart team.</p>
+      <div className="container margin-vert--md margin-vert--lg-desktop" style={{ padding: '0 1rem' }}>
+        <div className="text--center margin-bottom--lg margin-bottom--xl-desktop">
+          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)' }}>Latest Articles</h1>
+          <p style={{ fontSize: 'clamp(0.95rem, 2vw, 1.125rem)' }}>Insights, tutorials, and updates from the JetStart team.</p>
         </div>
 
         {isLoading ? (
@@ -54,25 +54,25 @@ export default function Blogs() {
           <>
             <div className="row">
               {currentPosts.map((post) => (
-                <div key={post.slug} className="col col--4 margin-bottom--lg">
+                <div key={post.slug} className="col col--12 col--6-tablet col--4-desktop margin-bottom--lg">
                   <div className="card h-100" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                       {post.mainImage && (
                           <div className="card__image">
-                              <img 
-                                  src={urlFor(post.mainImage)} 
-                                  alt={post.title} 
+                              <img
+                                  src={urlFor(post.mainImage)}
+                                  alt={post.title}
                                   style={{
-                                      borderTopLeftRadius: '12px', 
+                                      borderTopLeftRadius: '12px',
                                       borderTopRightRadius: '12px',
-                                      height: '240px', 
-                                      width: '100%', 
+                                      height: '200px',
+                                      width: '100%',
                                       objectFit: 'cover'
-                                  }} 
+                                  }}
                               />
                           </div>
                       )}
                     <div className="card__header">
-                      <h3>{post.title}</h3>
+                      <h3 style={{ fontSize: 'clamp(1.1rem, 3vw, 1.5rem)' }}>{post.title}</h3>
                     </div>
                     <div className="card__body" style={{ flexGrow: 1 }}>
                       <p className="text--secondary">
@@ -90,19 +90,23 @@ export default function Blogs() {
             
             {/* Pagination Controls */}
             {totalPages > 1 && (
-            <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
-              <button 
-                className="button button--secondary" 
-                onClick={handlePrev} 
+            <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                className="button button--secondary"
+                onClick={handlePrev}
                 disabled={currentPage === 1}
+                style={{ fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}
               >
                 Previous
               </button>
-              <span style={{ alignSelf: 'center' }}>Page {currentPage} of {totalPages}</span>
-              <button 
-                className="button button--secondary" 
-                onClick={handleNext} 
+              <span style={{ alignSelf: 'center', fontSize: 'clamp(0.875rem, 2vw, 1rem)', padding: '0 0.5rem' }}>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="button button--secondary"
+                onClick={handleNext}
                 disabled={currentPage === totalPages}
+                style={{ fontSize: 'clamp(0.875rem, 2vw, 1rem)' }}
               >
                 Next
               </button>

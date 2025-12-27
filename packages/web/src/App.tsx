@@ -62,7 +62,9 @@ function App() {
       // Construct WebSocket URL if host/port provided, otherwise use default
       let newWsUrl: string | undefined;
       if (paramHost && paramWsPort) {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        // Allow ws: for localhost/127.0.0.1 even if page is https: (mixed content might be allowed or needed)
+        const isLocal = paramHost === 'localhost' || paramHost === '127.0.0.1' || paramHost.startsWith('192.168.');
+        const protocol = (window.location.protocol === 'https:' && !isLocal) ? 'wss:' : 'ws:';
         newWsUrl = `${protocol}//${paramHost}:${paramWsPort}`;
       }
 

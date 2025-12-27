@@ -32,9 +32,22 @@ The JetStart Client is a Jetpack Compose Android app that serves as the bridge b
 
 ## Download and Installation
 
-### Download from GitHub Releases
+### Option 1: Direct Download from Docs (Recommended)
 
-The JetStart Client app is distributed via GitHub Releases. Download the latest version:
+Download the latest JetStart Client APK directly:
+
+<a href="/downloads/jetstart-client.apk" download className="w-10 h-auto">
+  📥 Download JetStart Client APK
+</a>
+
+**Quick Steps:**
+1. Click the download button above on your Android device
+2. Once downloaded, tap the APK file to install
+3. Follow the installation steps below
+
+### Option 2: Download from GitHub Releases
+
+The JetStart Client app is also available from GitHub Releases:
 
 **Latest Release:**
 - Visit: [https://github.com/dev-phantom/jetstart/releases](https://github.com/dev-phantom/jetstart/releases)
