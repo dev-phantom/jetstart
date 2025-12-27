@@ -73,68 +73,80 @@ export default function JetStartLanding() {
         className="fixed top-0 w-full z-50 border-b backdrop-blur-xl"
         style={{
           borderColor: 'rgba(255, 255, 255, 0.08)',
-          backgroundColor: colors.bgColor + 'E6',
+          backgroundColor: colors.bgColor + 'F0',
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 md:px-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex items-center justify-between h-16">
             <motion.div
               className="flex items-center gap-2"
               whileHover={{ scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400 }}
             >
-              <img 
-                src="img/logos/logo.png" 
-                alt="JetStart Logo" 
-                className="w-8 h-8 rounded-md" 
+              <img
+                src="img/logos/logo.png"
+                alt="JetStart Logo"
+                className="w-8 h-8 rounded-md"
               />
-              <span className="font-semibold text-lg">JetStart</span>
+              <span className="font-semibold text-base md:text-lg">JetStart</span>
             </motion.div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
               <a
                 href="/docs/getting-started/introduction"
-                className="text-sm text-gray-400 hover:text-white transition-colors"
+                className="text-sm hover:text-white transition-colors"
                 style={{ color: colors.textColor }}
               >
                 Docs
               </a>
-              <a href="/blogs" className="text-sm text-gray-400 hover:text-white transition-colors" style={{ color: colors.textColor }}>
+              <a
+                href="/blogs"
+                className="text-sm hover:text-white transition-colors"
+                style={{ color: colors.textColor }}
+              >
                 Blog
               </a>
               <a
                 href="https://github.com/dev-phantom/jetstart"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-gray-400 hover:text-white transition-colors"
+                className="text-sm hover:text-white transition-colors"
                 style={{ color: colors.textColor }}
               >
                 GitHub
               </a>
-              <motion.button
-                className="text-sm px-4 py-1.5 rounded-md font-medium transition-all"
-                style={{
-                  backgroundColor: colors.primary,
-                  color: colors.bgColor,
-                }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Get Started
-              </motion.button>
+              <a href="/docs/getting-started/introduction">
+                <motion.button
+                  className="text-sm px-4 py-1.5 rounded-md font-medium transition-all"
+                  style={{
+                    backgroundColor: colors.primary,
+                    color: colors.bgColor,
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Get Started
+                </motion.button>
+              </a>
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2"
-                style={{ color: colors.textColor }}
-              >
-                {isMobileMenuOpen ? <X /> : <Menu />}
-              </button>
-            </div>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-md transition-colors md:hidden"
+              style={{
+                backgroundColor: '#25FF79',
+                color: '#0A0A0A',
+              }}
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5" strokeWidth={2} />
+              ) : (
+                <Menu className="w-5 h-5" strokeWidth={2} />
+              )}
+            </button>
           </div>
         </div>
 
@@ -143,16 +155,17 @@ export default function JetStartLanding() {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
             className="md:hidden border-t"
             style={{
-              backgroundColor: colors.bgColor,
+              backgroundColor: colors.bgColor + 'F8',
               borderColor: 'rgba(255, 255, 255, 0.08)',
             }}
           >
-            <div className="px-6 py-4 space-y-4 flex flex-col">
+            <div className="px-4 py-4 space-y-3 flex flex-col">
               <a
                 href="/docs/getting-started/introduction"
-                className="block text-base font-medium"
+                className="block text-base font-medium py-2 px-3 rounded-lg hover:bg-white/5 transition-colors"
                 style={{ color: colors.textColor }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -160,7 +173,7 @@ export default function JetStartLanding() {
               </a>
               <a
                 href="/blogs"
-                className="block text-base font-medium"
+                className="block text-base font-medium py-2 px-3 rounded-lg hover:bg-white/5 transition-colors"
                 style={{ color: colors.textColor }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -170,38 +183,40 @@ export default function JetStartLanding() {
                 href="https://github.com/dev-phantom/jetstart"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-base font-medium"
+                className="block text-base font-medium py-2 px-3 rounded-lg hover:bg-white/5 transition-colors"
                 style={{ color: colors.textColor }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 GitHub
               </a>
-              <motion.button
-                className="w-full text-center px-4 py-3 rounded-lg font-medium"
-                style={{
-                  backgroundColor: colors.primary,
-                  color: colors.bgColor,
-                }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Get Started
-              </motion.button>
+              <a href="/docs/getting-started/introduction" onClick={() => setIsMobileMenuOpen(false)}>
+                <motion.button
+                  className="w-full text-center px-4 py-3 rounded-lg font-medium mt-2"
+                  style={{
+                    backgroundColor: colors.primary,
+                    color: colors.bgColor,
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Get Started
+                </motion.button>
+              </a>
             </div>
           </motion.div>
         )}
       </nav>
 
       {/* Hero */}
-      <section className="relative pt-24 md:pt-32 pb-20 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12 md:gap-16">
+      <section className="relative pt-24 md:pt-32 pb-16 md:pb-20 px-6 md:px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10 md:gap-16">
           <motion.div
-            className="max-w-xl text-center md:text-left"
+            className="max-w-xl text-center md:text-left w-full"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
             <motion.div
-              className="inline-flex items-center gap-2 mt-10 px-3 py-1 rounded-full text-xs mb-4 border"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs mb-6 border"
               style={{
                 backgroundColor: colors.altBg,
                 borderColor: 'rgba(37, 255, 121, 0.2)',
@@ -217,17 +232,17 @@ export default function JetStartLanding() {
               Android development reimagined
             </motion.div>
 
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-5 md:mb-6 leading-tight tracking-tight">
               Build Android apps
               <br />
               in <span style={{ color: colors.primary }}>VS Code</span>
             </h1>
 
-            <p className="text-lg md:text-xl text-gray-400 mb-10 leading-relaxed max-w-xl mx-auto md:mx-0">
+            <p className="text-lg md:text-xl text-gray-400 mb-8 md:mb-10 leading-relaxed max-w-xl mx-auto md:mx-0">
               Develop with Kotlin + Jetpack Compose. Preview on mobile, desktop, or web—instantly.
             </p>
 
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-16">
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-12 md:mb-16">
               <Link to="https://www.npmjs.com/package/@jetstart/cli">
                 <motion.button
                   className="px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-all"
@@ -259,7 +274,7 @@ export default function JetStartLanding() {
 
           {/* Right Side - Code Editor */}
           <motion.div
-            className="relative w-full max-w-[520px]"
+            className="relative w-full max-w-[520px] mt-4 md:mt-0"
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -296,7 +311,7 @@ export default function JetStartLanding() {
                     src="https://res.cloudinary.com/phantom1245/image/upload/v1765933925/jetstart/Screenshot_739_rzg81g.png"
                     alt="vscode editor"
                     className="w-full h-auto object-cover"
-                    style={{ maxHeight: '350px', objectFit: 'contain' }}
+                    style={{ maxHeight: '250px', objectFit: 'contain' }}
                   />
                 </div>
               </GradientBorderWrapper>
@@ -304,11 +319,11 @@ export default function JetStartLanding() {
 
             {/* Sparkle */}
             <motion.div
-              className="absolute -top-8 -right-8"
+              className="absolute -top-4 -right-4 md:-top-8 md:-right-8"
               animate={{ rotate: [0, 180, 360] }}
               transition={{ duration: 4, repeat: Infinity }}
             >
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <svg className="w-6 h-6 md:w-10 md:h-10" viewBox="0 0 40 40" fill="none">
                 <path
                   d="M20 0L21.8 18.2L40 20L21.8 21.8L20 40L18.2 21.8L0 20L18.2 18.2L20 0Z"
                   fill={colors.primary}
@@ -321,16 +336,16 @@ export default function JetStartLanding() {
       </section>
 
       {/* How It Works - Timeline Style */}
-      <section className="py-20 px-6">
+      <section className="py-12 md:py-20 px-4 md:px-6">
         <div className="max-w-4xl mx-auto">
           <motion.div
-            className="text-center mb-16"
+            className="text-center mb-10 md:mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-gray-400 text-lg">Get up and running in three simple steps</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">How It Works</h2>
+            <p className="text-gray-400 text-base md:text-lg">Get up and running in three simple steps</p>
           </motion.div>
 
           <div className="space-y-8">
@@ -368,11 +383,11 @@ export default function JetStartLanding() {
                 transition={{ delay: i * 0.1 }}
               >
                 {/* Step Card */}
-                <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex flex-col sm:flex-row gap-4 md:gap-6">
                   {/* Step Number Badge */}
                   <div className="flex-shrink-0">
                     <div
-                      className="w-16 h-16 rounded-lg flex items-center justify-center font-bold text-2xl border-2"
+                      className="w-14 h-14 md:w-16 md:h-16 rounded-lg flex items-center justify-center font-bold text-xl md:text-2xl border-2"
                       style={{
                         backgroundColor: colors.altBg,
                         borderColor: colors.primary,
@@ -387,7 +402,7 @@ export default function JetStartLanding() {
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="text-2xl font-bold mb-2">{item.title}</h3>
+                        <h3 className="text-xl md:text-2xl font-bold mb-2">{item.title}</h3>
                         <div className="flex gap-2 mb-3">
                           {item.tech.map((tech, j) => (
                             <span
@@ -427,7 +442,7 @@ export default function JetStartLanding() {
                 {/* Connecting Line */}
                 {i < 2 && (
                   <div
-                    className="absolute left-8 top-20 w-0.5 h-8"
+                    className="hidden sm:block absolute left-7 md:left-8 top-20 w-0.5 h-8"
                     style={{ backgroundColor: colors.primary + '30' }}
                   />
                 )}
@@ -438,16 +453,16 @@ export default function JetStartLanding() {
       </section>
 
       {/* Platform Tabs */}
-      <section className="py-20 px-6 relative">
+      <section className="py-12 md:py-20 px-4 md:px-6 relative">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            className="text-center mb-16"
+            className="text-center mb-10 md:mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-bold mb-4">One codebase. Three previews.</h2>
-            <p className="text-gray-400 text-lg">Choose how you want to see your app</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">One codebase. Three previews.</h2>
+            <p className="text-gray-400 text-base md:text-lg">Choose how you want to see your app</p>
           </motion.div>
 
           {/* Tab Navigation */}
@@ -482,7 +497,7 @@ export default function JetStartLanding() {
 
           {/* Tab Content */}
           <motion.div
-            className="rounded-2xl border p-12"
+            className="rounded-2xl border p-6 md:p-12"
             style={{
               backgroundColor: colors.altBg,
               borderColor: 'rgba(255, 255, 255, 0.08)',
@@ -493,14 +508,14 @@ export default function JetStartLanding() {
           >
             {activeTab === 0 && (
               <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center"
+                className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
                 <div className="order-2 md:order-1">
-                  <h3 className="text-2xl md:text-3xl font-bold mb-4">Mobile Client</h3>
-                  <p className="text-gray-400 mb-6 leading-relaxed">
+                  <h3 className="text-xl md:text-3xl font-bold mb-3 md:mb-4">Mobile Client</h3>
+                  <p className="text-sm md:text-base text-gray-400 mb-6 leading-relaxed">
                     Scan a QR code and instantly stream your app to your phone. Like Expo Go, but
                     for native Android with Kotlin & Compose.
                   </p>
@@ -518,27 +533,27 @@ export default function JetStartLanding() {
                         transition={{ delay: i * 0.1 }}
                       >
                         <CheckCircle2
-                          className="w-5 h-5 flex-shrink-0"
+                          className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0"
                           style={{ color: colors.primary }}
                         />
-                        <span className="text-gray-300">{item}</span>
+                        <span className="text-sm md:text-base text-gray-300">{item}</span>
                       </motion.div>
                     ))}
                   </div>
                 </div>
                 <motion.div
-                  className="flex justify-center"
+                  className="flex justify-center order-1 md:order-2"
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 >
                   <div
-                    className="w-48 h-96 rounded-3xl border-4 flex items-center justify-center relative overflow-hidden"
+                    className="w-32 h-64 md:w-48 md:h-96 rounded-3xl border-4 flex items-center justify-center relative overflow-hidden"
                     style={{
                       borderColor: colors.primary + '40',
                       backgroundColor: colors.bgColor,
                     }}
                   >
-                    <Smartphone className="w-16 h-16" style={{ color: colors.primary + '60' }} />
+                    <Smartphone className="w-12 h-12 md:w-16 md:h-16" style={{ color: colors.primary + '60' }} />
                   </div>
                 </motion.div>
               </motion.div>
@@ -546,14 +561,14 @@ export default function JetStartLanding() {
 
             {activeTab === 1 && (
               <motion.div
-                className="grid md:grid-cols-2 gap-12 items-center"
+                className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
                 <div>
-                  <h3 className="text-3xl font-bold mb-4">Desktop Emulator</h3>
-                  <p className="text-gray-400 mb-6 leading-relaxed">
+                  <h3 className="text-xl md:text-3xl font-bold mb-3 md:mb-4">Desktop Emulator</h3>
+                  <p className="text-sm md:text-base text-gray-400 mb-6 leading-relaxed">
                     Full Android emulator environment. Test hardware features, system APIs, and real
                     device behavior on your machine.
                   </p>
@@ -568,10 +583,10 @@ export default function JetStartLanding() {
                           transition={{ delay: i * 0.1 }}
                         >
                           <CheckCircle2
-                            className="w-5 h-5 flex-shrink-0"
+                            className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0"
                             style={{ color: colors.primary }}
                           />
-                          <span className="text-gray-300">{item}</span>
+                          <span className="text-sm md:text-base text-gray-300">{item}</span>
                         </motion.div>
                       )
                     )}
@@ -583,13 +598,13 @@ export default function JetStartLanding() {
                   transition={{ duration: 3, repeat: Infinity }}
                 >
                   <div
-                    className="w-64 h-56 rounded-xl border-2 flex items-center justify-center relative overflow-hidden"
+                    className="w-48 h-40 md:w-64 md:h-56 rounded-xl border-2 flex items-center justify-center relative overflow-hidden"
                     style={{
                       borderColor: colors.primary + '40',
                       backgroundColor: colors.bgColor,
                     }}
                   >
-                    <Monitor className="w-20 h-20" style={{ color: colors.primary + '60' }} />
+                    <Monitor className="w-16 h-16 md:w-20 md:h-20" style={{ color: colors.primary + '60' }} />
                   </div>
                 </motion.div>
               </motion.div>
@@ -597,14 +612,14 @@ export default function JetStartLanding() {
 
             {activeTab === 2 && (
               <motion.div
-                className="grid md:grid-cols-2 gap-12 items-center"
+                className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
                 <div>
-                  <h3 className="text-3xl font-bold mb-4">Web Emulator</h3>
-                  <p className="text-gray-400 mb-6 leading-relaxed">
+                  <h3 className="text-xl md:text-3xl font-bold mb-3 md:mb-4">Web Emulator</h3>
+                  <p className="text-sm md:text-base text-gray-400 mb-6 leading-relaxed">
                     Preview your Android app directly in the browser. No SDK, no setup—just instant
                     feedback for rapid prototyping.
                   </p>
@@ -619,10 +634,10 @@ export default function JetStartLanding() {
                           transition={{ delay: i * 0.1 }}
                         >
                           <CheckCircle2
-                            className="w-5 h-5 flex-shrink-0"
+                            className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0"
                             style={{ color: colors.primary }}
                           />
-                          <span className="text-gray-300">{item}</span>
+                          <span className="text-sm md:text-base text-gray-300">{item}</span>
                         </motion.div>
                       )
                     )}
@@ -634,13 +649,13 @@ export default function JetStartLanding() {
                   transition={{ duration: 3, repeat: Infinity }}
                 >
                   <div
-                    className="w-full h-48 rounded-xl border-2 flex items-center justify-center relative overflow-hidden"
+                    className="w-full h-40 md:h-48 rounded-xl border-2 flex items-center justify-center relative overflow-hidden"
                     style={{
                       borderColor: colors.primary + '40',
                       backgroundColor: colors.bgColor,
                     }}
                   >
-                    <Globe className="w-20 h-20" style={{ color: colors.primary + '60' }} />
+                    <Globe className="w-16 h-16 md:w-20 md:h-20" style={{ color: colors.primary + '60' }} />
                   </div>
                 </motion.div>
               </motion.div>
@@ -650,15 +665,15 @@ export default function JetStartLanding() {
       </section>
 
       {/* Why JetStart */}
-      <section className="py-20 px-6">
+      <section className="py-12 md:py-20 px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-16">
+          <div className="grid md:grid-cols-2 gap-10 md:gap-16">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl font-bold mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">
                 Traditional Android IDEs
                 <br />
                 <span className="text-gray-500">slow you down</span>
@@ -671,7 +686,7 @@ export default function JetStartLanding() {
                 ].map((item, i) => (
                   <motion.div
                     key={i}
-                    className="flex items-start gap-3 p-4 rounded-lg border"
+                    className="flex items-start gap-3 p-3 md:p-4 rounded-lg border"
                     style={{
                       backgroundColor: colors.altBg,
                       borderColor: 'rgba(255, 255, 255, 0.05)',
@@ -685,7 +700,7 @@ export default function JetStartLanding() {
                       className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
                       style={{ backgroundColor: colors.orange }}
                     />
-                    <span className="text-gray-400">{item}</span>
+                    <span className="text-sm md:text-base text-gray-400">{item}</span>
                   </motion.div>
                 ))}
               </div>
@@ -696,10 +711,10 @@ export default function JetStartLanding() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl font-bold mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">
                 <span style={{ color: colors.primary }}>JetStart is faster</span>
               </h2>
-              <div className="space-y-4 pt-8">
+              <div className="space-y-4 pt-0 md:pt-8">
                 {[
                   'Sub-100ms hot reload across all platforms',
                   'Lightweight VS Code integration',
@@ -707,7 +722,7 @@ export default function JetStartLanding() {
                 ].map((item, i) => (
                   <motion.div
                     key={i}
-                    className="flex items-start gap-3 p-4 rounded-lg border"
+                    className="flex items-start gap-3 p-3 md:p-4 rounded-lg border"
                     style={{
                       backgroundColor: colors.altBg,
                       borderColor: colors.primary + '20',
@@ -721,7 +736,7 @@ export default function JetStartLanding() {
                       className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
                       style={{ backgroundColor: colors.primary }}
                     />
-                    <span className="text-gray-300">{item}</span>
+                    <span className="text-sm md:text-base text-gray-300">{item}</span>
                   </motion.div>
                 ))}
               </div>
@@ -731,18 +746,18 @@ export default function JetStartLanding() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 px-6">
+      <section className="py-12 md:py-20 px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            className="text-center mb-12"
+            className="text-center mb-8 md:mb-12"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-bold mb-4">Everything you need</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">Everything you need</h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[
               { icon: Zap, title: 'Lightning Fast', desc: '<100ms hot reload' },
               { icon: Code2, title: 'Real Compose', desc: 'Actual Kotlin code' },
@@ -767,9 +782,9 @@ export default function JetStartLanding() {
                   y: -5,
                 }}
               >
-                <item.icon className="w-8 h-8 mb-4" style={{ color: colors.primary }} />
-                <h3 className="font-semibold mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-500">{item.desc}</p>
+                <item.icon className="w-6 h-6 md:w-8 md:h-8 mb-3 md:mb-4" style={{ color: colors.primary }} />
+                <h3 className="text-base md:text-lg font-semibold mb-2">{item.title}</h3>
+                <p className="text-xs md:text-sm text-gray-500">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -777,19 +792,19 @@ export default function JetStartLanding() {
       </section>
 
       {/* Latest Blog Posts */}
-      <section className="py-20 px-6">
+      <section className="py-12 md:py-20 px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            className="text-center mb-12"
+            className="text-center mb-8 md:mb-12"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-bold mb-4">Latest Updates</h2>
-            <p className="text-gray-400 text-lg">Fresh from the blog</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">Latest Updates</h2>
+            <p className="text-gray-400 text-base md:text-lg">Fresh from the blog</p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
             {latestPosts.map((post, i) => (
               <motion.div
                 key={post.slug}
@@ -813,13 +828,13 @@ export default function JetStartLanding() {
                     />
                   </div>
                 )}
-                <div className="p-6 flex-1 flex flex-col">
-                  <h3 className="text-xl font-bold mb-3 line-clamp-2">{post.title}</h3>
-                  <div className="mt-auto pt-4 flex items-center justify-between text-sm text-gray-400">
+                <div className="p-4 md:p-6 flex-1 flex flex-col">
+                  <h3 className="text-lg md:text-xl font-bold mb-2 md:mb-3 line-clamp-2">{post.title}</h3>
+                  <div className="mt-auto pt-3 md:pt-4 flex items-center justify-between text-xs md:text-sm text-gray-400">
                     <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
                     <Link
                       to={`/blog/${post.slug}`}
-                      className="text-primary hover:underline"
+                      className="text-primary hover:underline whitespace-nowrap"
                       style={{ color: colors.primary }}
                     >
                       Read more →
@@ -833,10 +848,10 @@ export default function JetStartLanding() {
       </section>
 
       {/* CTA */}
-      <section className="py-32 px-6">
+      <section className="py-16 md:py-32 px-4 md:px-6">
         <div className="max-w-4xl mx-auto text-center">
           <motion.h2
-            className="text-5xl font-bold mb-6"
+            className="text-3xl md:text-5xl font-bold mb-4 md:mb-6"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -844,7 +859,7 @@ export default function JetStartLanding() {
             Ready to ship faster?
           </motion.h2>
           <motion.p
-            className="text-xl text-gray-400 mb-10"
+            className="text-lg md:text-xl text-gray-400 mb-8 md:mb-10"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -893,23 +908,23 @@ export default function JetStartLanding() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-12 px-6" style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}>
+      <footer className="border-t py-8 md:py-12 px-4 md:px-6" style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}>
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-6 md:mb-8">
+            <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-3">
-                <img 
-                  src="img/logos/logo.png" 
-                  alt="JetStart Logo" 
-                  className="w-8 h-8 rounded-md" 
+                <img
+                  src="img/logos/logo.png"
+                  alt="JetStart Logo"
+                  className="w-8 h-8 rounded-md"
                 />
                 <span className="font-semibold">JetStart</span>
               </div>
-              <p className="text-sm text-gray-200">Launch Android apps at warp speed</p>
+              <p className="text-xs md:text-sm text-gray-200">Launch Android apps at warp speed</p>
             </div>
             <div>
-              <h3 className="font-semibold mb-3 text-sm">Docs</h3>
-              <div className="space-y-2 text-sm">
+              <h3 className="font-semibold mb-2 md:mb-3 text-xs md:text-sm">Docs</h3>
+              <div className="space-y-2 text-xs md:text-sm">
                 <a
                   href="/docs/getting-started/introduction"
                   className="block text-gray-200 hover:text-white transition"
@@ -931,8 +946,8 @@ export default function JetStartLanding() {
               </div>
             </div>
             <div>
-              <h3 className="font-semibold mb-3 text-sm">Community</h3>
-              <div className="space-y-2 text-sm">
+              <h3 className="font-semibold mb-2 md:mb-3 text-xs md:text-sm">Community</h3>
+              <div className="space-y-2 text-xs md:text-sm">
                 <a
                   href="https://github.com/dev-phantom/jetstart/discussions"
                   target="_blank"
@@ -952,9 +967,9 @@ export default function JetStartLanding() {
               </div>
             </div>
             <div>
-              <h3 className="font-semibold mb-3 text-sm">More</h3>
-              <div className="space-y-2 text-sm">
-                <a href="/blog" className="block text-gray-200 hover:text-white transition">
+              <h3 className="font-semibold mb-2 md:mb-3 text-xs md:text-sm">More</h3>
+              <div className="space-y-2 text-xs md:text-sm">
+                <a href="/blogs" className="block text-gray-200 hover:text-white transition">
                   Blog
                 </a>
                 <a
@@ -975,7 +990,7 @@ export default function JetStartLanding() {
             </div>
           </div>
           <div
-            className="pt-8 border-t text-center text-sm text-gray-200"
+            className="pt-6 md:pt-8 border-t text-center text-xs md:text-sm text-gray-200"
             style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}
           >
             © {new Date().getFullYear()} JetStart. Built with Docusaurus.
