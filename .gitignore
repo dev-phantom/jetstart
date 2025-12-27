@@ -46,6 +46,7 @@ pnpm-debug.log*
 
 # Android
 *.apk
+!docs/static/downloads/*.apk
 *.ap_
 *.aab
 *.dex
