@@ -1,0 +1,109 @@
+.status-bar {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  position: relative;
+}
+
+.status-bar-section {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-connected .status-indicator {
+  background-color: var(--secondary-color);
+}
+
+.status-connecting .status-indicator {
+  background-color: var(--warning-color);
+}
+
+.status-error .status-indicator,
+.status-disconnected .status-indicator {
+  background-color: var(--error-color);
+  animation: none;
+}
+
+.project-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.project-name .label {
+  color: var(--text-secondary);
+}
+
+.project-name .value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.build-status {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.build-idle {
+  color: var(--text-secondary);
+}
+
+.build-building {
+  color: var(--info-color);
+}
+
+.build-success {
+  color: var(--secondary-color);
+}
+
+.build-error {
+  color: var(--error-color);
+}
+
+.progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--bg-tertiary);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: var(--primary-color);
+  transition: width 0.3s ease;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

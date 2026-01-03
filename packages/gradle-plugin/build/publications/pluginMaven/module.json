@@ -1,0 +1,103 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.jetstart",
+    "module": "jetstart-gradle-plugin",
+    "version": "1.0.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.2.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "jetstart-gradle-plugin-1.0.0.jar",
+          "url": "jetstart-gradle-plugin-1.0.0.jar",
+          "size": 19006,
+          "sha512": "c4253581d906e2d5838e86c1a0cd813232bd80ee7c8f6c68b123cb2eebddf7418baae72d7269f42873d5f3b5d1d258d4dbdd410ce17bbe765ea782712e96dfc7",
+          "sha256": "71cd46f7db8addf7735e1cbd252a40669d49074bd5faf6335551356a887104d9",
+          "sha1": "5114514e635b9f0ffcfbd20cc97072300158b62a",
+          "md5": "b3a2c17c3f9d20322f1e78e5c8f11a32"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.ow2.asm",
+          "module": "asm",
+          "version": {
+            "requires": "9.6"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-commons",
+          "version": {
+            "requires": "9.6"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-util",
+          "version": {
+            "requires": "9.6"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "jetstart-gradle-plugin-1.0.0.jar",
+          "url": "jetstart-gradle-plugin-1.0.0.jar",
+          "size": 19006,
+          "sha512": "c4253581d906e2d5838e86c1a0cd813232bd80ee7c8f6c68b123cb2eebddf7418baae72d7269f42873d5f3b5d1d258d4dbdd410ce17bbe765ea782712e96dfc7",
+          "sha256": "71cd46f7db8addf7735e1cbd252a40669d49074bd5faf6335551356a887104d9",
+          "sha1": "5114514e635b9f0ffcfbd20cc97072300158b62a",
+          "md5": "b3a2c17c3f9d20322f1e78e5c8f11a32"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "name": "jetstart",
+  "version": "1.1.0",
+  "description": "Fast, wireless Android development with Kotlin and Jetpack Compose",
+  "private": true,
+  "workspaces": [
+    "packages/shared",
+    "packages/core",
+    "packages/cli",
+    "packages/web",
+    "packages/sanity-studio",
+    "packages/logs",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc --build && npm run build:web",
+    "build:packages": "tsc --build",
+    "build:shared": "npm run build --workspace=packages/shared",
+    "build:cli": "npm run build --workspace=packages/cli",
+    "build:core": "npm run build --workspace=packages/core",
+    "build:logs": "npm run build --workspace=packages/logs",
+    "build:web": "npm run build --workspace=packages/web",
+    "dev": "npm run dev --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present && rm -rf node_modules",
+    "bootstrap": "npm install",
+    "deploy:docs": "node scripts/deploy-ftps.mjs docs",
+    "deploy:web": "node scripts/deploy-ftps.mjs web",
+    "deploy:sanity": "node scripts/deploy-ftps.mjs sanity",
+    "deploy:all": "npm run deploy:docs && npm run deploy:web && npm run deploy:sanity",
+    "build:docs": "npm run build --workspace=docs",
+    "build:sanity": "npm run build --workspace=packages/sanity-studio",
+    "cli:dev": "npm run dev --workspace=packages/cli",
+    "core:dev": "npm run dev --workspace=packages/core",
+    "logs:dev": "npm run dev --workspace=packages/logs",
+    "web:dev": "npm run dev --workspace=packages/web",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "semantic-release": "semantic-release"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dev-phantom/jetstart.git"
+  },
+  "keywords": [
+    "android",
+    "kotlin",
+    "jetpack-compose",
+    "developer-tools",
+    "hot-reload",
+    "wireless-development",
+    "build-tool",
+    "mobile-development"
+  ],
+  "author": "Phantom",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dev-phantom/jetstart/issues"
+  },
+  "homepage": "https://github.com/dev-phantom/jetstart#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "6.0.3",
+    "@semantic-release/exec": "7.1.0",
+    "@semantic-release/git": "10.0.1",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "basic-ftp": "5.0.5",
+    "dotenv": "17.2.3",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.1.0",
+    "semantic-release": "25.0.2",
+    "semantic-release-monorepo": "8.0.2",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "ssh2-sftp-client": "12.0.1"
+  }
+}

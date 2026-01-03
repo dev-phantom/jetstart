@@ -1,0 +1,205 @@
+.device-frame-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  background-color: var(--jetstart-bg);
+}
+
+.device-frame {
+  /* Tecno Spark 4 dimensions - 6.52" display, 720x1600 (20:9) */
+  width: 300px;
+  height: 850px;
+  background-color: #0a0a0a;
+  border-radius: 35px;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+              0 0 0 8px #1a1a1a;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Waterdrop notch (teardrop) - Tecno Spark 4 style */
+.device-notch {
+  position: absolute;
+  top: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 30px;
+  background-color: #0a0a0a;
+  border-radius: 0 0 50% 50%;
+  z-index: 10;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);
+}
+
+/* Front camera inside notch */
+.device-notch::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: #1a2332;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(100, 150, 200, 0.3);
+}
+
+.device-screen {
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  border-radius: 26px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.status-bar-phone {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  padding-top: 0.75rem; /* Extra padding for notch */
+  background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+  color: #000000;
+  font-size: 0.7rem;
+  height: 35px;
+  z-index: 5;
+}
+
+.status-bar-phone .time {
+  font-weight: 600;
+}
+
+.status-icons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.status-icons .icon {
+  font-size: 0.875rem;
+}
+
+.device-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  background-color: #ffffff;
+}
+
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--bg-tertiary);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.apk-info {
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin: 1rem 0;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.apk-info p {
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.apk-info strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.download-button {
+  display: inline-block;
+  margin: 1rem 0;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  text-decoration: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.download-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.install-instructions {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  margin-top: 1rem;
+}
+
+.project-name-display {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-top: 1rem;
+}
+
+/* Modern Android navigation bar */
+.device-home-button {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 2px;
+  z-index: 1000;
+}
+
+.device-label {
+  margin-top: 1.5rem;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .device-frame {
+    width: 300px;
+    height: 667px; /* Maintain 20:9 aspect ratio */
+  }
+
+  .device-notch {
+    width: 25px;
+    height: 25px;
+  }
+
+  .device-notch::after {
+    width: 5px;
+    height: 5px;
+    top: 6px;
+  }
+
+  .device-frame-container {
+    padding: 1rem;
+  }
+}

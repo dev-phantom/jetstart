@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">JetStart Client</string>
+    
+    <!-- Home Screen -->
+    <string name="home_title">JetStart</string>
+    <string name="home_subtitle">Wireless Android Development</string>
+    <string name="scan_qr">Scan QR Code</string>
+    <string name="view_logs">View Logs</string>
+    
+    <!-- Scanner Screen -->
+    <string name="scanner_title">Scan QR Code</string>
+    <string name="scanner_instruction">Point camera at QR code</string>
+    
+    <!-- Connection Screen -->
+    <string name="connection_title">Connection</string>
+    <string name="connection_status">Connection Status</string>
+    <string name="build_status">Build Status</string>
+    <string name="project_info">Project Information</string>
+    <string name="disconnect">Disconnect</string>
+    
+    <!-- Logs Screen -->
+    <string name="logs_title">Logs</string>
+    <string name="clear_logs">Clear Logs</string>
+    <string name="no_logs">No logs yet</string>
+    
+    <!-- Status Messages -->
+    <string name="connecting">Connecting...</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="building">Building</string>
+    <string name="waiting">Waiting</string>
+    
+    <!-- How to Use -->
+    <string name="how_to_use">How to use:</string>
+    <string name="instruction_1">1. Run \'jetstart dev\' on your computer</string>
+    <string name="instruction_2">2. Scan the QR code displayed</string>
+    <string name="instruction_3">3. Your app will install automatically</string>
+    <string name="instruction_4">4. Edit code and see live updates!</string>
+</resources>

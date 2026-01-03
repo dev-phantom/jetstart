@@ -1,0 +1,60 @@
+/**
+ * WebSocket Server
+ * Real-time communication with clients
+ */
+
+import { WebSocketServer, WebSocket } from 'ws';
+import { Server } from 'http';
+import { WebSocketHandler } from './handler';
+import { ConnectionManager } from './manager';
+import { log } from '../utils/logger';
+
+import { LogsServer } from '@jetstart/logs';
+
+export interface WebSocketConfig {
+  port: number;
+  server?: Server;
+  logsServer?: LogsServer;
+  onClientConnected?: (sessionId: string) => void;
+}
+
+export interface WebSocketServerResult {
+  server: WebSocketServer;
+  handler: WebSocketHandler;
+}
+
+export async function createWebSocketServer(config: WebSocketConfig): Promise<WebSocketServerResult> {
+  const wss = new WebSocketServer({
+    port: config.port,
+  });
+
+  const connectionManager = new ConnectionManager();
+  const handler = new WebSocketHandler(connectionManager, {
+    logsServer: config.logsServer,
+    onClientConnected: config.onClientConnected,
+  });
+
+  wss.on('connection', (ws: WebSocket, _request) => {
+    const clientId = connectionManager.addConnection(ws);
+    log(`WebSocket client connected: ${clientId}`);
+
+    // Handle messages
+    ws.on('message', (data: Buffer) => {
+      handler.handleMessage(clientId, data);
+    });
+
+    // Handle disconnection
+    ws.on('close', () => {
+      log(`WebSocket client disconnected: ${clientId}`);
+      connectionManager.removeConnection(clientId);
+    });
+
+    // Handle errors
+    ws.on('error', (err: Error) => {
+      console.error(`WebSocket error for ${clientId}:`, err.message);
+    });
+  });
+
+  log(`WebSocket server listening on port ${config.port}`);
+  return { server: wss, handler };
+}

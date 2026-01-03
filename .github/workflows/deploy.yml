@@ -1,0 +1,98 @@
+name: Deploy to cPanel
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # ------------------------------------------------------------------
+      # BUILD STEPS
+      # ------------------------------------------------------------------
+
+      # 0. Build Shared Packages (required for apps)
+      - name: Build Shared Packages
+        run: npm run build:packages
+      
+      # 1. Build Docs (Docusaurus)
+      - name: Build Docs
+        run: npm run build --workspace=jetstart-docs
+
+      # 2. Build Web App (Vite)
+      - name: Build Web App
+        run: npm run build:web
+
+      # 3. Build Sanity Studio
+      - name: Build Sanity Studio
+        run: npm run build --workspace=packages/sanity-studio
+
+      # ------------------------------------------------------------------
+      # DEPLOYMENT STEPS (Rsync)
+      # ------------------------------------------------------------------
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+          # Setup SSH Agent with Passphrase using ASKPASS script
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          echo 'echo "${{ secrets.CPANEL_PASSPHRASE }}"' > ~/.ssh/askpass
+          chmod +x ~/.ssh/askpass
+          export SSH_ASKPASS=~/.ssh/askpass
+          export DISPLAY=:0 
+          setsid ssh-add ~/.ssh/id_rsa
+          
+          # Create SSH Config
+          cat >~/.ssh/config <<END
+          Host cpanel
+            HostName $SSH_HOST
+            User $SSH_USER
+            Port $SSH_PORT
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking no
+          END
+          
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
+        env:
+          SSH_USER: ${{ secrets.CPANEL_USERNAME }}
+          SSH_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+          SSH_HOST: ${{ secrets.CPANEL_HOST }}
+          SSH_PORT: ${{ secrets.CPANEL_PORT }}
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+
+      # Deploy Docs -> Root (public_html/)
+      - name: Deploy Docs
+        run: |
+          rsync -avz --delete \
+            ./docs/build/ \
+            cpanel:~/public_html/
+
+      # Deploy Web App -> /app (public_html/app/)
+      - name: Deploy Web App
+        run: |
+          rsync -avz --delete \
+            ./packages/web/dist/ \
+            cpanel:~/public_html/app/
+
+      # Deploy Sanity Studio -> /studio (public_html/studio/)
+      - name: Deploy Sanity Studio
+        run: |
+          rsync -avz --delete \
+            ./packages/sanity-studio/dist/ \
+            cpanel:~/public_html/studio/
