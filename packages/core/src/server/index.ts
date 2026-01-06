@@ -42,7 +42,7 @@ export class JetStartServer extends EventEmitter {
   private currentSession: ServerSession | null = null;
   private buildMutex: boolean = false;  // Prevent concurrent builds
   private latestApkPath: string | null = null;  // Store latest built APK path
-  private useTrueHotReload: boolean = true;  // Use DEX-based hot reload
+  private useTrueHotReload: boolean = false;  // Use DEX-based hot reload (DISABLED - use APK builds instead)
   private adbHelper: AdbHelper;  // Auto-install APKs via ADB
   private autoInstall: boolean = true;  // Auto-install APK after build
   private isFileChangeBuild: boolean = false;  // Track if build is from file change
@@ -113,6 +113,7 @@ export class JetStartServer extends EventEmitter {
       const envCheck = await this.hotReloadService.checkEnvironment();
       if (envCheck.ready) {
         log('🔥 True hot reload enabled (DEX-based)');
+        this.useTrueHotReload = true;
       } else {
         log('⚠️ True hot reload not available, falling back to DSL');
         log(`Issues: ${envCheck.issues.join(', ')}`);
@@ -131,6 +132,7 @@ export class JetStartServer extends EventEmitter {
       const wsResult = await createWebSocketServer({
         port: this.config.wsPort,
         logsServer: this.logsServer,
+        adbHelper: this.adbHelper,  // Enable wireless ADB auto-connect
         onClientConnected: async (sessionId: string) => {
           log(`Client connected (session: ${sessionId}). Triggering initial build...`);
           // Trigger initial build when client connects
@@ -148,12 +150,28 @@ export class JetStartServer extends EventEmitter {
       this.buildService.startWatching(this.config.projectPath, async (files) => {
         log(`Files changed: ${files.map(f => f.split(/[/\\]/).pop()).join(', ')}`);
 
-        // For now, always use full Gradle build + ADB install for reliable updates
-        // TRUE hot reload ($change instrumentation) can be enabled later
-        log('📦 File changes detected, triggering Gradle build + ADB install');
-        this.buildService.clearCache();
-        this.isFileChangeBuild = true;  // Mark as file change build for auto-install
-        await this.handleRebuild();
+        // Check if all changed files support hot reload (.kt files that aren't in build directory)
+        const hotReloadFiles = files.filter(f => {
+          const normalized = f.replace(/\\/g, '/');
+          // Support hot reload for all .kt files EXCEPT those in /build/ directory
+          return normalized.endsWith('.kt') &&
+                 !normalized.includes('/build/') &&
+                 !normalized.includes('build.gradle');
+        });
+
+        // Use TRUE hot reload for Kotlin files (sends DEX via WebSocket - no USB needed!)
+        if (hotReloadFiles.length > 0 && hotReloadFiles.length === files.length && this.useTrueHotReload) {
+          log('🔥 Kotlin files changed, using TRUE hot reload (DEX via WebSocket)');
+          for (const file of hotReloadFiles) {
+            await this.handleUIUpdate(file);
+          }
+        } else {
+          // Build files or mixed changes - use full Gradle build
+          log('📦 Build files changed, triggering Gradle build + ADB install');
+          this.buildService.clearCache();
+          this.isFileChangeBuild = true;  // Mark as file change build for auto-install
+          await this.handleRebuild();
+        }
       });
 
       console.log();
@@ -222,9 +240,10 @@ export class JetStartServer extends EventEmitter {
 
         // Auto-install APK via ADB only for file change builds (not initial builds)
         if (this.autoInstall && this.latestApkPath && this.isFileChangeBuild) {
-          const devices = this.adbHelper.getDevices();
-          if (devices.length > 0) {
-            log(`📱 Auto-installing APK on ${devices.length} device(s)...`);
+          const readyDevices = this.adbHelper.getDevices();
+
+          if (readyDevices.length > 0) {
+            log(`📱 Auto-installing APK on ${readyDevices.length} device(s)...`);
             const installResult = await this.adbHelper.installApk(this.latestApkPath);
             if (installResult.success) {
               success('📱 APK auto-installed! App will restart with new code.');
@@ -234,7 +253,16 @@ export class JetStartServer extends EventEmitter {
               error(`Auto-install failed: ${installResult.error}`);
             }
           } else {
-            log('No devices connected for auto-install. Scan QR or download APK manually.');
+            // Check if devices are connecting
+            const allDevices = this.adbHelper.getAllDeviceStates();
+            if (allDevices.length > 0) {
+              const states = allDevices.map(d => `${d.id} (${d.state})`).join(', ');
+              log(`⏳ Devices found but not ready: ${states}`);
+              log('ℹ️  Device may need user authorization on the phone.');
+              log('ℹ️  Auto-install will retry on the next file change.');
+            } else {
+              log('ℹ️  No devices connected for auto-install. Scan QR or download APK manually.');
+            }
           }
           // Reset flag after handling
           this.isFileChangeBuild = false;

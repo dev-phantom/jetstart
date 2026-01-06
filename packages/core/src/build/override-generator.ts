@@ -42,8 +42,10 @@ export class OverrideGenerator {
       const classInfo = this.parseKotlinSource(sourceContent, sourceFile);
 
       if (classInfo.length === 0) {
-        errors.push('No classes found in source file');
-        return { success: false, overrideClassFiles: [], errors };
+        // No classes found - this is normal for files with only @Composable functions
+        // Return success with 0 overrides and let the fallback handle it
+        log(`ℹ️ No classes found in ${sourceFile} - using direct class hot reload`);
+        return { success: true, overrideClassFiles: [], errors: [] };
       }
 
       // Generate override class source for each class
@@ -380,8 +382,10 @@ export class OverrideGenerator {
     lines.push(`/**`);
     lines.push(` * Generated override class for ${className}`);
     lines.push(` * Implements IncrementalChange to provide hot-reloaded method implementations`);
+    lines.push(` * `);
+    lines.push(` * Pattern: args[0] is 'this' for instance methods, method parameters follow`);
     lines.push(` */`);
-    lines.push(`class ${className}\$override(private val newInstance: ${className}) : IncrementalChange {`);
+    lines.push(`class ${className}\$override : IncrementalChange {`);
     lines.push('');
 
     // Generate access$dispatch method
@@ -389,32 +393,54 @@ export class OverrideGenerator {
     lines.push('        return when (methodSignature) {');
 
     for (const method of methods) {
-      const { name, parameters, returnType, signature } = method;
+      const { name, parameters, returnType, signature, isStatic } = method;
 
       // Generate case for this method
       lines.push(`            "${signature}" -> {`);
 
-      // Cast arguments and call the new method
+      // For instance methods, cast args[0] to the instance type
+      if (!isStatic) {
+        lines.push(`                val instance = args[0] as ${className}`);
+      }
+
+      // Cast arguments and call the method
       if (parameters.length === 0) {
         if (returnType === 'Unit') {
-          lines.push(`                newInstance.${name}()`);
+          if (isStatic) {
+            lines.push(`                ${className}.${name}()`);
+          } else {
+            lines.push(`                instance.${name}()`);
+          }
           lines.push('                null');
         } else {
-          lines.push(`                newInstance.${name}()`);
+          if (isStatic) {
+            lines.push(`                ${className}.${name}()`);
+          } else {
+            lines.push(`                instance.${name}()`);
+          }
         }
       } else {
         // Build argument list with casts
         const argCasts = parameters.map((p, i) => {
-          // args[0] is 'this' for instance methods, so actual args start at index 1
-          const argIndex = method.isStatic ? i : i + 1;
+          // For instance methods: args[0] is 'this', method params start at args[1]
+          // For static methods: method params start at args[0]
+          const argIndex = isStatic ? i : i + 1;
           return `args[${argIndex}] as ${p.type}`;
         });
 
         if (returnType === 'Unit') {
-          lines.push(`                newInstance.${name}(${argCasts.join(', ')})`);
+          if (isStatic) {
+            lines.push(`                ${className}.${name}(${argCasts.join(', ')})`);
+          } else {
+            lines.push(`                instance.${name}(${argCasts.join(', ')})`);
+          }
           lines.push('                null');
         } else {
-          lines.push(`                newInstance.${name}(${argCasts.join(', ')})`);
+          if (isStatic) {
+            lines.push(`                ${className}.${name}(${argCasts.join(', ')})`);
+          } else {
+            lines.push(`                instance.${name}(${argCasts.join(', ')})`);
+          }
         }
       }
 

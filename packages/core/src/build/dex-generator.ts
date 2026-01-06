@@ -120,7 +120,6 @@ export class DexGenerator {
     const args = [
       '--output', dexOutputDir,
       '--min-api', '24',
-      '--no-desugaring',
       ...classFiles
     ];
 

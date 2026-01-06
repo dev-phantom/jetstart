@@ -4,8 +4,11 @@
  */
 
 import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
 import { KotlinCompiler } from './kotlin-compiler';
 import { DexGenerator } from './dex-generator';
+import { OverrideGenerator } from './override-generator';
 import { log, error as logError, success } from '../utils/logger';
 
 export interface HotReloadResult {
@@ -20,10 +23,14 @@ export interface HotReloadResult {
 export class HotReloadService {
   private kotlinCompiler: KotlinCompiler;
   private dexGenerator: DexGenerator;
+  private overrideGenerator: OverrideGenerator;
+  private projectPath: string;
 
   constructor(projectPath: string) {
+    this.projectPath = projectPath;
     this.kotlinCompiler = new KotlinCompiler(projectPath);
     this.dexGenerator = new DexGenerator();
+    this.overrideGenerator = new OverrideGenerator();
   }
 
   /**
@@ -54,7 +61,41 @@ export class HotReloadService {
 
     log(`Compilation completed in ${compileTime}ms (${compileResult.classFiles.length} classes)`);
 
-    // Step 2: Convert .class to .dex
+    // Step 2: Generate $Override classes (Phase 2)
+    const overrideDir = path.join(os.tmpdir(), 'jetstart-overrides', Date.now().toString());
+    fs.mkdirSync(overrideDir, { recursive: true });
+
+    const overrideResult = await this.overrideGenerator.generateOverrides(
+      compileResult.classFiles,
+      filePath,
+      overrideDir
+    );
+
+    if (!overrideResult.success) {
+      log(`⚠️ Override generation failed: ${overrideResult.errors.join(', ')}`);
+      log(`📝 Falling back to direct class hot reload (less efficient)`);
+    } else {
+      log(`Generated ${overrideResult.overrideClassFiles.length} override classes`);
+
+      // Compile override source files to .class
+      const allOverrideClassFiles: string[] = [];
+      for (const overrideFile of overrideResult.overrideClassFiles) {
+        const compRes = await this.kotlinCompiler.compileFile(overrideFile);
+        if (compRes.success) {
+          allOverrideClassFiles.push(...compRes.classFiles);
+        } else {
+          log(`⚠️ Failed to compile override ${path.basename(overrideFile)}: ${compRes.errors.join(', ')}`);
+        }
+      }
+
+      if (allOverrideClassFiles.length > 0) {
+        log(`Compiled ${allOverrideClassFiles.length} override classes`);
+        // Add override classes to DEX generation
+        compileResult.classFiles.push(...allOverrideClassFiles);
+      }
+    }
+
+    // Step 3: Convert .class to .dex
     const dexStart = Date.now();
     const dexResult = await this.dexGenerator.generateDex(compileResult.classFiles);
     const dexTime = Date.now() - dexStart;
