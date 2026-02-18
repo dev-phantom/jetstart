@@ -9,7 +9,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { downloadWithRetry } from './downloader';
 import { startSpinner, stopSpinner } from './spinner';
-import { success, error as logError, warning, info } from './logger';
+import { success, error as warning, info } from './logger';
 
 const execAsync = promisify(exec);
 

@@ -146,8 +146,6 @@ If QR scanning doesn't work:
 5. **Tap "Connect"**
 
 ### Option C: Web Emulator
-
-### Option C: Web Emulator
  
  Don't have an Android device? Use the web emulator:
  

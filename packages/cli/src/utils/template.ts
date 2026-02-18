@@ -1,6 +1,10 @@
 /**
  * Template Generator
- * Creates project structure from templates
+ * Creates project structure from file-based templates
+ *
+ * Instead of inline string templates, this uses the `packages/template/base/`
+ * folder. Template files contain {{PLACEHOLDER}} variables that are substituted
+ * at scaffold time.
  */
 
 import path from 'path';
@@ -9,925 +13,146 @@ import { spawn } from 'child_process';
 import { TemplateOptions } from '../types';
 import { MIN_ANDROID_API_LEVEL, TARGET_ANDROID_API_LEVEL } from '@jetstart/shared';
 
-export async function generateProjectTemplate(
-  projectPath: string,
-  options: TemplateOptions
-): Promise<void> {
-  const { projectName, packageName } = options;
+// ============================================================================
+// Placeholder Variables
+// ============================================================================
 
-  // Create directory structure
-  await createDirectoryStructure(projectPath);
+/**
+ * Build the variable map from TemplateOptions
+ */
+function buildVariableMap(options: TemplateOptions): Record<string, string> {
+  const themeName = options.projectName.replace(/[^a-zA-Z0-9]/g, '');
 
-  // Generate files
-  await generateRootBuildGradle(projectPath);
-  await generateBuildGradle(projectPath, options);
-  await generateSettingsGradle(projectPath, projectName);
-  await generateGradleProperties(projectPath);
-  await generateGradleWrapper(projectPath);
-  await generateMainActivity(projectPath, packageName);
-  await generateJetStart(projectPath, packageName);
-  await generateAndroidManifest(projectPath, options);
-  await generateResourceFiles(projectPath, projectName);
-  await generateLocalProperties(projectPath);
-  await generateJetStartConfig(projectPath, options);
-  await generateGitignore(projectPath);
-  await generateReadme(projectPath, projectName);
+  return {
+    '{{PROJECT_NAME}}': options.projectName,
+    '{{PACKAGE_NAME}}': options.packageName,
+    '{{THEME_NAME}}': themeName,
+    '{{MIN_SDK}}': String(MIN_ANDROID_API_LEVEL),
+    '{{TARGET_SDK}}': String(TARGET_ANDROID_API_LEVEL),
+  };
 }
 
-async function generateJetStart(
+// ============================================================================
+// Template Processing
+// ============================================================================
+
+/**
+ * Resolve the template directory.
+ * When compiled, template.ts lives at packages/cli/dist/utils/template.js,
+ * so we go up to packages/ then into template/base/.
+ * When running via ts-node, template.ts lives at packages/cli/src/utils/template.ts,
+ * same relative traversal works.
+ */
+function getTemplateDir(): string {
+  // __dirname at compile time: packages/cli/dist/utils/
+  // __dirname at dev time:     packages/cli/src/utils/
+  // Either way, go up 3 levels to packages/, then into template/base/
+  return path.resolve(__dirname, '..', '..', '..', 'template', 'base');
+}
+
+/**
+ * Known binary/non-text extensions that should be copied without substitution.
+ */
+const BINARY_EXTENSIONS = new Set([
+  '.jar',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.ico',
+  '.pdf',
+  '.zip',
+  '.gz',
+  '.tar',
+  '.class',
+]);
+
+/**
+ * Check if a file is a text file that should have placeholders replaced.
+ */
+function isTextFile(filePath: string): boolean {
+  const ext = path.extname(filePath).toLowerCase();
+  return !BINARY_EXTENSIONS.has(ext);
+}
+
+/**
+ * Replace all {{PLACEHOLDER}} variables in a text string.
+ */
+function replaceVariables(content: string, variables: Record<string, string>): string {
+  let result = content;
+  for (const [placeholder, value] of Object.entries(variables)) {
+    // Use split+join for global replace (no regex needed)
+    result = result.split(placeholder).join(value);
+  }
+  return result;
+}
+
+/**
+ * Recursively walk a directory tree and return all file paths (relative).
+ */
+async function walkDir(dir: string, base?: string): Promise<string[]> {
+  const root = base ?? dir;
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await walkDir(fullPath, root)));
+    } else {
+      files.push(path.relative(root, fullPath));
+    }
+  }
+
+  return files;
+}
+
+// ============================================================================
+// Core Template Functions
+// ============================================================================
+
+/**
+ * Copy the template folder to the project path, replacing placeholders.
+ */
+async function copyTemplateWithVariables(
+  templateDir: string,
   projectPath: string,
+  variables: Record<string, string>,
   packageName: string
 ): Promise<void> {
-  const packagePath = packageName.replace(/\./g, '/');
-  const jetStartPath = path.join(
-    projectPath,
-    'app/src/main/java',
-    packagePath,
-    'JetStart.kt'
-  );
+  const files = await walkDir(templateDir);
 
-  const content = `package ${packageName}
+  for (const relPath of files) {
+    const srcPath = path.join(templateDir, relPath);
 
-// Android
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.util.Log
-import androidx.core.content.FileProvider
+    // Replace __PACKAGE_PATH__ in the directory structure
+    const packageDir = packageName.replace(/\./g, '/');
+    const destRelPath = relPath.replace('__PACKAGE_PATH__', packageDir);
+    const destPath = path.join(projectPath, destRelPath);
 
-// Compose
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+    // Ensure the destination directory exists
+    await fs.ensureDir(path.dirname(destPath));
 
-// Third-party
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import okhttp3.*
-
-// Standard library & JSON
-import org.json.JSONArray
-import org.json.JSONObject
-import java.io.File
-import java.io.IOException
-
-// ============================================================================
-// DSL Type Definitions
-// ============================================================================
-
-/**
- * DSL Type Definitions
- * Represents UI elements in JSON format that can be interpreted at runtime
- */
-
-data class UIDefinition(
-    val version: String = "1.0",
-    val screen: DSLElement
-)
-
-data class DSLElement(
-    val type: String,
-    val text: String? = null,
-    val style: String? = null,
-    val color: String? = null,
-    val modifier: DSLModifier? = null,
-    val horizontalAlignment: String? = null,
-    val verticalArrangement: String? = null,
-    val contentAlignment: String? = null,
-    val height: Int? = null,
-    val width: Int? = null,
-    val onClick: String? = null,
-    val enabled: Boolean? = true,
-    val imageVector: String? = null,
-    val tint: String? = null,
-    val contentDescription: String? = null,
-    val children: List<DSLElement>? = null
-)
-
-data class DSLModifier(
-    val fillMaxSize: Boolean? = null,
-    val fillMaxWidth: Boolean? = null,
-    val fillMaxHeight: Boolean? = null,
-    val padding: Int? = null,
-    val paddingHorizontal: Int? = null,
-    val paddingVertical: Int? = null,
-    val size: Int? = null,
-    val height: Int? = null,
-    val width: Int? = null,
-    val weight: Float? = null
-)
-
-/**
- * Parse JSON string to UIDefinition
- */
-fun parseUIDefinition(json: String): UIDefinition {
-    val obj = JSONObject(json)
-    val version = obj.optString("version", "1.0")
-    val screenObj = obj.getJSONObject("screen")
-
-    return UIDefinition(
-        version = version,
-        screen = parseDSLElement(screenObj)
-    )
-}
-
-/**
- * Parse JSONObject to DSLElement
- */
-fun parseDSLElement(obj: JSONObject): DSLElement {
-    val children = if (obj.has("children")) {
-        val childrenArray = obj.getJSONArray("children")
-        List(childrenArray.length()) { i ->
-            parseDSLElement(childrenArray.getJSONObject(i))
-        }
-    } else null
-
-    val modifier = if (obj.has("modifier")) {
-        val modObj = obj.getJSONObject("modifier")
-        DSLModifier(
-            fillMaxSize = modObj.optBoolean("fillMaxSize"),
-            fillMaxWidth = modObj.optBoolean("fillMaxWidth"),
-            fillMaxHeight = modObj.optBoolean("fillMaxHeight"),
-            padding = if (modObj.has("padding")) modObj.getInt("padding") else null,
-            paddingHorizontal = if (modObj.has("paddingHorizontal")) modObj.getInt("paddingHorizontal") else null,
-            paddingVertical = if (modObj.has("paddingVertical")) modObj.getInt("paddingVertical") else null,
-            size = if (modObj.has("size")) modObj.getInt("size") else null,
-            height = if (modObj.has("height")) modObj.getInt("height") else null,
-            width = if (modObj.has("width")) modObj.getInt("width") else null,
-            weight = if (modObj.has("weight")) modObj.getDouble("weight").toFloat() else null
-        )
-    } else null
-
-    return DSLElement(
-        type = obj.getString("type"),
-        text = if (obj.has("text")) obj.getString("text") else null,
-        style = if (obj.has("style")) obj.getString("style") else null,
-        color = if (obj.has("color")) obj.getString("color") else null,
-        modifier = modifier,
-        horizontalAlignment = if (obj.has("horizontalAlignment")) obj.getString("horizontalAlignment") else null,
-        verticalArrangement = if (obj.has("verticalArrangement")) obj.getString("verticalArrangement") else null,
-        contentAlignment = if (obj.has("contentAlignment")) obj.getString("contentAlignment") else null,
-        height = if (obj.has("height")) obj.getInt("height") else null,
-        width = if (obj.has("width")) obj.getInt("width") else null,
-        onClick = if (obj.has("onClick")) obj.getString("onClick") else null,
-        enabled = obj.optBoolean("enabled", true),
-        imageVector = if (obj.has("imageVector")) obj.getString("imageVector") else null,
-        tint = if (obj.has("tint")) obj.getString("tint") else null,
-        contentDescription = if (obj.has("contentDescription")) obj.getString("contentDescription") else null,
-        children = children
-    )
-}
-
-// ============================================================================
-// DSL Interpreter
-// ============================================================================
-
-/**
- * DSL Interpreter
- * Converts JSON DSL to Compose UI at runtime
- */
-object DSLInterpreter {
-    private const val TAG = "DSLInterpreter"
-
-    private val _currentDSL = MutableStateFlow<UIDefinition?>(null)
-    val currentDSL: StateFlow<UIDefinition?> = _currentDSL
-
-    /**
-     * Update the current DSL definition
-     */
-    fun updateDSL(jsonString: String) {
-        try {
-            val definition = parseUIDefinition(jsonString)
-            _currentDSL.value = definition
-            Log.d(TAG, "DSL updated successfully")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse DSL: \${e.message}", e)
-        }
+    if (isTextFile(srcPath)) {
+      // Read, substitute, and write
+      const content = await fs.readFile(srcPath, 'utf-8');
+      const processed = replaceVariables(content, variables);
+      await fs.writeFile(destPath, processed);
+    } else {
+      // Binary file — copy as-is
+      await fs.copy(srcPath, destPath);
     }
-
-    /**
-     * Render DSL as Compose UI
-     */
-    @Composable
-    fun RenderDSL(definition: UIDefinition) {
-        RenderElement(definition.screen)
-    }
-
-    /**
-     * Render individual DSL element
-     */
-    @Composable
-    fun RenderElement(element: DSLElement) {
-        when (element.type) {
-            "Column" -> RenderColumn(element)
-            "Row" -> RenderRow(element)
-            "Box" -> RenderBox(element)
-            "Text" -> RenderText(element)
-            "Button" -> RenderButton(element)
-            "Spacer" -> RenderSpacer(element)
-            else -> {
-                Log.w(TAG, "Unknown element type: \${element.type}")
-                Text("Unsupported: \${element.type}", color = Color.Red)
-            }
-        }
-    }
-
-    @Composable
-    private fun RenderColumn(element: DSLElement) {
-        Column(
-            modifier = parseModifier(element.modifier),
-            horizontalAlignment = parseHorizontalAlignment(element.horizontalAlignment),
-            verticalArrangement = parseVerticalArrangement(element.verticalArrangement)
-        ) {
-            element.children?.forEach { child ->
-                RenderElement(child)
-            }
-        }
-    }
-
-    @Composable
-    private fun RenderRow(element: DSLElement) {
-        Row(
-            modifier = parseModifier(element.modifier),
-            verticalAlignment = parseVerticalAlignment(element.horizontalAlignment),
-            horizontalArrangement = parseHorizontalArrangement(element.verticalArrangement)
-        ) {
-            element.children?.forEach { child ->
-                RenderElement(child)
-            }
-        }
-    }
-
-    @Composable
-    private fun RenderBox(element: DSLElement) {
-        Box(
-            modifier = parseModifier(element.modifier),
-            contentAlignment = parseContentAlignment(element.contentAlignment)
-        ) {
-            element.children?.forEach { child ->
-                RenderElement(child)
-            }
-        }
-    }
-
-    @Composable
-    private fun RenderText(element: DSLElement) {
-        Text(
-            text = element.text ?: "",
-            style = parseTextStyle(element.style),
-            color = parseColor(element.color) ?: Color.Unspecified,
-            modifier = parseModifier(element.modifier)
-        )
-    }
-
-    @Composable
-    private fun RenderButton(element: DSLElement) {
-        Button(
-            onClick = { handleClick(element.onClick, element.text) },
-            modifier = parseModifier(element.modifier),
-            enabled = element.enabled ?: true
-        ) {
-            Text(element.text ?: "Button")
-        }
-    }
-
-    @Composable
-    private fun RenderSpacer(element: DSLElement) {
-        Spacer(
-            modifier = Modifier
-                .height(element.height?.dp ?: 0.dp)
-                .width(element.width?.dp ?: 0.dp)
-        )
-    }
-
-    /**
-     * Parse DSL modifier to Compose Modifier
-     */
-    private fun parseModifier(dslModifier: DSLModifier?): Modifier {
-        var modifier: Modifier = Modifier
-
-        dslModifier?.let { m ->
-            if (m.fillMaxSize == true) modifier = modifier.fillMaxSize()
-            if (m.fillMaxWidth == true) modifier = modifier.fillMaxWidth()
-            if (m.fillMaxHeight == true) modifier = modifier.fillMaxHeight()
-
-            m.padding?.let { modifier = modifier.padding(it.dp) }
-            m.paddingHorizontal?.let { modifier = modifier.padding(horizontal = it.dp) }
-            m.paddingVertical?.let { modifier = modifier.padding(vertical = it.dp) }
-
-            m.size?.let { modifier = modifier.size(it.dp) }
-            m.height?.let { modifier = modifier.height(it.dp) }
-            m.width?.let { modifier = modifier.width(it.dp) }
-
-            // Note: weight() is only available in RowScope/ColumnScope
-            // We'll handle it separately when needed
-        }
-
-        return modifier
-    }
-
-    /**
-     * Parse alignment strings
-     */
-    private fun parseHorizontalAlignment(alignment: String?): Alignment.Horizontal {
-        return when (alignment?.lowercase()) {
-            "start" -> Alignment.Start
-            "centerhorizontally", "center" -> Alignment.CenterHorizontally
-            "end" -> Alignment.End
-            else -> Alignment.Start
-        }
-    }
-
-    private fun parseVerticalAlignment(alignment: String?): Alignment.Vertical {
-        return when (alignment?.lowercase()) {
-            "top" -> Alignment.Top
-            "centervertically", "center" -> Alignment.CenterVertically
-            "bottom" -> Alignment.Bottom
-            else -> Alignment.Top
-        }
-    }
-
-    private fun parseContentAlignment(alignment: String?): Alignment {
-        return when (alignment?.lowercase()) {
-            "center" -> Alignment.Center
-            "topcenter" -> Alignment.TopCenter
-            "topstart" -> Alignment.TopStart
-            "topend" -> Alignment.TopEnd
-            "bottomcenter" -> Alignment.BottomCenter
-            "bottomstart" -> Alignment.BottomStart
-            "bottomend" -> Alignment.BottomEnd
-            "centerstart" -> Alignment.CenterStart
-            "centerend" -> Alignment.CenterEnd
-            else -> Alignment.TopStart
-        }
-    }
-
-    private fun parseVerticalArrangement(arrangement: String?): Arrangement.Vertical {
-        return when (arrangement?.lowercase()) {
-            "top" -> Arrangement.Top
-            "center" -> Arrangement.Center
-            "bottom" -> Arrangement.Bottom
-            "spacebetween" -> Arrangement.SpaceBetween
-            "spacearound" -> Arrangement.SpaceAround
-            "spaceevenly" -> Arrangement.SpaceEvenly
-            else -> Arrangement.Top
-        }
-    }
-
-    private fun parseHorizontalArrangement(arrangement: String?): Arrangement.Horizontal {
-        return when (arrangement?.lowercase()) {
-            "start" -> Arrangement.Start
-            "center" -> Arrangement.Center
-            "end" -> Arrangement.End
-            "spacebetween" -> Arrangement.SpaceBetween
-            "spacearound" -> Arrangement.SpaceAround
-            "spaceevenly" -> Arrangement.SpaceEvenly
-            else -> Arrangement.Start
-        }
-    }
-
-    /**
-     * Parse text style
-     */
-    @Composable
-    private fun parseTextStyle(style: String?): androidx.compose.ui.text.TextStyle {
-        return when (style?.lowercase()) {
-            "headlinelarge" -> MaterialTheme.typography.headlineLarge
-            "headlinemedium" -> MaterialTheme.typography.headlineMedium
-            "headlinesmall" -> MaterialTheme.typography.headlineSmall
-            "titlelarge" -> MaterialTheme.typography.titleLarge
-            "titlemedium" -> MaterialTheme.typography.titleMedium
-            "titlesmall" -> MaterialTheme.typography.titleSmall
-            "bodylarge" -> MaterialTheme.typography.bodyLarge
-            "bodymedium" -> MaterialTheme.typography.bodyMedium
-            "bodysmall" -> MaterialTheme.typography.bodySmall
-            "labellarge" -> MaterialTheme.typography.labelLarge
-            "labelmedium" -> MaterialTheme.typography.labelMedium
-            "labelsmall" -> MaterialTheme.typography.labelSmall
-            else -> MaterialTheme.typography.bodyMedium
-        }
-    }
-
-    /**
-     * Parse color from string
-     */
-    private fun parseColor(colorString: String?): Color? {
-        if (colorString == null) return null
-
-        return try {
-            when {
-                colorString.startsWith("#") -> {
-                    // Hex color
-                    Color(android.graphics.Color.parseColor(colorString))
-                }
-                else -> null
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse color: \$colorString")
-            null
-        }
-    }
-
-    /**
-     * Handle click events
-     */
-    private fun handleClick(action: String?, text: String?) {
-        if (action != null) {
-            Log.d(TAG, "Button clicked: \$action")
-
-            // Send click event to dev server
-            sendClickEvent(action, "Button", text)
-        }
-    }
-
-    /**
-     * Send click event to dev server via WebSocket
-     */
-    private fun sendClickEvent(action: String, elementType: String, elementText: String?) {
-        try {
-            val ws = HotReload.getWebSocket()
-            if (ws != null) {
-                val message = JSONObject().apply {
-                    put("type", "client:click")
-                    put("timestamp", System.currentTimeMillis())
-                    put("action", action)
-                    put("elementType", elementType)
-                    elementText?.let { put("elementText", it) }
-                }
-
-                ws.send(message.toString())
-                Log.d(TAG, "Sent click event to server: \$action")
-            } else {
-                Log.w(TAG, "WebSocket not available, cannot send click event")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to send click event: \${e.message}")
-        }
-    }
-}
-
-// ============================================================================
-// Hot Reload Manager
-// ============================================================================
-
-/**
- * Hot Reload Manager
- * Connects to JetStart dev server and automatically reloads the app when code changes
- */
-object HotReload {
-    private const val TAG = "HotReload"
-    private var webSocket: WebSocket? = null
-    private var activity: Activity? = null
-    private var connectionTime: Long = 0
-    private var ignoreFirstBuild = true
-    private val httpClient = OkHttpClient()
-
-    /**
-     * Get the current WebSocket connection (for sending messages)
-     */
-    fun getWebSocket(): WebSocket? = webSocket
-
-    fun connect(activity: Activity, serverUrl: String, sessionId: String) {
-        this.activity = activity
-
-        val wsUrl = serverUrl.replace("http://", "ws://").replace("https://", "wss://")
-        Log.d(TAG, "Connecting to dev server: \$wsUrl")
-
-        val client = OkHttpClient()
-        val request = Request.Builder()
-            .url(wsUrl)
-            .build()
-
-        webSocket = client.newWebSocket(request, object : WebSocketListener() {
-            override fun onOpen(webSocket: WebSocket, response: Response) {
-                Log.d(TAG, "WebSocket connected")
-                connectionTime = System.currentTimeMillis()
-                ignoreFirstBuild = true // Ignore the first build-complete after connecting
-
-                // Send connect message
-                val connectMsg = JSONObject().apply {
-                    put("type", "client:connect")
-                    put("sessionId", sessionId)
-                    put("clientType", "test-app")
-                }
-                webSocket.send(connectMsg.toString())
-            }
-
-            override fun onMessage(webSocket: WebSocket, text: String) {
-                Log.d(TAG, "Received: \$text")
-
-                try {
-                    val json = JSONObject(text)
-                    val type = json.getString("type")
-
-                    when (type) {
-                        "core:ui-update" -> {
-                            // DSL-based hot reload (FAST)
-                            if (ignoreFirstBuild) {
-                                Log.d(TAG, "Ignoring first UI update (old build)")
-                                ignoreFirstBuild = false
-                                return@onMessage
-                            }
-
-                            val timestamp = json.optLong("timestamp", 0)
-                            val dslContent = json.optString("dslContent", "")
-
-                            Log.d(TAG, "UI update received at \$timestamp, connection at \$connectionTime")
-
-                            // Only update if changes happened AFTER we connected
-                            if (timestamp > connectionTime && dslContent.isNotEmpty()) {
-                                Log.d(TAG, "New UI update detected, recomposing (\${dslContent.length} bytes)")
-
-                                // Update DSL on main thread
-                                activity?.runOnUiThread {
-                                    DSLInterpreter.updateDSL(dslContent)
-                                }
-                            } else {
-                                Log.d(TAG, "Ignoring old UI update")
-                            }
-                        }
-
-                        "core:reload" -> {
-                            Log.d(TAG, "Reload triggered!")
-                            // Restart activity on main thread
-                            activity?.runOnUiThread {
-                                activity?.recreate()
-                            }
-                        }
-
-                        "core:build-complete" -> {
-                            // Full APK rebuild (SLOW - fallback for non-UI changes)
-                            if (ignoreFirstBuild) {
-                                Log.d(TAG, "Ignoring first build-complete (old build)")
-                                ignoreFirstBuild = false
-                                return@onMessage
-                            }
-
-                            val timestamp = json.optLong("timestamp", 0)
-                            val downloadUrl = json.optString("downloadUrl", "")
-
-                            Log.d(TAG, "Build complete at \$timestamp, connection at \$connectionTime")
-                            Log.d(TAG, "Download URL: \$downloadUrl")
-
-                            // Only reload if build happened AFTER we connected
-                            if (timestamp > connectionTime && downloadUrl.isNotEmpty()) {
-                                Log.d(TAG, "New build detected, downloading and installing APK")
-                                downloadAndInstallApk(downloadUrl)
-                            } else {
-                                Log.d(TAG, "Ignoring old build (timestamp before connection)")
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to parse message: \${e.message}")
-                }
-            }
-
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                Log.e(TAG, "WebSocket error: \${t.message}")
-                // Auto-reconnect after 5 seconds
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    connect(activity!!, serverUrl, sessionId)
-                }, 5000)
-            }
-
-            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                Log.d(TAG, "WebSocket closed: \$reason")
-            }
-        })
-    }
-
-    fun disconnect() {
-        webSocket?.close(1000, "App closing")
-        webSocket = null
-        activity = null
-    }
-
-    private fun downloadAndInstallApk(downloadUrl: String) {
-        Log.d(TAG, "Starting APK download from: \$downloadUrl")
-
-        val request = Request.Builder()
-            .url(downloadUrl)
-            .build()
-
-        httpClient.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e(TAG, "APK download failed: \${e.message}")
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                if (!response.isSuccessful) {
-                    Log.e(TAG, "APK download failed with code: \${response.code}")
-                    return
-                }
-
-                try {
-                    val apkData = response.body?.bytes()
-                    if (apkData == null) {
-                        Log.e(TAG, "APK data is null")
-                        return
-                    }
-
-                    Log.d(TAG, "APK downloaded successfully (\${apkData.size} bytes)")
-
-                    // Save APK to cache directory
-                    val cacheDir = activity?.cacheDir
-                    if (cacheDir == null) {
-                        Log.e(TAG, "Cache directory is null")
-                        return
-                    }
-
-                    val apkFile = File(cacheDir, "update.apk")
-                    apkFile.outputStream().use { output ->
-                        output.write(apkData)
-                    }
-
-                    Log.d(TAG, "APK saved to: \${apkFile.absolutePath}")
-
-                    // Install APK on main thread
-                    activity?.runOnUiThread {
-                        installApk(apkFile)
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to save/install APK: \${e.message}")
-                }
-            }
-        })
-    }
-
-    private fun installApk(apkFile: File) {
-        try {
-            val context = activity ?: return
-
-            val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                FileProvider.getUriForFile(
-                    context,
-                    "\${context.packageName}.fileprovider",
-                    apkFile
-                )
-            } else {
-                Uri.fromFile(apkFile)
-            }
-
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "application/vnd.android.package-archive")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-
-            context.startActivity(intent)
-            Log.d(TAG, "Installation intent started")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to install APK: \${e.message}")
-        }
-    }
-}
-`;
-
-  await fs.ensureDir(path.dirname(jetStartPath));
-  await fs.writeFile(jetStartPath, content);
-}
-
-async function createDirectoryStructure(projectPath: string): Promise<void> {
-  const dirs = [
-    'app/src/main/java',
-    'app/src/main/res/layout',
-    'app/src/main/res/values',
-    'app/src/main/res/drawable',
-    'gradle/wrapper',
-  ];
-
-  for (const dir of dirs) {
-    await fs.ensureDir(path.join(projectPath, dir));
   }
 }
 
-async function generateBuildGradle(
-  projectPath: string,
-  options: TemplateOptions
-): Promise<void> {
-  const content = `plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-}
-
-android {
-    namespace '${options.packageName}'
-    compileSdk ${TARGET_ANDROID_API_LEVEL}
-
-    defaultConfig {
-        applicationId "${options.packageName}"
-        minSdk ${MIN_ANDROID_API_LEVEL}
-        targetSdk ${TARGET_ANDROID_API_LEVEL}
-        versionCode 1
-        versionName "1.0.0"
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-
-    buildFeatures {
-        compose true
-        buildConfig true  // Required for JetStart hot reload
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = '1.5.6'
-    }
-}
-
-dependencies {
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
-    implementation 'androidx.activity:activity-compose:1.8.1'
-    implementation platform('androidx.compose:compose-bom:2023.10.01')
-    implementation 'androidx.compose.ui:ui'
-    implementation 'androidx.compose.ui:ui-graphics'
-    implementation 'androidx.compose.ui:ui-tooling-preview'
-    implementation 'androidx.compose.material3:material3'
-
-    // JetStart Hot Reload dependencies
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-}`;
-
-  await fs.writeFile(path.join(projectPath, 'app/build.gradle'), content);
-}
-
-async function generateSettingsGradle(
-  projectPath: string,
-  projectName: string
-): Promise<void> {
-  const content = `rootProject.name = "${projectName}"
-include ':app'`;
-
-  await fs.writeFile(path.join(projectPath, 'settings.gradle'), content);
-}
-
-async function generateGradleProperties(projectPath: string): Promise<void> {
-  const content = `org.gradle.jvmargs=-Xmx2048m
-android.useAndroidX=true
-kotlin.code.style=official`;
-
-  await fs.writeFile(path.join(projectPath, 'gradle.properties'), content);
-}
-
-async function generateMainActivity(
-  projectPath: string,
-  packageName: string
-): Promise<void> {
-  const packagePath = packageName.replace(/\./g, '/');
-  const activityPath = path.join(
-    projectPath,
-    'app/src/main/java',
-    packagePath,
-    'MainActivity.kt'
-  );
-
-  const content = `package ${packageName}
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // Initialize hot reload - reads from BuildConfig injected by jetstart dev
-        try {
-            val serverUrl = BuildConfig.JETSTART_SERVER_URL
-            val sessionId = BuildConfig.JETSTART_SESSION_ID
-            HotReload.connect(this, serverUrl, sessionId)
-        } catch (e: Exception) {
-            // BuildConfig not available yet, hot reload will be disabled
-            android.util.Log.w("MainActivity", "Hot reload not configured: \${e.message}")
-        }
-
-        setContent {
-            MaterialTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    // Check if we should render from DSL (hot reload mode)
-                    val dsl by DSLInterpreter.currentDSL.collectAsState()
-
-                    if (dsl != null) {
-                        // Hot reload mode: render from DSL sent by server
-                        DSLInterpreter.RenderDSL(dsl!!)
-                    } else {
-                        // Normal mode: render actual Compose code
-                        AppContent()
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        HotReload.disconnect()
-    }
-}
+// ============================================================================
+// Dynamic File Generators (keep as code — not template files)
+// ============================================================================
 
 /**
- * Main App Content - REAL Kotlin Compose Code!
- * This gets parsed to DSL and sent via hot reload
+ * Generate jetstart.config.json (dynamic JSON structure)
  */
-@Composable
-fun AppContent() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Welcome to JetStart! 🚀",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Edit this code and save to see hot reload!",
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = { /* Handle click */ },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Click Me!")
-        }
-    }
-}`;
-
-  await fs.ensureDir(path.dirname(activityPath));
-  await fs.writeFile(activityPath, content);
-}
-
-async function generateAndroidManifest(
-  projectPath: string,
-  options: TemplateOptions
-): Promise<void> {
-  const themeName = options.projectName.replace(/[^a-zA-Z0-9]/g, '');
-  const content = `<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <uses-permission android:name="android.permission.INTERNET" />
-
-    <application
-        android:allowBackup="true"
-        android:label="@string/app_name"
-        android:theme="@style/Theme.${themeName}"
-        android:networkSecurityConfig="@xml/network_security_config">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-
-</manifest>`;
-
-  await fs.writeFile(
-    path.join(projectPath, 'app/src/main/AndroidManifest.xml'),
-    content
-  );
-}
-
 async function generateJetStartConfig(
   projectPath: string,
   options: TemplateOptions
@@ -944,135 +169,14 @@ async function generateJetStartConfig(
     },
   };
 
-  await fs.writeJSON(
-    path.join(projectPath, 'jetstart.config.json'),
-    config,
-    { spaces: 2 }
-  );
+  await fs.writeJSON(path.join(projectPath, 'jetstart.config.json'), config, { spaces: 2 });
 }
 
-async function generateGitignore(projectPath: string): Promise<void> {
-  const content = `# Build
-/build
-/app/build
-.gradle
-*.hprof
-
-# IDE
-.idea
-*.iml
-.vscode
-.DS_Store
-
-
-# JetStart
-.jetstart
-
-# Android
-local.properties
-*.apk
-*.aab
-*.ap_
-*.dex
-*.class
-bin/
-gen/
-out/
-captures/
-.externalNativeBuild
-.cxx
-
-# Log files
-*.log
-
-# Keystore files
-*.jks
-*.keystore`;
-
-  await fs.writeFile(path.join(projectPath, '.gitignore'), content);
-}
-
-async function generateReadme(projectPath: string, projectName: string): Promise<void> {
-  const content = `# ${projectName}
-
-A JetStart project with Kotlin and Jetpack Compose.
-
-## Getting Started
-
-\`\`\`bash
-# Start development server
-jetstart dev
-
-# Build production APK
-jetstart build
-
-# View logs
-jetstart logs
-\`\`\`
-
-## Project Structure
-
-\`\`\`
-${projectName}/
-├── app/
-│   └── src/
-│       └── main/
-│           ├── java/          # Kotlin source files
-│           └── res/           # Resources
-├── jetstart.config.json       # JetStart configuration
-└── build.gradle               # Gradle build file
-\`\`\`
-
-## Learn More
-
-- [JetStart Documentation](https://github.com/phantom/jetstart)
-- [Jetpack Compose](https://developer.android.com/jetpack/compose)
-`;
-
-  await fs.writeFile(path.join(projectPath, 'README.md'), content);
-}
-
-async function generateRootBuildGradle(projectPath: string): Promise<void> {
-  const content = `// Top-level build file
-buildscript {
-    ext {
-        kotlin_version = '1.9.21'
-        compose_version = '1.5.4'
-    }
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
-}`;
-
-  await fs.writeFile(path.join(projectPath, 'build.gradle'), content);
-}
-
+/**
+ * Generate Gradle wrapper by calling system gradle.
+ */
 async function generateGradleWrapper(projectPath: string): Promise<void> {
-  // Use system Gradle to initialize proper wrapper
-  // This generates:
-  // - gradle/wrapper/gradle-wrapper.jar
-  // - gradle/wrapper/gradle-wrapper.properties
-  // - gradlew (Unix shell script)
-  // - gradlew.bat (Windows batch script)
-
   return new Promise<void>((resolve) => {
-    // Try to use system gradle to generate wrapper
     const gradleCmd = process.platform === 'win32' ? 'gradle.bat' : 'gradle';
 
     const gradleProcess = spawn(gradleCmd, ['wrapper', '--gradle-version', '8.2'], {
@@ -1080,14 +184,11 @@ async function generateGradleWrapper(projectPath: string): Promise<void> {
       shell: true,
     });
 
-    gradleProcess.on('close', (code) => {
-      // Continue regardless of success/failure
-      // If gradle wrapper command fails, the build will fall back to system gradle
+    gradleProcess.on('close', () => {
       resolve();
     });
 
     gradleProcess.on('error', () => {
-      // Continue even if gradle command not found
       resolve();
     });
 
@@ -1099,68 +200,10 @@ async function generateGradleWrapper(projectPath: string): Promise<void> {
   });
 }
 
-async function generateResourceFiles(
-  projectPath: string,
-  projectName: string
-): Promise<void> {
-  // Generate strings.xml
-  const stringsXml = `<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">${projectName}</string>
-</resources>`;
-
-  await fs.writeFile(
-    path.join(projectPath, 'app/src/main/res/values/strings.xml'),
-    stringsXml
-  );
-
-  // Generate colors.xml
-  const colorsXml = `<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-</resources>`;
-
-  await fs.writeFile(
-    path.join(projectPath, 'app/src/main/res/values/colors.xml'),
-    colorsXml
-  );
-
-  // Generate themes.xml
-  const themesXml = `<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.${projectName.replace(/[^a-zA-Z0-9]/g, '')}" parent="android:Theme.Material.Light.NoActionBar" />
-</resources>`;
-
-  await fs.writeFile(
-    path.join(projectPath, 'app/src/main/res/values/themes.xml'),
-    themesXml
-  );
-
-  // Generate network_security_config.xml for development (allows cleartext traffic)
-  const networkSecurityConfig = `<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-    <base-config cleartextTrafficPermitted="true">
-        <trust-anchors>
-            <certificates src="system" />
-        </trust-anchors>
-    </base-config>
-</network-security-config>`;
-
-  await fs.ensureDir(path.join(projectPath, 'app/src/main/res/xml'));
-  await fs.writeFile(
-    path.join(projectPath, 'app/src/main/res/xml/network_security_config.xml'),
-    networkSecurityConfig
-  );
-}
-
+/**
+ * Generate local.properties by auto-detecting Android SDK location.
+ */
 async function generateLocalProperties(projectPath: string): Promise<void> {
-  // Auto-detect Android SDK location
   let androidSdkPath: string | undefined;
 
   // Check environment variables first
@@ -1200,15 +243,53 @@ async function generateLocalProperties(projectPath: string): Promise<void> {
   }
 
   if (!androidSdkPath) {
-    console.warn('[Warning] Android SDK not found. You may need to set ANDROID_HOME or create local.properties manually.');
+    console.warn(
+      '[Warning] Android SDK not found. You may need to set ANDROID_HOME or create local.properties manually.'
+    );
     return;
   }
 
-  // Create local.properties with SDK path
   const content = `# Auto-generated by JetStart
 sdk.dir=${androidSdkPath.replace(/\\/g, '\\\\')}
 `;
 
   await fs.writeFile(path.join(projectPath, 'local.properties'), content);
   console.log(`[JetStart] Created local.properties with SDK: ${androidSdkPath}`);
+}
+
+// ============================================================================
+// Main Entry Point
+// ============================================================================
+
+/**
+ * Generate a new JetStart project from the file-based template.
+ *
+ * 1. Copy packages/template/base/ → projectPath
+ * 2. Rename __PACKAGE_PATH__ → actual package dir (e.g. com/jetstart/myapp)
+ * 3. Replace {{VAR}} placeholders in all text files
+ * 4. Generate dynamic files (jetstart.config.json, gradle wrapper, local.properties)
+ */
+export async function generateProjectTemplate(
+  projectPath: string,
+  options: TemplateOptions
+): Promise<void> {
+  const templateDir = getTemplateDir();
+
+  // Validate template directory exists
+  if (!(await fs.pathExists(templateDir))) {
+    throw new Error(
+      `Template directory not found: ${templateDir}. ` + `Make sure packages/template/base/ exists.`
+    );
+  }
+
+  // Build variable map
+  const variables = buildVariableMap(options);
+
+  // 1. Copy template files with variable substitution + package path rename
+  await copyTemplateWithVariables(templateDir, projectPath, variables, options.packageName);
+
+  // 2. Generate dynamic files
+  await generateGradleWrapper(projectPath);
+  await generateLocalProperties(projectPath);
+  await generateJetStartConfig(projectPath, options);
 }
