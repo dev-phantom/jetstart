@@ -11,12 +11,22 @@ import androidx.core.content.FileProvider
 // Compose
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.material3.*
+import androidx.compose.material3.AssistChip
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext // Added
+import android.content.Context // Added
+import androidx.compose.foundation.clickable // Added
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 
 // Third-party
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +37,22 @@ import okhttp3.*
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
+import android.util.Base64
+import dalvik.system.DexClassLoader
+
+// DivKit Imports
+import com.yandex.div.DivDataTag
+import com.yandex.div.core.Div2Context
+import com.yandex.div.core.DivConfiguration
+import com.yandex.div.core.view2.Div2View
+import com.yandex.div.data.DivParsingEnvironment
+import com.yandex.div.json.ParsingErrorLogger
+import com.yandex.div.glide.GlideDivImageLoader
+import com.yandex.div2.DivData
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.appcompat.app.AppCompatActivity
 
 // ============================================================================
 // DSL Type Definitions
@@ -38,389 +63,104 @@ import java.io.IOException
  * Represents UI elements in JSON format that can be interpreted at runtime
  */
 
-data class UIDefinition(
-    val version: String = "1.0",
-    val screen: DSLElement
-)
+// ============================================================================
+// DivKit Integration
+// ============================================================================
 
-data class DSLElement(
-    val type: String,
-    val text: String? = null,
-    val style: String? = null,
-    val color: String? = null,
-    val modifier: DSLModifier? = null,
-    val horizontalAlignment: String? = null,
-    val verticalArrangement: String? = null,
-    val contentAlignment: String? = null,
-    val height: Int? = null,
-    val width: Int? = null,
-    val onClick: String? = null,
-    val enabled: Boolean? = true,
-    val imageVector: String? = null,
-    val tint: String? = null,
-    val contentDescription: String? = null,
-    val children: List<DSLElement>? = null
-)
-
-data class DSLModifier(
-    val fillMaxSize: Boolean? = null,
-    val fillMaxWidth: Boolean? = null,
-    val fillMaxHeight: Boolean? = null,
-    val padding: Int? = null,
-    val paddingHorizontal: Int? = null,
-    val paddingVertical: Int? = null,
-    val size: Int? = null,
-    val height: Int? = null,
-    val width: Int? = null,
-    val weight: Float? = null
-)
-
-/**
- * Parse JSON string to UIDefinition
- */
-fun parseUIDefinition(json: String): UIDefinition {
-    val obj = JSONObject(json)
-    val version = obj.optString("version", "1.0")
-    val screenObj = obj.getJSONObject("screen")
-
-    return UIDefinition(
-        version = version,
-        screen = parseDSLElement(screenObj)
-    )
-}
-
-/**
- * Parse JSONObject to DSLElement
- */
-fun parseDSLElement(obj: JSONObject): DSLElement {
-    val children = if (obj.has("children")) {
-        val childrenArray = obj.getJSONArray("children")
-        List(childrenArray.length()) { i ->
-            parseDSLElement(childrenArray.getJSONObject(i))
-        }
-    } else null
-
-    val modifier = if (obj.has("modifier")) {
-        val modObj = obj.getJSONObject("modifier")
-        DSLModifier(
-            fillMaxSize = modObj.optBoolean("fillMaxSize"),
-            fillMaxWidth = modObj.optBoolean("fillMaxWidth"),
-            fillMaxHeight = modObj.optBoolean("fillMaxHeight"),
-            padding = if (modObj.has("padding")) modObj.getInt("padding") else null,
-            paddingHorizontal = if (modObj.has("paddingHorizontal")) modObj.getInt("paddingHorizontal") else null,
-            paddingVertical = if (modObj.has("paddingVertical")) modObj.getInt("paddingVertical") else null,
-            size = if (modObj.has("size")) modObj.getInt("size") else null,
-            height = if (modObj.has("height")) modObj.getInt("height") else null,
-            width = if (modObj.has("width")) modObj.getInt("width") else null,
-            weight = if (modObj.has("weight")) modObj.getDouble("weight").toFloat() else null
-        )
-    } else null
-
-    return DSLElement(
-        type = obj.getString("type"),
-        text = if (obj.has("text")) obj.getString("text") else null,
-        style = if (obj.has("style")) obj.getString("style") else null,
-        color = if (obj.has("color")) obj.getString("color") else null,
-        modifier = modifier,
-        horizontalAlignment = if (obj.has("horizontalAlignment")) obj.getString("horizontalAlignment") else null,
-        verticalArrangement = if (obj.has("verticalArrangement")) obj.getString("verticalArrangement") else null,
-        contentAlignment = if (obj.has("contentAlignment")) obj.getString("contentAlignment") else null,
-        height = if (obj.has("height")) obj.getInt("height") else null,
-        width = if (obj.has("width")) obj.getInt("width") else null,
-        onClick = if (obj.has("onClick")) obj.getString("onClick") else null,
-        enabled = obj.optBoolean("enabled", true),
-        imageVector = if (obj.has("imageVector")) obj.getString("imageVector") else null,
-        tint = if (obj.has("tint")) obj.getString("tint") else null,
-        contentDescription = if (obj.has("contentDescription")) obj.getString("contentDescription") else null,
-        children = children
-    )
-}
+// Removed custom DSL classes (UIDefinition, DSLElement) in favor of standard DivKit JSON.
 
 // ============================================================================
 // DSL Interpreter
 // ============================================================================
 
+
 /**
- * DSL Interpreter
- * Converts JSON DSL to Compose UI at runtime
+ * DivKit Interpreter
+ * Renders DivKit JSON using the official DivKit Android SDK
+ */
+
+/**
+ * DivKit Interpreter
+ * Renders DivKit JSON using the official DivKit Android SDK
  */
 object DSLInterpreter {
     private const val TAG = "DSLInterpreter"
 
-    private val _currentDSL = MutableStateFlow<UIDefinition?>(null)
-    val currentDSL: StateFlow<UIDefinition?> = _currentDSL
+    private val _currentDSL = MutableStateFlow<JSONObject?>(null)
+    val currentDSL: StateFlow<JSONObject?> = _currentDSL
+
+    private var divConfiguration: DivConfiguration? = null
 
     /**
      * Update the current DSL definition
      */
     fun updateDSL(jsonString: String) {
         try {
-            val definition = parseUIDefinition(jsonString)
-            _currentDSL.value = definition
-            Log.d(TAG, "DSL updated successfully")
+            val json = JSONObject(jsonString)
+            _currentDSL.value = json
+            Log.d(TAG, "DivKit DSL updated successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse DSL: ${e.message}", e)
+            Log.e(TAG, "Failed to parse DivKit JSON: ${e.message}", e)
         }
     }
 
     /**
-     * Render DSL as Compose UI
+     * Find Activity from a Context (traverses ContextWrapper chain)
      */
-    @Composable
-    fun RenderDSL(definition: UIDefinition) {
-        RenderElement(definition.screen)
+    private fun Context.findActivity(): AppCompatActivity? {
+        var ctx = this
+        while (ctx is android.content.ContextWrapper) {
+            if (ctx is AppCompatActivity) return ctx
+            ctx = ctx.baseContext
+        }
+        return null
     }
 
     /**
-     * Render individual DSL element
+     * Render DSL as Compose UI using AndroidView -> Div2View
      */
     @Composable
-    fun RenderElement(element: DSLElement) {
-        when (element.type) {
-            "Column" -> RenderColumn(element)
-            "Row" -> RenderRow(element)
-            "Box" -> RenderBox(element)
-            "Text" -> RenderText(element)
-            "Button" -> RenderButton(element)
-            "Spacer" -> RenderSpacer(element)
-            else -> {
-                Log.w(TAG, "Unknown element type: ${element.type}")
-                Text("Unsupported: ${element.type}", color = Color.Red)
-            }
-        }
-    }
+    fun RenderDSL(json: JSONObject) {
+        val context = LocalContext.current
+        val activity = context.findActivity()
 
-    @Composable
-    private fun RenderColumn(element: DSLElement) {
-        Column(
-            modifier = parseModifier(element.modifier),
-            horizontalAlignment = parseHorizontalAlignment(element.horizontalAlignment),
-            verticalArrangement = parseVerticalArrangement(element.verticalArrangement)
-        ) {
-            element.children?.forEach { child ->
-                RenderElement(child)
-            }
-        }
-    }
-
-    @Composable
-    private fun RenderRow(element: DSLElement) {
-        Row(
-            modifier = parseModifier(element.modifier),
-            verticalAlignment = parseVerticalAlignment(element.horizontalAlignment),
-            horizontalArrangement = parseHorizontalArrangement(element.verticalArrangement)
-        ) {
-            element.children?.forEach { child ->
-                RenderElement(child)
-            }
-        }
-    }
-
-    @Composable
-    private fun RenderBox(element: DSLElement) {
-        Box(
-            modifier = parseModifier(element.modifier),
-            contentAlignment = parseContentAlignment(element.contentAlignment)
-        ) {
-            element.children?.forEach { child ->
-                RenderElement(child)
-            }
-        }
-    }
-
-    @Composable
-    private fun RenderText(element: DSLElement) {
-        Text(
-            text = element.text ?: "",
-            style = parseTextStyle(element.style),
-            color = parseColor(element.color) ?: Color.Unspecified,
-            modifier = parseModifier(element.modifier)
-        )
-    }
-
-    @Composable
-    private fun RenderButton(element: DSLElement) {
-        Button(
-            onClick = { handleClick(element.onClick, element.text) },
-            modifier = parseModifier(element.modifier),
-            enabled = element.enabled ?: true
-        ) {
-            Text(element.text ?: "Button")
-        }
-    }
-
-    @Composable
-    private fun RenderSpacer(element: DSLElement) {
-        Spacer(
-            modifier = Modifier
-                .height(element.height?.dp ?: 0.dp)
-                .width(element.width?.dp ?: 0.dp)
-        )
-    }
-
-    /**
-     * Parse DSL modifier to Compose Modifier
-     */
-    private fun parseModifier(dslModifier: DSLModifier?): Modifier {
-        var modifier: Modifier = Modifier
-
-        dslModifier?.let { m ->
-            if (m.fillMaxSize == true) modifier = modifier.fillMaxSize()
-            if (m.fillMaxWidth == true) modifier = modifier.fillMaxWidth()
-            if (m.fillMaxHeight == true) modifier = modifier.fillMaxHeight()
-
-            m.padding?.let { modifier = modifier.padding(it.dp) }
-            m.paddingHorizontal?.let { modifier = modifier.padding(horizontal = it.dp) }
-            m.paddingVertical?.let { modifier = modifier.padding(vertical = it.dp) }
-
-            m.size?.let { modifier = modifier.size(it.dp) }
-            m.height?.let { modifier = modifier.height(it.dp) }
-            m.width?.let { modifier = modifier.width(it.dp) }
-
-            // Note: weight() is only available in RowScope/ColumnScope
-            // We'll handle it separately when needed
+        if (activity == null) {
+            Log.e(TAG, "Cannot find AppCompatActivity from context")
+            // Show fallback UI
+            androidx.compose.material3.Text(
+                text = "Hot reload requires AppCompatActivity",
+                color = androidx.compose.ui.graphics.Color.Red
+            )
+            return
         }
 
-        return modifier
-    }
-
-    /**
-     * Parse alignment strings
-     */
-    private fun parseHorizontalAlignment(alignment: String?): Alignment.Horizontal {
-        return when (alignment?.lowercase()) {
-            "start" -> Alignment.Start
-            "centerhorizontally", "center" -> Alignment.CenterHorizontally
-            "end" -> Alignment.End
-            else -> Alignment.Start
+        // Initialize DivConfiguration once
+        if (divConfiguration == null) {
+            divConfiguration = DivConfiguration.Builder(GlideDivImageLoader(context))
+                .build()
         }
-    }
 
-    private fun parseVerticalAlignment(alignment: String?): Alignment.Vertical {
-        return when (alignment?.lowercase()) {
-            "top" -> Alignment.Top
-            "centervertically", "center" -> Alignment.CenterVertically
-            "bottom" -> Alignment.Bottom
-            else -> Alignment.Top
-        }
-    }
-
-    private fun parseContentAlignment(alignment: String?): Alignment {
-        return when (alignment?.lowercase()) {
-            "center" -> Alignment.Center
-            "topcenter" -> Alignment.TopCenter
-            "topstart" -> Alignment.TopStart
-            "topend" -> Alignment.TopEnd
-            "bottomcenter" -> Alignment.BottomCenter
-            "bottomstart" -> Alignment.BottomStart
-            "bottomend" -> Alignment.BottomEnd
-            "centerstart" -> Alignment.CenterStart
-            "centerend" -> Alignment.CenterEnd
-            else -> Alignment.TopStart
-        }
-    }
-
-    private fun parseVerticalArrangement(arrangement: String?): Arrangement.Vertical {
-        return when (arrangement?.lowercase()) {
-            "top" -> Arrangement.Top
-            "center" -> Arrangement.Center
-            "bottom" -> Arrangement.Bottom
-            "spacebetween" -> Arrangement.SpaceBetween
-            "spacearound" -> Arrangement.SpaceAround
-            "spaceevenly" -> Arrangement.SpaceEvenly
-            else -> Arrangement.Top
-        }
-    }
-
-    private fun parseHorizontalArrangement(arrangement: String?): Arrangement.Horizontal {
-        return when (arrangement?.lowercase()) {
-            "start" -> Arrangement.Start
-            "center" -> Arrangement.Center
-            "end" -> Arrangement.End
-            "spacebetween" -> Arrangement.SpaceBetween
-            "spacearound" -> Arrangement.SpaceAround
-            "spaceevenly" -> Arrangement.SpaceEvenly
-            else -> Arrangement.Start
-        }
-    }
-
-    /**
-     * Parse text style
-     */
-    @Composable
-    private fun parseTextStyle(style: String?): androidx.compose.ui.text.TextStyle {
-        return when (style?.lowercase()) {
-            "headlinelarge" -> MaterialTheme.typography.headlineLarge
-            "headlinemedium" -> MaterialTheme.typography.headlineMedium
-            "headlinesmall" -> MaterialTheme.typography.headlineSmall
-            "titlelarge" -> MaterialTheme.typography.titleLarge
-            "titlemedium" -> MaterialTheme.typography.titleMedium
-            "titlesmall" -> MaterialTheme.typography.titleSmall
-            "bodylarge" -> MaterialTheme.typography.bodyLarge
-            "bodymedium" -> MaterialTheme.typography.bodyMedium
-            "bodysmall" -> MaterialTheme.typography.bodySmall
-            "labellarge" -> MaterialTheme.typography.labelLarge
-            "labelmedium" -> MaterialTheme.typography.labelMedium
-            "labelsmall" -> MaterialTheme.typography.labelSmall
-            else -> MaterialTheme.typography.bodyMedium
-        }
-    }
-
-    /**
-     * Parse color from string
-     */
-    private fun parseColor(colorString: String?): Color? {
-        if (colorString == null) return null
-
-        return try {
-            when {
-                colorString.startsWith("#") -> {
-                    // Hex color
-                    Color(android.graphics.Color.parseColor(colorString))
+        AndroidView(
+            factory = { _ ->
+                val divContext = Div2Context(
+                    baseContext = activity,
+                    configuration = divConfiguration!!,
+                    lifecycleOwner = activity
+                )
+                Div2View(divContext)
+            },
+            update = { view ->
+                try {
+                    val environment = DivParsingEnvironment(ParsingErrorLogger.ASSERT)
+                    // Parse DivKit JSON - expects card format from screen.card
+                    val cardJson = json.optJSONObject("screen")?.optJSONObject("card") ?: json
+                    val divData = DivData(environment, cardJson)
+                    view.setData(divData, DivDataTag("hot_reload"))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to render DivData: ${e.message}", e)
                 }
-                else -> null
             }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse color: $colorString")
-            null
-        }
-    }
-
-    /**
-     * Handle click events
-     */
-    private fun handleClick(action: String?, text: String?) {
-        if (action != null) {
-            Log.d(TAG, "Button clicked: $action")
-
-            // Send click event to dev server
-            sendClickEvent(action, "Button", text)
-        }
-    }
-
-    /**
-     * Send click event to dev server via WebSocket
-     */
-    private fun sendClickEvent(action: String, elementType: String, elementText: String?) {
-        try {
-            val ws = HotReload.getWebSocket()
-            if (ws != null) {
-                val message = JSONObject().apply {
-                    put("type", "client:click")
-                    put("timestamp", System.currentTimeMillis())
-                    put("action", action)
-                    put("elementType", elementType)
-                    elementText?.let { put("elementText", it) }
-                }
-
-                ws.send(message.toString())
-                Log.d(TAG, "Sent click event to server: $action")
-            } else {
-                Log.w(TAG, "WebSocket not available, cannot send click event")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to send click event: ${e.message}")
-        }
+        )
     }
 }
 
@@ -440,6 +180,15 @@ object HotReload {
     private var ignoreFirstBuild = true
     private val httpClient = OkHttpClient()
 
+    // DEX-based hot reload state
+    private var dexCacheDir: File? = null
+    private var dexCounter = 0
+    private val loadedClasses = mutableMapOf<String, Class<*>>()
+
+    // Reload version for triggering recomposition
+    private val _reloadVersion = MutableStateFlow(0)
+    val reloadVersion: StateFlow<Int> = _reloadVersion
+
     /**
      * Get the current WebSocket connection (for sending messages)
      */
@@ -447,6 +196,10 @@ object HotReload {
 
     fun connect(activity: Activity, serverUrl: String, sessionId: String) {
         this.activity = activity
+
+        // Initialize DEX cache directory
+        dexCacheDir = File(activity.cacheDir, "hot-reload-dex")
+        dexCacheDir?.mkdirs()
 
         val wsUrl = serverUrl.replace("http://", "ws://").replace("https://", "wss://")
         Log.d(TAG, "Connecting to dev server: $wsUrl")
@@ -479,29 +232,44 @@ object HotReload {
                     val type = json.getString("type")
 
                     when (type) {
-                        "core:ui-update" -> {
-                            // DSL-based hot reload (FAST)
-                            if (ignoreFirstBuild) {
-                                Log.d(TAG, "Ignoring first UI update (old build)")
-                                ignoreFirstBuild = false
-                                return@onMessage
+                        "core:dex-reload" -> {
+                            // TRUE hot reload - DEX-based class swapping
+                            val dexBase64 = json.optString("dexBase64", "")
+                            val classNamesArray = json.optJSONArray("classNames")
+                            val classNames = mutableListOf<String>()
+
+                            classNamesArray?.let {
+                                for (i in 0 until it.length()) {
+                                    classNames.add(it.getString(i))
+                                }
                             }
 
+                            Log.d(TAG, "🔥 DEX reload received: ${dexBase64.length} base64 chars, ${classNames.size} classes")
+                            Log.d(TAG, "Classes: ${classNames.joinToString()}")
+
+                            if (dexBase64.isNotEmpty()) {
+                                activity?.runOnUiThread {
+                                    android.widget.Toast.makeText(activity, "🔥 True Hot Reload...", android.widget.Toast.LENGTH_SHORT).show()
+                                    loadDexAndReload(dexBase64, classNames)
+                                }
+                            }
+                        }
+
+                        "core:ui-update" -> {
+                            // DSL-based hot reload (FALLBACK)
                             val timestamp = json.optLong("timestamp", 0)
                             val dslContent = json.optString("dslContent", "")
 
-                            Log.d(TAG, "UI update received at $timestamp, connection at $connectionTime")
+                            Log.d(TAG, "UI update received at $timestamp")
 
-                            // Only update if changes happened AFTER we connected
-                            if (timestamp > connectionTime && dslContent.isNotEmpty()) {
-                                Log.d(TAG, "New UI update detected, recomposing (${dslContent.length} bytes)")
+                            if (dslContent.isNotEmpty()) {
+                                Log.d(TAG, "DSL update detected, recomposing (${dslContent.length} bytes)")
 
                                 // Update DSL on main thread
                                 activity?.runOnUiThread {
+                                    android.widget.Toast.makeText(activity, "⚡ DSL Hot Reload...", android.widget.Toast.LENGTH_SHORT).show()
                                     DSLInterpreter.updateDSL(dslContent)
                                 }
-                            } else {
-                                Log.d(TAG, "Ignoring old UI update")
                             }
                         }
 
@@ -559,6 +327,434 @@ object HotReload {
         webSocket?.close(1000, "App closing")
         webSocket = null
         activity = null
+    }
+
+    /**
+     * Load a DEX file and apply hot reload WITHOUT restarting the app.
+     * This is TRUE hot reload using the $change field pattern (Instant Run style).
+     *
+     * How it works:
+     * 1. Classes in the APK have been instrumented with a static $change field
+     * 2. When we load new DEX, we create IncrementalChange implementations
+     * 3. We set $change on the original APK classes via reflection
+     * 4. When methods are called, they check $change and delegate to new implementation
+     * 5. Trigger recomposition to see the UI updates
+     */
+    private fun loadDexAndReload(dexBase64: String, classNames: List<String>) {
+        try {
+            val context = activity ?: return
+            val cacheDir = dexCacheDir ?: return
+
+            // Decode and save DEX file
+            val dexBytes = Base64.decode(dexBase64, Base64.DEFAULT)
+
+            // Use timestamp-based name to avoid conflicts with previous read-only files
+            val dexFile = File(cacheDir, "reload_${System.currentTimeMillis()}.dex")
+
+            // Delete if exists (shouldn't happen with timestamp names)
+            if (dexFile.exists()) {
+                dexFile.setWritable(true)
+                dexFile.delete()
+            }
+
+            FileOutputStream(dexFile).use { fos ->
+                fos.write(dexBytes)
+            }
+
+            // Make file read-only (required by Android security for DexClassLoader)
+            dexFile.setReadOnly()
+
+            Log.d(TAG, "🔥 Saved DEX to: ${dexFile.absolutePath} (${dexBytes.size} bytes)")
+
+            // Create Child-First ClassLoader to prioritize classes from DEX
+            // This prevents the infinite recursion loop where the new class resolves to the old class
+            val dexClassLoader = HotReloadClassLoader(
+                dexFile.absolutePath,
+                cacheDir.absolutePath,
+                null,
+                context.classLoader
+            )
+
+            // Load the new classes from DEX and apply $change to original classes
+            var successCount = 0
+            for (className in classNames) {
+                try {
+                    // Skip $override classes - they're just helpers, not original classes
+                    if (className.endsWith("\$override")) {
+                        Log.d(TAG, "🔥 Skipping override class: $className")
+                        continue
+                    }
+
+                    // Load the NEW class from DEX
+                    val newClass = dexClassLoader.loadClass(className)
+                    loadedClasses[className] = newClass
+                    Log.d(TAG, "🔥 Loaded new class from DEX: $className")
+
+                    // Find the ORIGINAL class from APK (loaded by app's classloader)
+                    try {
+                        val originalClass = context.classLoader.loadClass(className)
+
+                        // ALWAYS use manual dispatch - override classes cause infinite recursion
+                        // because they call instance.method() which is the ORIGINAL instrumented method.
+                        // When the instrumented method checks $change and calls access$dispatch again,
+                        // we get: dispatchToNewClass() → method.invoke() → instrumented code → access$dispatch() → dispatchToNewClass() → LOOP
+                        // The recursion guard breaks the cycle but returns null, causing blank screens.
+                        // Manual dispatch with new instances from DEX avoids this entirely.
+                        if (applyChangeField(originalClass, newClass, dexClassLoader)) {
+                            Log.d(TAG, "🔥 Applied ${"$"}change (manual dispatch) to: $className")
+                        }
+
+                        successCount++
+                    } catch (e: ClassNotFoundException) {
+                        // This is a new class, not an update - that's fine
+                        Log.d(TAG, "🔥 New class (not update): $className")
+                        successCount++
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "🔥 Failed to process class $className: ${e.message}")
+                }
+            }
+
+            Log.d(TAG, "🔥 Hot reload complete: $successCount/${classNames.size} classes updated")
+
+            // Trigger recomposition by incrementing reload version
+            // This will cause @Composable functions to re-execute with new code
+            _reloadVersion.value++
+            Log.d(TAG, "🔥 Triggered recomposition (version: ${_reloadVersion.value})")
+
+            // Show success toast
+            android.widget.Toast.makeText(
+                context,
+                "🔥 Hot reload applied! ($successCount classes)",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+
+        } catch (e: Exception) {
+            Log.e(TAG, "🔥 Failed to load DEX: ${e.message}", e)
+            android.widget.Toast.makeText(
+                activity,
+                "❌ Hot reload failed: ${e.message}",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    /**
+     * Apply $change field using the $override class (Phase 2 - preferred approach).
+     *
+     * The override class is generated and already implements IncrementalChange.
+     * We just need to instantiate it and set it as $change.
+     */
+    private fun applyChangeFieldWithOverride(
+        originalClass: Class<*>,
+        overrideClass: Class<*>
+    ): Boolean {
+        try {
+            // Find the $change field in the original class
+            val changeField = try {
+                originalClass.getDeclaredField("\$change")
+            } catch (e: NoSuchFieldException) {
+                Log.w(TAG, "🔥 No \$change field in ${originalClass.name} - not instrumented")
+                return false
+            }
+
+            changeField.isAccessible = true
+
+            // Instantiate the override class (no-arg constructor)
+            // The generated $override class implements IncrementalChange and has a no-arg constructor.
+            // It receives the instance as args[0] in the access$dispatch method.
+            val overrideInstance = try {
+                overrideClass.getDeclaredConstructor().apply { isAccessible = true }.newInstance()
+            } catch (e: Exception) {
+                Log.w(TAG, "🔥 Cannot instantiate ${overrideClass.name}: ${e.message}")
+                return false
+            }
+
+            // Set the $change field to the override instance
+            changeField.set(null, overrideInstance)
+
+            Log.d(TAG, "🔥 Set \$change field on ${originalClass.name} using \$override class")
+            return true
+
+        } catch (e: Exception) {
+            Log.e(TAG, "🔥 Failed to apply \$override to ${originalClass.name}: ${e.message}", e)
+            return false
+        }
+    }
+
+    /**
+     * Apply $change field to the original class to redirect method calls to new implementation.
+     *
+     * The original class has been instrumented with:
+     *   public static IncrementalChange $change;
+     *
+     * We create an IncrementalChange that delegates to the new class via reflection.
+     */
+    private fun applyChangeField(
+        originalClass: Class<*>,
+        newClass: Class<*>,
+        dexClassLoader: ClassLoader
+    ): Boolean {
+        return try {
+            // Find the $change field in the original class
+            val changeField = try {
+                originalClass.getDeclaredField("\$change")
+            } catch (e: NoSuchFieldException) {
+                Log.w(TAG, "🔥 No \$change field in ${originalClass.name} - not instrumented")
+                return false
+            }
+
+            changeField.isAccessible = true
+
+            // Create an IncrementalChange implementation that delegates to the new class
+            val incrementalChange = createIncrementalChange(newClass, dexClassLoader)
+
+            if (incrementalChange == null) {
+                Log.e(TAG, "🔥 Failed to create IncrementalChange for ${originalClass.name}")
+                return false
+            }
+
+            // Set the $change field to our implementation
+            changeField.set(null, incrementalChange)
+
+            Log.d(TAG, "✔ Set \$change field on ${originalClass.name}")
+            true
+
+        } catch (e: NoSuchFieldException) {
+            Log.e(TAG, "🔥 Missing \$change field in ${originalClass.name} - not instrumented?")
+            false
+        } catch (e: IllegalAccessException) {
+            Log.e(TAG, "🔥 Cannot access \$change field in ${originalClass.name}: ${e.message}")
+            false
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "🔥 Cannot set \$change field in ${originalClass.name}: ${e.message}")
+            false
+        } catch (e: Exception) {
+            Log.e(TAG, "🔥 Error applying \$change field: ${e.javaClass.simpleName}: ${e.message}", e)
+            false
+        }
+    }
+
+    /**
+     * Create an IncrementalChange implementation that delegates method calls
+     * to the new class loaded from DEX.
+     *
+     * This uses dynamic proxy to implement IncrementalChange interface.
+     */
+    private fun createIncrementalChange(
+        newClass: Class<*>,
+        dexClassLoader: ClassLoader
+    ): Any {
+        // Load the IncrementalChange interface from the app's classloader
+        // (it needs to be the same class as what the instrumented code expects)
+        val incrementalChangeInterface = try {
+            activity!!.classLoader.loadClass("com.jetstart.hotreload.IncrementalChange")
+        } catch (e: ClassNotFoundException) {
+            // Fallback: create a simple delegating object
+            Log.w(TAG, "🔥 IncrementalChange interface not found, using fallback")
+            return createFallbackIncrementalChange(newClass)
+        }
+
+        // Create a dynamic proxy that implements IncrementalChange
+        return java.lang.reflect.Proxy.newProxyInstance(
+            activity!!.classLoader,
+            arrayOf(incrementalChangeInterface)
+        ) { _, method, args ->
+            when (method.name) {
+                "access\$dispatch" -> {
+                    // Add validation and logging for arguments
+                    if (args == null || args.size < 2) {
+                        Log.e(TAG, "🔥 ERROR: Invalid args to access\$dispatch: ${args?.size ?: "null"}")
+                        return@newProxyInstance null
+                    }
+
+                    val signature = args[0] as? String
+                    if (signature == null) {
+                        Log.e(TAG, "🔥 ERROR: Signature is null: ${args[0]?.javaClass?.simpleName ?: "unknown"}")
+                        return@newProxyInstance null
+                    }
+
+                    val methodArgs = args[1] as? Array<*>
+                    if (methodArgs == null) {
+                        Log.e(TAG, "🔥 ERROR: Method args is null: ${args[1]?.javaClass?.simpleName ?: "unknown"}")
+                        return@newProxyInstance null
+                    }
+
+                    Log.d(TAG, "🔥 Dispatching: $signature with ${methodArgs.size} args")
+
+                    dispatchToNewClass(newClass, signature, methodArgs)
+                }
+                else -> {
+                    Log.e(TAG, "🔥 ERROR: Unknown method on IncrementalChange: ${method.name}")
+                    null
+                }
+            }
+        }
+    }
+
+    /**
+     * Fallback IncrementalChange for when the interface isn't available
+     */
+    private fun createFallbackIncrementalChange(newClass: Class<*>): Any {
+        return object : com.jetstart.hotreload.IncrementalChange {
+            override fun `access$dispatch`(methodSignature: String, vararg args: Any?): Any? {
+                return dispatchToNewClass(newClass, methodSignature, args as Array<*>)
+            }
+        }
+    }
+
+    /**
+     * Dispatch a method call to the new class implementation.
+     *
+     * Note: Recursion guard is NOT needed because DEX classes are NOT instrumented.
+     * They don't have $change fields, so they can't recurse.
+     */
+    private fun dispatchToNewClass(newClass: Class<*>, signature: String, args: Array<*>): Any? {
+        val methodName = signature.substringBefore(".(")
+
+        try {
+            
+            // Find methods with matching name
+            val allMethods = newClass.declaredMethods
+            val candidates = mutableListOf<java.lang.reflect.Method>()
+
+            for (method in allMethods) {
+                if (method.name != methodName) continue
+                candidates.add(method)
+            }
+
+            if (candidates.isEmpty()) {
+                Log.w(TAG, "🔥 Method not found: $methodName in ${newClass.name}")
+                return null
+            }
+
+            // Determine if static based on first candidate
+            // All candidates with same name should have same modifiers (instance vs static)
+            val representative = candidates.first()
+            val isStatic = java.lang.reflect.Modifier.isStatic(representative.modifiers)
+
+            // Prepare actual arguments
+            // For instance methods, args[0] is 'this', which we drop because 'invoke' takes instance separately
+            val actualArgs = if (isStatic) {
+                args
+            } else {
+                if (args.isEmpty()) emptyArray() else args.drop(1).toTypedArray()
+            }
+
+            Log.d(TAG, "🔥 Resolving $methodName: static=$isStatic, totalArgs=${args.size}, actualArgs=${actualArgs.size}")
+
+            // STRICT MATCHING ONLY
+            // We do NOT pad arguments anymore. If signatures don't match, we abort.
+            // This prevents crashes when adding/removing parameters.
+
+            val method = candidates.find { m ->
+                val params = m.parameterTypes
+                if (params.size != actualArgs.size) {
+                    Log.d(TAG, "🔥 Param count mismatch for ${m.name}: expected ${params.size}, got ${actualArgs.size}")
+                    return@find false
+                }
+
+                // Check compatibility of each argument
+                for (i in params.indices) {
+                    val arg = actualArgs[i]
+                    val paramType = params[i]
+
+                    if (arg != null) {
+                        // Allow assignability (e.g. String passed to CharSequence)
+                        // Also handle primitives (Integer -> int)
+                        if (!isAssignableFrom(paramType, arg.javaClass)) {
+                            Log.d(TAG, "🔥 Type mismatch for ${m.name} param $i: expected ${paramType.simpleName}, got ${arg.javaClass.simpleName}")
+                            return@find false
+                        }
+                    } else {
+                        // null passed - only allowed if param is not primitive
+                        if (paramType.isPrimitive) {
+                            Log.d(TAG, "🔥 Null not allowed for primitive param $i in ${m.name}")
+                            return@find false
+                        }
+                    }
+                }
+                Log.d(TAG, "🔥 Found matching method: ${m.name} with ${m.parameterCount} params")
+                true
+            }
+
+            if (method != null) {
+                method.isAccessible = true
+
+                // Prepare instance
+                val instance = if (isStatic) {
+                    null
+                } else {
+                    if (args.isNotEmpty()) args[0] else null
+                }
+
+                Log.d(TAG, "🔥 Invoking ${method.name} on ${if (isStatic) "class" else "instance"}")
+
+                try {
+                    val result = method.invoke(instance, *actualArgs)
+                    Log.d(TAG, "✔ Dispatch succeeded: ${method.name} returned ${result?.javaClass?.simpleName ?: "null"}")
+                    return result
+                } catch (e: java.lang.reflect.InvocationTargetException) {
+                    Log.e(TAG, "🔥 Method threw exception: ${e.cause?.message}")
+                    throw e.cause ?: e
+                } catch (e: Exception) {
+                    Log.e(TAG, "🔥 Invocation failed: ${e.javaClass.simpleName}: ${e.message}")
+                    throw e
+                }
+            } else {
+                Log.w(TAG, "🔥 Signature mismatch for $methodName. Expected ${actualArgs.map { it?.javaClass?.simpleName ?: "null" }}")
+
+                // Inform user about mismatch
+                activity?.runOnUiThread {
+                    android.widget.Toast.makeText(
+                        activity,
+                        "⚠️ Restart needed: $methodName signature changed",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+                return getDefaultValue(signature)
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "🔥 Dispatch error: ${e.message}", e)
+            return getDefaultValue(signature)
+        }
+    }
+
+    private fun getDefaultValue(signature: String): Any? {
+        // signature format: name.(params)returnType
+        val returnTypeDesc = signature.substringAfterLast(')')
+        return when (returnTypeDesc) {
+            "Z" -> false
+            "B" -> 0.toByte()
+            "S" -> 0.toShort()
+            "C" -> '\u0000'
+            "I" -> 0
+            "J" -> 0L
+            "F" -> 0f
+            "D" -> 0.0
+            else -> null // Objects and void
+        }
+    }
+
+    private fun isAssignableFrom(paramType: Class<*>, argType: Class<*>): Boolean {
+        if (paramType.isAssignableFrom(argType)) return true
+        if (paramType == Int::class.javaPrimitiveType && argType == Int::class.javaObjectType) return true
+        if (paramType == Boolean::class.javaPrimitiveType && argType == Boolean::class.javaObjectType) return true
+        if (paramType == Long::class.javaPrimitiveType && argType == Long::class.javaObjectType) return true
+        if (paramType == Float::class.javaPrimitiveType && argType == Float::class.javaObjectType) return true
+        if (paramType == Double::class.javaPrimitiveType && argType == Double::class.javaObjectType) return true
+        if (paramType == Byte::class.javaPrimitiveType && argType == Byte::class.javaObjectType) return true
+        if (paramType == Short::class.javaPrimitiveType && argType == Short::class.javaObjectType) return true
+        if (paramType == Char::class.javaPrimitiveType && argType == Char::class.javaObjectType) return true
+        return false
+    }
+
+    /**
+     * Get a loaded override class by name.
+     */
+    fun getLoadedClass(className: String): Class<*>? {
+        return loadedClasses[className]
     }
 
     private fun downloadAndInstallApk(downloadUrl: String) {
@@ -633,10 +829,50 @@ object HotReload {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
+            Log.d(TAG, "Starting installation intent for: ${apkFile.absolutePath}")
             context.startActivity(intent)
             Log.d(TAG, "Installation intent started")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to install APK: ${e.message}")
+        }
+    }
+}
+
+/**
+ * Child-First ClassLoader
+ * Prioritizes loading classes from the DEX file (child) before delegating to the parent.
+ * This is CRITICAL for hot reload to work, otherwise the parent classloader (which has the original class)
+ * shadows the new class in the DEX, causing the "new" class to be identically equal to the "old" class,
+ * leading to infinite recursion.
+ */
+class HotReloadClassLoader(
+    dexPath: String,
+    optimizedDirectory: String?,
+    librarySearchPath: String?,
+    parent: ClassLoader
+) : DexClassLoader(dexPath, optimizedDirectory, librarySearchPath, parent) {
+
+    override fun loadClass(name: String, resolve: Boolean): Class<*> {
+        // 1. Check if class is already loaded to prevent duplicate class definition
+        var c = findLoadedClass(name)
+        if (c != null) {
+            if (resolve) resolveClass(c)
+            return c
+        }
+
+        // 2. Delegate system classes to parent immediately to avoid conflicts
+        if (name.startsWith("java.") || name.startsWith("android.") || name.startsWith("androidx.") || name.startsWith("kotlin.")) {
+            return super.loadClass(name, resolve)
+        }
+
+        // 3. Try to find the class in THIS dex file (child-first)
+        try {
+            c = findClass(name)
+            if (resolve) resolveClass(c)
+            return c
+        } catch (e: ClassNotFoundException) {
+            // 4. If not found in DEX, delegate to parent (dependencies, etc.)
+            return super.loadClass(name, resolve)
         }
     }
 }

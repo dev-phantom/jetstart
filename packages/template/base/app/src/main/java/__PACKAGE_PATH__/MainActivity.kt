@@ -1,7 +1,7 @@
 package {{PACKAGE_NAME}}
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -9,8 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import {{PACKAGE_NAME}}.ui.NotesScreen
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -30,15 +31,21 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    // Observe reload version - forces recomposition when DEX hot reload happens
+                    val reloadVersion by HotReload.reloadVersion.collectAsState()
+
                     // Check if we should render from DSL (hot reload mode)
                     val dsl by DSLInterpreter.currentDSL.collectAsState()
 
-                    if (dsl != null) {
-                        // Hot reload mode: render from DSL sent by server
-                        DSLInterpreter.RenderDSL(dsl!!)
-                    } else {
-                        // Normal mode: render actual Compose code
-                        AppContent()
+                    // Use reloadVersion as key to force recomposition of entire tree
+                    key(reloadVersion) {
+                        if (dsl != null) {
+                            // Hot reload mode: render from DSL sent by server
+                            DSLInterpreter.RenderDSL(dsl!!)
+                        } else {
+                            // Normal mode: render actual Compose code
+                            AppContent()
+                        }
                     }
                 }
             }
@@ -52,37 +59,9 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * Main App Content - REAL Kotlin Compose Code!
- * This gets parsed to DSL and sent via hot reload
+ * Main App Content
  */
 @Composable
 fun AppContent() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Welcome to JetStart! 🚀",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Edit this code and save to see hot reload!",
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = { /* Handle click */ },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Click Me!")
-        }
-    }
+    NotesScreen()
 }

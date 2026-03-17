@@ -20,7 +20,7 @@ export class KotlinCompiler {
   private static readonly TAG = 'KotlinCompiler';
   private kotlincPath: string | null = null;
   private composeCompilerPath: string | null = null;
-  private projectClasspath: string[] = [];
+  private staticClasspath: string[] = []; // SDK + deps cached; project classes always fresh
 
   constructor(private projectPath: string) {}
 
@@ -133,7 +133,9 @@ export class KotlinCompiler {
    * This needs to include Android SDK, Compose, and project dependencies
    */
   async buildClasspath(): Promise<string[]> {
-    if (this.projectClasspath.length > 0) return this.projectClasspath;
+    if (this.staticClasspath.length > 0) {
+      return [...this.staticClasspath, ...this.getProjectClasspathEntries()];
+    }
 
     const classpath: string[] = [];
     // Check multiple locations for Android SDK
@@ -239,98 +241,49 @@ export class KotlinCompiler {
       }
     }
 
-    // Scan transforms-3 cache for extracted AAR JARs (Compose, Material3, etc.)
+    // Scan transforms-3 cache - grab ALL classes.jar (Compose, Material3, Room, DivKit, etc.)
     const transformsCache = path.join(os.homedir(), '.gradle', 'caches', 'transforms-3');
     if (fs.existsSync(transformsCache)) {
-      const requiredPatterns = [
-        'runtime-release',
-        'runtime-saveable-release',
-        'ui-release',
-        'ui-graphics-release',
-        'ui-text-release',
-        'ui-geometry-release',
-        'ui-unit-release',
-        'ui-util-release',
-        'foundation-release',
-        'foundation-layout-release',
-        'material3',
-        'material-release',
-        'material-ripple-release',
-        'material-icons-core-release',
-        'animation-core-release',
-        'animation-release',
-        'activity-compose',
-        'lifecycle-viewmodel-compose',
-        'lifecycle-viewmodel-2',  // AndroidViewModel
-        'lifecycle-viewmodel-ktx',
-        'lifecycle-viewmodel-savedstate',
-        'lifecycle-runtime',
-        'lifecycle-livedata',
-        'lifecycle-common',
-        'savedstate',
-        'core-',
-        'annotation-',
-        'collection-',
-        'room-runtime',  // For database access
-        'room-common',
-        'kotlinx-coroutines',  // For Flow
-      ];
-
       try {
-        const transforms = fs.readdirSync(transformsCache);
-        for (const hash of transforms) {
+        for (const hash of fs.readdirSync(transformsCache)) {
           const transformedDir = path.join(transformsCache, hash, 'transformed');
           if (!fs.existsSync(transformedDir)) continue;
-
           try {
-            const packages = fs.readdirSync(transformedDir);
-            for (const pkg of packages) {
-              // Check if this package matches any required pattern
-              const isRequired = requiredPatterns.some(pattern =>
-                pkg.toLowerCase().includes(pattern.toLowerCase())
-              );
-
-              if (isRequired) {
-                const classesJar = path.join(transformedDir, pkg, 'jars', 'classes.jar');
-                if (fs.existsSync(classesJar) && !classpath.includes(classesJar)) {
-                  classpath.push(classesJar);
-                  log(`Added transformed: ${pkg}`);
-                }
+            for (const pkg of fs.readdirSync(transformedDir)) {
+              const classesJar = path.join(transformedDir, pkg, 'jars', 'classes.jar');
+              if (fs.existsSync(classesJar) && !classpath.includes(classesJar)) {
+                classpath.push(classesJar);
               }
             }
-          } catch (e) {
-            // Ignore permission errors
-          }
+          } catch (e) { /* ignore */ }
         }
-      } catch (e) {
-        // Ignore
-      }
+        log(`Added ${classpath.length} transforms-3 JARs to classpath`);
+      } catch (e) { /* ignore */ }
     }
 
-    // Add project's compiled classes (multiple possible locations)
-    const projectClassPaths = [
-      path.join(this.projectPath, 'app', 'build', 'intermediates', 'javac', 'debug', 'classes'),
+    // Cache static entries; project build outputs always fetched fresh
+    this.staticClasspath = [...classpath];
+    const projectEntries = this.getProjectClasspathEntries();
+    log(`Built static classpath with ${classpath.length} entries + ${projectEntries.length} project entries`);
+    return [...classpath, ...projectEntries];
+  }
+
+  /**
+   * Get project build output classpath entries.
+   * Always called fresh ΓÇö never cached ΓÇö so new class files from Gradle builds are always visible.
+   */
+  private getProjectClasspathEntries(): string[] {
+    const entries: string[] = [];
+    const candidates = [
       path.join(this.projectPath, 'app', 'build', 'tmp', 'kotlin-classes', 'debug'),
+      path.join(this.projectPath, 'app', 'build', 'intermediates', 'javac', 'debug', 'classes'),
       path.join(this.projectPath, 'app', 'build', 'intermediates', 'compile_and_runtime_not_namespaced_r_class_jar', 'debug', 'R.jar'),
-      path.join(this.projectPath, 'app', 'build', 'intermediates', 'runtime_library_classes_jar', 'debug', 'classes.jar'),
+      path.join(this.projectPath, 'app', 'build', 'intermediates', 'classes', 'debug', 'transformDebugClassesWithAsm', 'jars', '0.jar'),
     ];
-
-    for (const classPath of projectClassPaths) {
-      if (fs.existsSync(classPath)) {
-        classpath.push(classPath);
-        log(`Added project classes: ${path.basename(classPath)}`);
-      }
+    for (const c of candidates) {
+      if (fs.existsSync(c)) entries.push(c);
     }
-
-    // Also scan intermediates for any JAR files we might need
-    const intermediatesDir = path.join(this.projectPath, 'app', 'build', 'intermediates');
-    if (fs.existsSync(intermediatesDir)) {
-      this.findJarsRecursive(intermediatesDir, classpath, 2); // Max depth 2
-    }
-
-    this.projectClasspath = classpath;
-    log(`Built classpath with ${classpath.length} entries`);
-    return classpath;
+    return entries;
   }
 
   /**

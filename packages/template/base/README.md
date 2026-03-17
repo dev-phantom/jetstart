@@ -1,4 +1,4 @@
-# {{PROJECT_NAME}}
+# my-app
 
 A JetStart project with Kotlin and Jetpack Compose.
 
@@ -18,7 +18,7 @@ jetstart logs
 ## Project Structure
 
 ```
-{{PROJECT_NAME}}/
+my-app/
 ├── app/
 │   └── src/
 │       └── main/

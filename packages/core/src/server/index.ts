@@ -4,6 +4,7 @@
  */
 
 import * as path from 'path';
+import * as fs from 'fs';
 import * as os from 'os';
 import { EventEmitter } from 'events';
 import { createHttpServer } from './http';
@@ -14,7 +15,6 @@ import { DEFAULT_CORE_PORT, DEFAULT_WS_PORT } from '@jetstart/shared';
 import { SessionManager } from '../utils/session';
 import { BuildService } from '../build';
 import { ServerSession } from '../types';
-import { DSLParser } from '../build/dsl-parser';
 import { injectBuildConfigFields } from '../build/gradle-injector';
 import { HotReloadService } from '../build/hot-reload-service';
 import { AdbHelper } from '../build/gradle';
@@ -115,7 +115,7 @@ export class JetStartServer extends EventEmitter {
         log('🔥 True hot reload enabled (DEX-based)');
         this.useTrueHotReload = true;
       } else {
-        log('⚠️ True hot reload not available, falling back to DSL');
+        log('True hot reload unavailable - file changes will trigger full Gradle builds');
         log(`Issues: ${envCheck.issues.join(', ')}`);
         this.useTrueHotReload = false;
       }
@@ -135,9 +135,15 @@ export class JetStartServer extends EventEmitter {
         adbHelper: this.adbHelper,  // Enable wireless ADB auto-connect
         onClientConnected: async (sessionId: string) => {
           log(`Client connected (session: ${sessionId}). Triggering initial build...`);
-          // Trigger initial build when client connects
-          this.isFileChangeBuild = false; // Don't auto-install for initial build
-          await this.handleRebuild();
+          // If APK already built, just notify this new client - no rebuild needed
+          if (this.latestApkPath && fs.existsSync(this.latestApkPath)) {
+            log(`APK already built, re-sending build complete to new client`);
+            const downloadUrl = `http://${this.config.displayHost}:${this.config.httpPort}/download/app.apk`;
+            this.wsHandler?.sendBuildComplete(sessionId, downloadUrl);
+          } else {
+            this.isFileChangeBuild = false; // Don't auto-install for initial build
+            await this.handleRebuild();
+          }
         },
       });
       this.wsServer = wsResult.server;
@@ -248,7 +254,16 @@ export class JetStartServer extends EventEmitter {
             if (installResult.success) {
               success('📱 APK auto-installed! App will restart with new code.');
               // Launch the app
-              await this.adbHelper.launchApp('com.jetstart.myapp', '.MainActivity');
+              // Read actual package name from jetstart.config.json
+              let appPackageName = 'com.example.app';
+              try {
+                const configPath = path.join(this.config.projectPath, 'jetstart.config.json');
+                if (fs.existsSync(configPath)) {
+                  const cfg = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                  appPackageName = cfg.packageName || appPackageName;
+                }
+              } catch (_) {}
+              await this.adbHelper.launchApp(appPackageName, '.MainActivity');
             } else {
               error(`Auto-install failed: ${installResult.error}`);
             }
@@ -330,62 +345,36 @@ export class JetStartServer extends EventEmitter {
    * Handle UI file updates - uses TRUE hot reload (DEX-based) when available
    */
   private async handleUIUpdate(filePath: string): Promise<void> {
-    if (!this.currentSession || !this.wsHandler) {
-      return;
-    }
+    if (!this.currentSession || !this.wsHandler) return;
 
-    // Try TRUE hot reload first (DEX-based)
+    // TRUE hot reload: compile to DEX and push to device via WebSocket
     if (this.useTrueHotReload && this.hotReloadService) {
       try {
-        log(`🔥 True hot reload: Compiling ${path.basename(filePath)}...`);
+        log(`≡ƒöÑ Hot reloading: ${path.basename(filePath)}...`);
         const result = await this.hotReloadService.hotReload(filePath);
 
         if (result.success && result.dexBase64) {
-          // Send DEX to app via WebSocket
           this.wsHandler.sendDexReload(
             this.currentSession.id,
             result.dexBase64,
             result.classNames
           );
-          success(`🔥 True hot reload complete! (${result.compileTime + result.dexTime}ms)`);
+          success(`≡ƒöÑ Hot reload complete! (${result.compileTime + result.dexTime}ms)`);
           return;
-        } else {
-          error(`True hot reload failed: ${result.errors.join(', ')}`);
-          log('Falling back to DSL hot reload...');
         }
+
+        // DEX compilation failed ΓÇö fall through to full Gradle rebuild
+        error(`Hot reload compile failed: ${result.errors[0] ?? 'unknown'}`);
+        log('Triggering full Gradle rebuild...');
       } catch (err: any) {
-        error(`True hot reload error: ${err.message}`);
-        log('Falling back to DSL hot reload...');
+        error(`Hot reload error: ${err.message}`);
+        log('Triggering full Gradle rebuild...');
       }
     }
 
-    // Fallback to DSL-based hot reload
-    try {
-      log(`Parsing UI file: ${path.basename(filePath)}`);
-      const parseResult = DSLParser.parseFile(filePath);
-
-      if (parseResult.success && parseResult.dsl) {
-        const dslContent = JSON.stringify(parseResult.dsl);
-        log(`DSL generated: ${dslContent.length} bytes`);
-
-        // Send DSL update via WebSocket (instant hot reload!)
-        this.wsHandler.sendUIUpdate(
-          this.currentSession.id,
-          dslContent,
-          [path.basename(filePath)]
-        );
-
-        success(`DSL hot reload sent in <100ms ⚡`);
-      } else {
-        error(`Failed to parse UI file: ${parseResult.errors?.join(', ')}`);
-        // Fallback to full build
-        log('Falling back to full Gradle build...');
-        this.handleRebuild();
-      }
-    } catch (err: any) {
-      error(`UI update failed: ${err.message}`);
-      // Fallback to full build
-      this.handleRebuild();
-    }
+    // Fall back to full Gradle build (catches build-file changes, new dependencies, etc.)
+    this.buildService.clearCache();
+    this.isFileChangeBuild = true;
+    await this.handleRebuild();
   }
 }

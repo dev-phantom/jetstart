@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Template Generator
  * Creates project structure from file-based templates
  *
@@ -136,7 +136,9 @@ async function copyTemplateWithVariables(
 
     if (isTextFile(srcPath)) {
       // Read, substitute, and write
-      const content = await fs.readFile(srcPath, 'utf-8');
+      const raw = await fs.readFile(srcPath, 'utf-8');
+      // Strip UTF-8 BOM if present - Gradle/Groovy parsers reject it
+      const content = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw;
       const processed = replaceVariables(content, variables);
       await fs.writeFile(destPath, processed);
     } else {
@@ -293,3 +295,4 @@ export async function generateProjectTemplate(
   await generateLocalProperties(projectPath);
   await generateJetStartConfig(projectPath, options);
 }
+
