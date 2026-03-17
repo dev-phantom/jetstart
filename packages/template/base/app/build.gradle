@@ -18,8 +18,8 @@ android {
         versionName "1.0.0"
 
         // JetStart injected fields
-        buildConfigField "String", "JETSTART_SERVER_URL", "\"ws://10.217.220.220:8766\""
-        buildConfigField "String", "JETSTART_SESSION_ID", "\"0hArVYJg\""
+        buildConfigField "String", "JETSTART_SERVER_URL", "\"ws://localhost:8766\""
+        buildConfigField "String", "JETSTART_SESSION_ID", "\"none\""
         // End JetStart fields
     }
 
