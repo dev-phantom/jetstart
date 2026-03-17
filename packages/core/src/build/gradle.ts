@@ -258,7 +258,6 @@ export class AdbHelper {
         // Device not found yet, retry connection
         if (connectRetryCount < maxConnectRetries) {
           const delay = connectRetryDelays[connectRetryCount + 1] || 5000;
-          console.warn(`[ADB] Device ${target} not found, retrying connection...`);
           setTimeout(() => this.connectWireless(target.split(':')[0], connectRetryCount + 1), delay);
         }
       }

@@ -262,7 +262,7 @@ export class JetStartServer extends EventEmitter {
                   const cfg = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
                   appPackageName = cfg.packageName || appPackageName;
                 }
-              } catch (_) {}
+              } catch (_) { /* empty */ }
               await this.adbHelper.launchApp(appPackageName, '.MainActivity');
             } else {
               error(`Auto-install failed: ${installResult.error}`);
@@ -350,7 +350,7 @@ export class JetStartServer extends EventEmitter {
     // TRUE hot reload: compile to DEX and push to device via WebSocket
     if (this.useTrueHotReload && this.hotReloadService) {
       try {
-        log(`≡ƒöÑ Hot reloading: ${path.basename(filePath)}...`);
+        log(`Hot reloading: ${path.basename(filePath)}...`);
         const result = await this.hotReloadService.hotReload(filePath);
 
         if (result.success && result.dexBase64) {

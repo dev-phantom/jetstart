@@ -11,10 +11,6 @@
 .vscode
 .DS_Store
 
-# Claude Code
-.claude
-.claude-worktrees
-
 # JetStart
 .jetstart
 
