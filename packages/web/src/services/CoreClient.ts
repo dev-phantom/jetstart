@@ -28,6 +28,8 @@ export interface CoreClientConfig {
   onBuildStatus?: (status: any) => void;
   onUIUpdate?: (dslContent: string, screens?: string[], hash?: string) => void;
   onReload?: (reloadType: 'full' | 'hot') => void;
+  /** Called when the server sends a DEX hot reload (Kotlin file changed). */
+  onDexReload?: (classNames: string[], dexBase64Length: number) => void;
   onDisconnect?: (reason: string) => void;
   onLog?: (log: LogEntry) => void;
   onStateChange?: (state: WSState) => void;
@@ -185,6 +187,15 @@ export class CoreClient {
 
         case 'core:reload':
           this.config.onReload?.(message.reloadType);
+          break;
+
+        case 'core:dex-reload':
+          // Browser can't execute DEX, but we surface the event so the UI can show
+          // a live hot-reload indicator with the changed class names.
+          this.config.onDexReload?.(
+            message.classNames || [],
+            (message.dexBase64 || '').length
+          );
           break;
         
         case 'core:log':

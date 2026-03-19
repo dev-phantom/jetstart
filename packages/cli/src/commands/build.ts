@@ -25,6 +25,8 @@ interface BuildOptions {
   sign?: boolean;
   flavor?: string;
   bundle?: boolean;
+  /** Auto-generate a self-signed test keystore and sign the release APK. */
+  selfSign?: boolean;
 }
 
 interface KeystoreConfig {
@@ -197,7 +199,36 @@ export async function buildCommand(options: BuildOptions) {
     }
     stopSpinner(ksSpinner, true, 'Keystore ready (alias: ' + ks.keyAlias + ')');
   } else if (isRelease) {
-    warning('Building UNSIGNED release. Add --sign for a signed APK.');
+    console.log();
+    warning('Building UNSIGNED release APK.');
+    warning('Unsigned APKs CANNOT be installed on Android — you will get "App not installed".');
+    info('Options:');
+    info('  --sign        Sign with your keystore (required for Play Store)');
+    info('  --self-sign   Auto-generate a test keystore and sign (good for device testing)');
+    console.log();
+  }
+
+  // 2b. Self-sign: auto-generate test keystore if --self-sign passed without --sign
+  if (isRelease && options.selfSign && !ks) {
+    const ssSpinner = startSpinner('Generating self-signed test keystore...');
+    try {
+      const ksPath = path.join(projectPath, 'jetstart-test.jks');
+      const { execSync } = require('child_process');
+      if (!require('fs-extra').existsSync(ksPath)) {
+        execSync(
+          'keytool -genkey -v -keystore "' + ksPath + '" -keyalg RSA -keysize 2048 -validity 3650' +
+          ' -alias jetstart-test -storepass jetstarttest -keypass jetstarttest' +
+          ' -dname "CN=JetStart Test, OU=Dev, O=JetStart, L=Local, ST=Local, C=US"',
+          { stdio: 'ignore', timeout: 30000 }
+        );
+      }
+      ks = { storeFile: ksPath, storePassword: 'jetstarttest', keyAlias: 'jetstart-test', keyPassword: 'jetstarttest' };
+      stopSpinner(ssSpinner, true, 'Self-signed test keystore ready (NOT for Play Store)');
+    } catch (err: any) {
+      stopSpinner(ssSpinner, false, 'Failed to generate keystore: ' + err.message);
+      error('Make sure JDK is installed and keytool is in your PATH.');
+      process.exit(1);
+    }
   }
 
   // 3. Security hardening (release only)

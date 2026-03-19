@@ -30,6 +30,7 @@ function App() {
     error,
     currentDSL,
     dslHash,
+    dexReloadInfo,
     connect,
   } = useWebSocket({
     sessionId,
@@ -148,12 +149,12 @@ function App() {
     }
   }, [buildStatus.isBuilding, buildStatus.apkInfo, buildStatus.error, onBuildStart, onBuildComplete]);
 
-  // Track UI updates (hot reload)
+  // Track DEX hot reload events for performance metrics
   useEffect(() => {
-    if (currentDSL && dslHash) {
+    if (dexReloadInfo) {
       onUIUpdate();
     }
-  }, [dslHash, onUIUpdate]);
+  }, [dexReloadInfo, onUIUpdate]);
 
   return (
     <div className="app">
@@ -170,6 +171,7 @@ function App() {
             projectName={projectName}
             currentDSL={currentDSL}
             dslHash={dslHash}
+            dexReloadInfo={dexReloadInfo}
           />
         </div>
 

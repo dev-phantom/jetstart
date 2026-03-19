@@ -22,6 +22,8 @@ export interface UseWebSocketReturn {
   error: Error | null;
   currentDSL: string | null;
   dslHash: string | null;
+  /** Last DEX hot reload info — null until a Kotlin file is hot-reloaded. */
+  dexReloadInfo: { classNames: string[]; count: number; timestamp: number } | null;
   connect: () => void;
   disconnect: () => void;
   sendStatus: (status: SessionStatus, message?: string) => void;
@@ -50,6 +52,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
   });
   const [currentDSL, setCurrentDSL] = useState<string | null>(null);
   const [dslHash, setDslHash] = useState<string | null>(null);
+  const [dexReloadInfo, setDexReloadInfo] = useState<{ classNames: string[]; count: number; timestamp: number } | null>(null);
 
   const clientRef = useRef<CoreClient | null>(null);
 
@@ -109,6 +112,11 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
           apkInfo: null,
           downloadUrl: null,
         });
+      },
+
+      onDexReload: (classNames, dexBase64Length) => {
+        console.log('DEX hot reload:', classNames.length, 'classes,', dexBase64Length, 'bytes');
+        setDexReloadInfo({ classNames, count: classNames.length, timestamp: Date.now() });
       },
 
       onUIUpdate: (dslContent, _screens, hash) => {
@@ -182,6 +190,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     error,
     currentDSL,
     dslHash,
+    dexReloadInfo,
     connect,
     disconnect,
     sendStatus,

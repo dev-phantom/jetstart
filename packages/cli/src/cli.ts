@@ -53,6 +53,7 @@ program
   .option('-o, --output <path>', 'Output directory', './build')
   .option('-r, --release', 'Build release version', false)
   .option('--sign', 'Sign the APK')
+  .option('--self-sign', 'Auto-generate a test keystore and sign (device testing, NOT for Play Store)')
   .option('--bundle', 'Build AAB (App Bundle) instead of APK — recommended for Play Store')
   .option('--flavor <name>', 'Build a specific product flavor')
   .action(buildCommand);

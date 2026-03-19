@@ -2,65 +2,31 @@
  * DeviceFrame - Simulated Android device frame for app preview
  */
 
-import { useState, useEffect, useCallback } from 'react';
 import { BuildStatusInfo } from '../hooks/useWebSocket';
-import { DSLRenderer } from './dsl';
-import { parseUIDefinition } from '../utils/dslParser';
-import { UIDefinition } from '../types/dsl';
 import './DeviceFrame.css';
 
 export interface DeviceFrameProps {
   buildStatus: BuildStatusInfo;
   projectName: string | null;
-  currentDSL: string | null;
-  dslHash: string | null;
+  currentDSL?: string | null;  // Unused — server now sends DEX not DSL
+  dslHash?: string | null;       // Unused
+  dexReloadInfo: { classNames: string[]; count: number; timestamp: number } | null;
 }
 
-export function DeviceFrame({ buildStatus, projectName, currentDSL, dslHash }: DeviceFrameProps) {
-  const [uiDefinition, setUIDefinition] = useState<UIDefinition | null>(null);
-  const [parseError, setParseError] = useState<string | null>(null);
+export function DeviceFrame({ buildStatus, projectName, currentDSL: _currentDSL, dslHash: _dslHash, dexReloadInfo }: DeviceFrameProps) {
+  // DSL parsing removed — server now sends DEX hot reload, not DSL
+  // dexReloadInfo contains live hot reload events from Kotlin file changes
 
-  // Parse DSL when it changes
-  useEffect(() => {
-    if (currentDSL) {
-      try {
-        const parsed = parseUIDefinition(currentDSL);
-        setUIDefinition(parsed);
-        setParseError(null);
-        console.log('DSL parsed successfully:', parsed);
-      } catch (error) {
-        console.error('Failed to parse DSL:', error);
-        setParseError((error as Error).message);
-        setUIDefinition(null);
-      }
-    }
-  }, [currentDSL, dslHash]);
-
-  const handleButtonClick = useCallback((action: string) => {
-    console.log('Button action:', action);
-    // TODO: Implement action handling (could send back to server)
-  }, []);
   const renderContent = () => {
-    // Error states first
-    if (parseError) {
-      return (
-        <div className="device-content-message error">
-          <h3>DSL Parse Error</h3>
-          <p>{parseError}</p>
-        </div>
-      );
-    }
-
     if (buildStatus.error) {
       return (
         <div className="device-content-message error">
-          <h3>Build Failed</h3>
+          <h3>⚠ Build Failed</h3>
           <p>{buildStatus.error}</p>
         </div>
       );
     }
 
-    // Building state
     if (buildStatus.isBuilding) {
       return (
         <div className="device-content-message building">
@@ -71,45 +37,55 @@ export function DeviceFrame({ buildStatus, projectName, currentDSL, dslHash }: D
       );
     }
 
-    // DSL UI rendering (PRIORITY - show live preview)
-    if (uiDefinition) {
+    // DEX hot reload event received
+    if (dexReloadInfo) {
+      const secondsAgo = Math.round((Date.now() - dexReloadInfo.timestamp) / 1000);
       return (
-        <div className="dsl-preview-container">
-          <DSLRenderer
-            element={uiDefinition.screen}
-            onButtonClick={handleButtonClick}
-          />
+        <div className="device-content-message success">
+          <h3>⚡ Hot Reload Applied</h3>
+          <p style={{ fontSize: '13px', color: '#aaa', marginTop: 4 }}>
+            {secondsAgo === 0 ? 'Just now' : `${secondsAgo}s ago`}
+          </p>
+          <div className="apk-info" style={{ textAlign: 'left', marginTop: 12 }}>
+            <p><strong>{dexReloadInfo.count} class{dexReloadInfo.count !== 1 ? 'es' : ''} updated:</strong></p>
+            {dexReloadInfo.classNames.slice(0, 8).map((cls, i) => (
+              <p key={i} style={{ fontSize: '11px', color: '#ccc', fontFamily: 'monospace', margin: '2px 0' }}>
+                {cls.split('.').pop()}
+              </p>
+            ))}
+            {dexReloadInfo.classNames.length > 8 && (
+              <p style={{ fontSize: '11px', color: '#888' }}>+{dexReloadInfo.classNames.length - 8} more</p>
+            )}
+          </div>
+          <p className="install-instructions" style={{ marginTop: 16 }}>
+            Changes are live on your connected device
+          </p>
         </div>
       );
     }
 
-    // Build complete (fallback - show download option)
+    // Build complete — show APK download
     if (buildStatus.apkInfo) {
       return (
         <div className="device-content-message success">
-          <h3>Build Complete</h3>
+          <h3>✔ Build Complete</h3>
           <div className="apk-info">
             <p><strong>Version:</strong> {buildStatus.apkInfo.versionName} ({buildStatus.apkInfo.versionCode})</p>
             <p><strong>Size:</strong> {formatFileSize(buildStatus.apkInfo.size)}</p>
             <p><strong>Package:</strong> {buildStatus.apkInfo.applicationId}</p>
           </div>
           {buildStatus.downloadUrl && (
-            <a
-              href={buildStatus.downloadUrl}
-              download
-              className="download-button"
-            >
-              Download APK
+            <a href={buildStatus.downloadUrl} download className="download-button">
+              ⬇ Download APK
             </a>
           )}
           <p className="install-instructions">
-            Scan the QR code with your device to install the app
+            Scan the QR code with your Android device to install and connect
           </p>
         </div>
       );
     }
 
-    // Idle state
     return (
       <div className="device-content-message idle">
         <h3>Ready</h3>
@@ -140,7 +116,7 @@ export function DeviceFrame({ buildStatus, projectName, currentDSL, dslHash }: D
       </div>
       <div className="device-label">
         JetStart Web Emulator
-        {dslHash && <span className="dsl-hash"> • {dslHash.slice(0, 8)}</span>}
+        {dexReloadInfo && <span className="dsl-hash"> • ⚡ {dexReloadInfo.count} class{dexReloadInfo.count !== 1 ? 'es' : ''}</span>}
       </div>
     </div>
   );

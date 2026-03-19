@@ -24,6 +24,8 @@ export interface ServerConfig {
   wsPort?: number;
   host?: string;
   displayHost?: string; // IP address to display in logs/QR codes (for client connections)
+  /** Override the URL injected into BuildConfig for emulator builds. Emulators reach the host at 10.0.2.2, not the local network IP. */
+  emulatorHost?: string;
   projectPath?: string;
   projectName?: string;
 }
@@ -35,7 +37,7 @@ export class JetStartServer extends EventEmitter {
   private wsServer: any;
   private logsServer: LogsServer;
   private wsHandler: WebSocketHandler | null = null;
-  private config: Required<ServerConfig> & { displayHost: string };
+  private config: Required<Omit<ServerConfig, 'emulatorHost'>> & { displayHost: string; emulatorHost?: string };
   private sessionManager: SessionManager;
   private buildService: BuildService;
   private hotReloadService: HotReloadService | null = null;
@@ -59,6 +61,7 @@ export class JetStartServer extends EventEmitter {
       displayHost: displayHost,
       projectPath: config.projectPath || process.cwd(),
       projectName: config.projectName || path.basename(config.projectPath || process.cwd()),
+      emulatorHost: config.emulatorHost,
     };
 
     this.sessionManager = new SessionManager();
@@ -101,7 +104,9 @@ export class JetStartServer extends EventEmitter {
       });
 
       // Inject server URL into build.gradle for hot reload
-      const serverUrl = `ws://${this.config.displayHost}:${this.config.wsPort}`;
+      // For Android emulators, use 10.0.2.2 (host gateway) in BuildConfig; physical phones use the network IP
+      const buildConfigHost = this.config.emulatorHost || this.config.displayHost;
+      const serverUrl = `ws://${buildConfigHost}:${this.config.wsPort}`;
       await injectBuildConfigFields(this.config.projectPath, [
         { type: 'String', name: 'JETSTART_SERVER_URL', value: serverUrl },
         { type: 'String', name: 'JETSTART_SESSION_ID', value: this.currentSession.id }

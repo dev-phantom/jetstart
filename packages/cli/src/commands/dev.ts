@@ -85,6 +85,9 @@ export async function devCommand(options: DevOptions) {
       wsPort,
       host: '0.0.0.0', // Bind to all interfaces for maximum compatibility
       displayHost: host, // Use detected IP for display and client connections
+      // Android emulators reach the host at 10.0.2.2 (not the LAN IP).
+      // Inject this into BuildConfig so the emulator app connects correctly.
+      emulatorHost: options.emulator ? '10.0.2.2' : undefined,
       projectPath,
       projectName,
     });
