@@ -18,8 +18,8 @@ android {
         versionName "1.0.0"
 
         // JetStart injected fields
-        buildConfigField "String", "JETSTART_SERVER_URL", "\"\"  // Filled by jetstart dev"
-        buildConfigField "String", "JETSTART_SESSION_ID", "\"\"  // Filled by jetstart dev"
+        buildConfigField "String", "JETSTART_SERVER_URL", "\"\"" // injected by: jetstart dev
+        buildConfigField "String", "JETSTART_SESSION_ID", "\"\"" // injected by: jetstart dev
         // End JetStart fields
     }
 

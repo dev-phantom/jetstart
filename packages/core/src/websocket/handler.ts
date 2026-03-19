@@ -1,6 +1,12 @@
 /**
  * WebSocket Message Handler
- * Processes incoming WebSocket messages
+ * Processes incoming WebSocket messages with session + token validation.
+ *
+ * Security model:
+ * - Every connecting client must supply the correct sessionId AND token.
+ * - Both are embedded in the QR code shown by `jetstart dev`.
+ * - A device that was built against a previous session (different token)
+ *   is rejected immediately — it cannot hijack the current dev session.
  */
 
 import {
@@ -9,27 +15,37 @@ import {
   CoreConnectedMessage,
   CoreBuildStartMessage,
   CoreBuildCompleteMessage,
-  CoreUIUpdateMessage,
   CoreDexReloadMessage,
 } from '@jetstart/shared';
 import { ConnectionManager } from './manager';
 import { log, error as logError } from '../utils/logger';
-
 import { LogsServer } from '@jetstart/logs';
 
 export class WebSocketHandler {
   private onClientConnected?: (sessionId: string) => void;
   private logsServer?: LogsServer;
+  /** The session ID this server owns — clients must match this exactly. */
+  private expectedSessionId: string;
+  /** The token this server owns — clients must match this exactly. */
+  private expectedToken: string;
+  /** Human-readable project name for the `core:connected` response. */
+  private projectName: string;
 
   constructor(
     private connectionManager: ConnectionManager,
-    options?: { 
+    options?: {
       onClientConnected?: (sessionId: string) => void;
       logsServer?: LogsServer;
+      expectedSessionId?: string;
+      expectedToken?: string;
+      projectName?: string;
     }
   ) {
-    this.onClientConnected = options?.onClientConnected;
-    this.logsServer = options?.logsServer;
+    this.onClientConnected   = options?.onClientConnected;
+    this.logsServer          = options?.logsServer;
+    this.expectedSessionId   = options?.expectedSessionId ?? '';
+    this.expectedToken       = options?.expectedToken ?? '';
+    this.projectName         = options?.projectName ?? 'JetStart Project';
   }
 
   handleMessage(clientId: string, data: Buffer): void {
@@ -37,11 +53,9 @@ export class WebSocketHandler {
       const message: WSMessage = JSON.parse(data.toString());
       log(`Received message from ${clientId}: ${message.type}`);
 
-      // Route message based on type
       if (this.isClientMessage(message)) {
         this.handleClientMessage(clientId, message);
       }
-
     } catch (err: any) {
       logError(`Failed to parse message from ${clientId}: ${err.message}`);
     }
@@ -60,23 +74,19 @@ export class WebSocketHandler {
         log(`Client ${clientId} status: ${message.status}`);
         break;
       case 'client:log':
-        // Add to Logs Server (for CLI/Web Dashboard)
         if (this.logsServer) {
           this.logsServer.addLog(message.log);
         }
-        
-        // Broadcast log to all clients in the session (e.g. Logs Viewer in App)
         if (message.sessionId) {
           this.connectionManager.broadcastToSession(message.sessionId, {
             type: 'core:log',
             timestamp: Date.now(),
             sessionId: message.sessionId,
-            log: message.log
+            log: message.log,
           });
         }
         break;
       case 'client:heartbeat':
-        // Update last activity
         break;
       case 'client:disconnect':
         this.handleDisconnect(clientId, message);
@@ -85,25 +95,54 @@ export class WebSocketHandler {
   }
 
   private handleConnect(clientId: string, message: ClientMessage & { type: 'client:connect' }): void {
-    log(`Client connecting with session: ${message.sessionId}`);
+    const incomingSession = message.sessionId;
+    const incomingToken   = (message as any).token as string | undefined;
 
-    // Associate this client with the session for isolation
-    this.connectionManager.setClientSession(clientId, message.sessionId);
+    // ── Session + token validation ──────────────────────────────────────────
+    // Only validate when the server has an expected session configured.
+    if (this.expectedSessionId) {
+      if (incomingSession !== this.expectedSessionId) {
+        logError(
+          `Rejected client ${clientId}: wrong session "${incomingSession}" (expected "${this.expectedSessionId}")`
+        );
+        logError('This device was built against a different jetstart dev session. Rescan the QR code.');
+        // Close the WebSocket immediately — do not accept this client.
+        const ws = this.connectionManager.getConnection(clientId);
+        if (ws) {
+          ws.close(4001, 'Session mismatch — rescan QR code');
+        }
+        this.connectionManager.removeConnection(clientId);
+        return;
+      }
 
-    // Send connected confirmation
+      if (this.expectedToken && incomingToken && incomingToken !== this.expectedToken) {
+        logError(
+          `Rejected client ${clientId}: wrong token (session ${incomingSession})`
+        );
+        const ws = this.connectionManager.getConnection(clientId);
+        if (ws) {
+          ws.close(4002, 'Token mismatch — rescan QR code');
+        }
+        this.connectionManager.removeConnection(clientId);
+        return;
+      }
+    }
+
+    // ── Accepted ─────────────────────────────────────────────────────────────
+    log(`Client accepted (session: ${incomingSession})`);
+    this.connectionManager.setClientSession(clientId, incomingSession);
+
     const response: CoreConnectedMessage = {
       type: 'core:connected',
       timestamp: Date.now(),
-      sessionId: message.sessionId,
-      projectName: 'DemoProject', // In real implementation, get from session
+      sessionId: incomingSession,
+      projectName: this.projectName,
     };
-
     this.connectionManager.sendToClient(clientId, response);
 
-    // Trigger initial build for the client
     if (this.onClientConnected) {
-      log(`Triggering initial build for session: ${message.sessionId}`);
-      this.onClientConnected(message.sessionId);
+      log(`Triggering initial build for session: ${incomingSession}`);
+      this.onClientConnected(incomingSession);
     }
   }
 
@@ -111,14 +150,12 @@ export class WebSocketHandler {
     log(`Client disconnecting: ${message.reason || 'No reason provided'}`);
   }
 
-  // Send build notifications
   sendBuildStart(sessionId: string): void {
     const message: CoreBuildStartMessage = {
       type: 'core:build-start',
       timestamp: Date.now(),
       sessionId,
     };
-
     this.connectionManager.broadcastToSession(sessionId, message);
   }
 
@@ -139,54 +176,9 @@ export class WebSocketHandler {
       },
       downloadUrl: apkUrl,
     };
-
     this.connectionManager.broadcastToSession(sessionId, message);
   }
 
-  /**
-   * Send UI update (DSL-based hot reload) - broadcasts to ALL connected clients
-   * In dev mode, we want hot reload to work regardless of session mismatch
-   */
-  sendUIUpdate(sessionId: string, dslContent: string, screens?: string[]): void {
-    const message: CoreUIUpdateMessage = {
-      type: 'core:ui-update',
-      timestamp: Date.now(),
-      sessionId,
-      dslContent,
-      screens,
-      hash: this.generateHash(dslContent),
-    };
-
-    log(`Sending UI update to ALL clients: ${dslContent.length} bytes`);
-    log(`DSL Content: ${dslContent}`);
-    // Broadcast to ALL connected clients - session isolation not needed for dev hot reload
-    this.connectionManager.broadcastToAll(message);
-  }
-
-  private generateHash(content: string): string {
-    // Simple hash for caching (in production, use crypto.createHash)
-    let hash = 0;
-    for (let i = 0; i < content.length; i++) {
-      const char = content.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return hash.toString(16);
-  }
-
-  // Broadcast any log entry to the session
-  sendLogBroadcast(sessionId: string, logEntry: any): void {
-      this.connectionManager.broadcastToSession(sessionId, {
-          type: 'core:log',
-          timestamp: Date.now(),
-          sessionId: sessionId,
-          log: logEntry
-      });
-  }
-
-  /**
-   * Send DEX reload for true hot reload (sends compiled dex bytes)
-   */
   sendDexReload(sessionId: string, dexBase64: string, classNames: string[]): void {
     const message: CoreDexReloadMessage = {
       type: 'core:dex-reload',
@@ -195,11 +187,16 @@ export class WebSocketHandler {
       dexBase64,
       classNames,
     };
-
-    log(`Sending DEX reload to ALL clients: ${dexBase64.length} base64 chars, ${classNames.length} classes`);
-    log(`Classes: ${classNames.join(', ')}`);
-
-    // Broadcast to ALL connected clients
+    log(`Sending DEX reload: ${dexBase64.length} base64 chars, ${classNames.length} classes`);
     this.connectionManager.broadcastToAll(message);
+  }
+
+  sendLogBroadcast(sessionId: string, logEntry: any): void {
+    this.connectionManager.broadcastToSession(sessionId, {
+      type: 'core:log',
+      timestamp: Date.now(),
+      sessionId,
+      log: logEntry,
+    });
   }
 }

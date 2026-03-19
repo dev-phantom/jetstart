@@ -15,6 +15,7 @@ import { installAuditCommand } from './commands/install-audit';
 import { androidEmulatorCommand } from './commands/android-emulator';
 import { JETSTART_VERSION } from '@jetstart/shared';
 import {version} from '../package.json';
+import { cleanCommand } from './commands/clean';
 const program = new Command();
 
 program
@@ -78,6 +79,14 @@ program
   .command('android-emulator')
   .description('Manage Android emulators (AVDs)')
   .action(androidEmulatorCommand);
+
+// Clean command
+program
+  .command('clean')
+  .description('Stop Gradle daemons and remove build artifacts — fixes "Folder In Use" errors')
+  .option('--build', 'Also delete app/build/ to free disk space (next build will be slower)')
+  .option('--daemons-only', 'Only stop Gradle daemons, do not touch build output')
+  .action(cleanCommand);
 
 // Error handling
 program.on('command:*', (operands) => {

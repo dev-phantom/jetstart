@@ -133,6 +133,9 @@ export class JetStartServer extends EventEmitter {
         port: this.config.wsPort,
         logsServer: this.logsServer,
         adbHelper: this.adbHelper,  // Enable wireless ADB auto-connect
+        expectedSessionId: this.currentSession?.id,   // Reject old-session devices
+        expectedToken:     this.currentSession?.token, // Validate token too
+        projectName:       this.config.projectName,
         onClientConnected: async (sessionId: string) => {
           log(`Client connected (session: ${sessionId}). Triggering initial build...`);
           // If APK already built, just notify this new client - no rebuild needed

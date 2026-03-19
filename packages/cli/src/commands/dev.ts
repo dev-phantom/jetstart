@@ -14,6 +14,20 @@ import { DEFAULT_CORE_PORT, DEFAULT_WS_PORT } from '@jetstart/shared';
 import { DevOptions } from '../types';
 import { EmulatorDeployer } from '../utils/emulator-deployer';
 import { openBrowser } from '../utils/open';
+import { execSync } from 'child_process';
+
+
+/** Stop all Gradle daemons so the project folder can be deleted freely. */
+function stopGradleDaemons(projectPath: string): void {
+  try {
+    const isWin = process.platform === 'win32';
+    const gradle = isWin ? 'gradle.bat' : 'gradle';
+    execSync(`"${gradle}" --stop`, { cwd: projectPath, stdio: 'ignore', timeout: 10000 });
+    log('Gradle daemons stopped');
+  } catch {
+    // Daemon may already be gone — not an error
+  }
+}
 
 export async function devCommand(options: DevOptions) {
   try {
@@ -146,6 +160,7 @@ export async function devCommand(options: DevOptions) {
     process.on('SIGINT', async () => {
       console.log();
       log('Shutting down dev server...');
+      stopGradleDaemons(projectPath);
       await server.stop();
       process.exit(0);
     });
@@ -153,6 +168,7 @@ export async function devCommand(options: DevOptions) {
     process.on('SIGTERM', async () => {
       console.log();
       log('Shutting down dev server...');
+      stopGradleDaemons(projectPath);
       await server.stop();
       process.exit(0);
     });
