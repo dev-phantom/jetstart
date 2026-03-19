@@ -18,14 +18,21 @@ android {
         versionName "1.0.0"
 
         // JetStart injected fields
-        buildConfigField "String", "JETSTART_SERVER_URL", "\"ws://localhost:8766\""
-        buildConfigField "String", "JETSTART_SESSION_ID", "\"none\""
+        buildConfigField "String", "JETSTART_SERVER_URL", "\"\"  // Filled by jetstart dev"
+        buildConfigField "String", "JETSTART_SESSION_ID", "\"\"  // Filled by jetstart dev"
         // End JetStart fields
     }
 
     buildTypes {
+        debug {
+            debuggable true
+        }
         release {
-            minifyEnabled false
+            debuggable false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Signing config is injected by `jetstart build --sign` via keystore.properties
         }
     }
 

@@ -11,9 +11,9 @@ The Core package (`@jetstart/core`) is the central hub of JetStart, responsible 
 
 The Core package provides:
 
-- 🏗️ **Build Management** - Compiling Kotlin/Compose projects with Gradle
-- 🌐 **HTTP Server** - Serving APKs and REST API endpoints
-- 🔌 **WebSocket Server** - Real-time communication with clients
+- 🏗️ **Build Management** - Compiling Kotlin/Compose projects
+- 🌐 **HTTP Server** - Serving APKs and REST API
+- 🔌 **WebSocket Server** - Real-time communication
 - 📦 **Build Caching** - Faster incremental builds
 - 👀 **File Watching** - Auto-rebuild on file changes
 - 🔐 **Session Management** - Secure device pairing and authentication

@@ -15,14 +15,18 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize hot reload - reads from BuildConfig injected by jetstart dev
-        try {
-            val serverUrl = BuildConfig.JETSTART_SERVER_URL
-            val sessionId = BuildConfig.JETSTART_SESSION_ID
-            HotReload.connect(this, serverUrl, sessionId)
-        } catch (e: Exception) {
-            // BuildConfig not available yet, hot reload will be disabled
-            android.util.Log.w("MainActivity", "Hot reload not configured: ${e.message}")
+        // Hot reload is ONLY active in debug builds.
+        // In release builds this block is completely eliminated by R8 (BuildConfig.DEBUG = false).
+        if (BuildConfig.DEBUG) {
+            try {
+                val serverUrl = BuildConfig.JETSTART_SERVER_URL
+                val sessionId = BuildConfig.JETSTART_SESSION_ID
+                if (serverUrl.isNotEmpty()) {
+                    HotReload.connect(this, serverUrl, sessionId)
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("MainActivity", "Hot reload not configured: ${e.message}")
+            }
         }
 
         setContent {
@@ -54,7 +58,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        HotReload.disconnect()
+        if (BuildConfig.DEBUG) { HotReload.disconnect() }
     }
 }
 

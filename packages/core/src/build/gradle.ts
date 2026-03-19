@@ -194,7 +194,7 @@ export class AdbHelper {
     const retryDelays = [0, 1000, 2000, 3000, 5000]; // Escalating delays
 
     try {
-      console.log(`[ADB] Attempting wireless connection to ${target}...${retryCount > 0 ? ` (retry ${retryCount}/${maxRetries})` : ''}`);
+      // console.log(`[ADB] Attempting wireless connection to ${target}...${retryCount > 0 ? ` (retry ${retryCount}/${maxRetries})` : ''}`);
 
       // Use longer timeout: 15 seconds for wireless ADB handshake
       // This allows time for:

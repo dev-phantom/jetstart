@@ -9,7 +9,7 @@ The Logs package provides:
 - 📊 **Log Server** - WebSocket-based log streaming
 - 💾 **Log Storage** - In-memory log storage with size limits
 - 🔍 **Filtering** - Filter by level, source, tag, or search query
-- 🖥️ **CLI Viewer** - Terminal-based log viewer
+- 🖥️  **CLI Viewer** - Terminal-based log viewer
 - 📈 **Statistics** - Log metrics and analytics
 
 ## Usage

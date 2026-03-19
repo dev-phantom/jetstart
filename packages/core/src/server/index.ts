@@ -359,11 +359,11 @@ export class JetStartServer extends EventEmitter {
             result.dexBase64,
             result.classNames
           );
-          success(`≡ƒöÑ Hot reload complete! (${result.compileTime + result.dexTime}ms)`);
+          success(`Hot reload complete! (${result.compileTime + result.dexTime}ms)`);
           return;
         }
 
-        // DEX compilation failed ΓÇö fall through to full Gradle rebuild
+        // DEX compilation failed — fall through to full Gradle rebuild
         error(`Hot reload compile failed: ${result.errors[0] ?? 'unknown'}`);
         log('Triggering full Gradle rebuild...');
       } catch (err: any) {
