@@ -16,6 +16,7 @@ import {
   CoreBuildStartMessage,
   CoreBuildCompleteMessage,
   CoreDexReloadMessage,
+  CoreJsUpdateMessage,
 } from '@jetstart/shared';
 import { ConnectionManager } from './manager';
 import { log, error as logError } from '../utils/logger';
@@ -188,7 +189,25 @@ export class WebSocketHandler {
       classNames,
     };
     log(`Sending DEX reload: ${dexBase64.length} base64 chars, ${classNames.length} classes`);
-    this.connectionManager.broadcastToAll(message);
+    this.connectionManager.broadcastToAll(message as any);
+  }
+
+  /**
+   * Send compiled Kotlin→JS ES module to web emulator clients.
+   * The browser imports it dynamically and renders the Compose UI as HTML.
+   */
+  sendJsUpdate(sessionId: string, jsBase64: string, sourceFile: string, byteSize: number, screenFunctionName: string): void {
+    const message: CoreJsUpdateMessage = {
+      type: 'core:js-update',
+      timestamp: Date.now(),
+      sessionId,
+      jsBase64,
+      sourceFile,
+      byteSize,
+    };
+    log(`Sending JS update: ${sourceFile} (${byteSize} bytes) to web clients`);
+    // Broadcast to all — web clients use it, Android clients ignore unknown types
+    this.connectionManager.broadcastToAll(message as any);
   }
 
   sendLogBroadcast(sessionId: string, logEntry: any): void {

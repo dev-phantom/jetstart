@@ -1,3 +1,4 @@
+import { useComposeRenderer } from '../services/ComposeRenderer';
 /**
  * DeviceFrame - Simulated Android device frame for app preview
  */
@@ -11,13 +12,50 @@ export interface DeviceFrameProps {
   currentDSL?: string | null;  // Unused — server now sends DEX not DSL
   dslHash?: string | null;       // Unused
   dexReloadInfo: { classNames: string[]; count: number; timestamp: number } | null;
+  /** Compiled Kotlin→JS module from the server — drives live Compose rendering */
+  jsUpdate: { jsBase64: string; sourceFile: string; byteSize: number; timestamp: number } | null;
 }
 
-export function DeviceFrame({ buildStatus, projectName, currentDSL: _currentDSL, dslHash: _dslHash, dexReloadInfo }: DeviceFrameProps) {
-  // DSL parsing removed — server now sends DEX hot reload, not DSL
-  // dexReloadInfo contains live hot reload events from Kotlin file changes
+export function DeviceFrame({ buildStatus, projectName, currentDSL: _currentDSL, dslHash: _dslHash, dexReloadInfo, jsUpdate }: DeviceFrameProps) {
+  // DSL parsing removed — server now sends DEX hot reload + JS preview
+  const { element: composeElement, isLoading: composeLoading, error: composeError, sourceFile: composeSource, compileMs } = useComposeRenderer(jsUpdate);
 
   const renderContent = () => {
+    // ── Live Compose rendering (kotlinc-js pipeline) ─────────────────────────
+    if (composeLoading) {
+      return (
+        <div className="device-content-message building">
+          <div className="spinner"></div>
+          <h3>Compiling Kotlin → JS</h3>
+          <p style={{ fontSize: '12px', color: '#aaa' }}>Live preview loading...</p>
+        </div>
+      );
+    }
+
+    if (composeError) {
+      return (
+        <div className="device-content-message error">
+          <h3>⚠ Preview Error</h3>
+          <p style={{ fontSize: '11px', fontFamily: 'monospace', whiteSpace: 'pre-wrap', maxHeight: 200, overflowY: 'auto' }}>{composeError}</p>
+        </div>
+      );
+    }
+
+    if (composeElement) {
+      return (
+        <div style={{ width: '100%', height: '100%', overflowY: 'auto', fontFamily: 'Roboto, sans-serif' }}>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" />
+          {composeElement}
+          {compileMs !== null && (
+            <div style={{ position: 'absolute', bottom: 4, right: 8, fontSize: 10, color: 'rgba(0,0,0,.3)', fontFamily: 'monospace', pointerEvents: 'none' }}>
+              ⚡ {compileMs}ms · {composeSource}
+            </div>
+          )}
+        </div>
+      );
+    }
+
     if (buildStatus.error) {
       return (
         <div className="device-content-message error">
@@ -116,7 +154,8 @@ export function DeviceFrame({ buildStatus, projectName, currentDSL: _currentDSL,
       </div>
       <div className="device-label">
         JetStart Web Emulator
-        {dexReloadInfo && <span className="dsl-hash"> • ⚡ {dexReloadInfo.count} class{dexReloadInfo.count !== 1 ? 'es' : ''}</span>}
+        {composeSource && <span className="dsl-hash"> • ⚡ {composeSource}</span>}
+        {dexReloadInfo && !composeSource && <span className="dsl-hash"> • {dexReloadInfo.count} class{dexReloadInfo.count !== 1 ? 'es' : ''}</span>}
       </div>
     </div>
   );

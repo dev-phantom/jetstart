@@ -125,6 +125,21 @@ export interface CoreDexReloadMessage extends BaseMessage {
   classNames: string[];
 }
 
+/**
+ * Compiled Kotlin→JS module for web emulator preview.
+ * The browser imports this as an ES module, executes renderScreen(),
+ * and gets back a component tree it renders as Material You HTML.
+ */
+export interface CoreJsUpdateMessage extends BaseMessage {
+  type: 'core:js-update';
+  /** Base64-encoded ES module (.mjs) compiled by kotlinc-js */
+  jsBase64: string;
+  /** Source file that triggered this update */
+  sourceFile: string;
+  /** Size in bytes for display */
+  byteSize: number;
+}
+
 export interface CoreDisconnectMessage extends BaseMessage {
   type: 'core:disconnect';
   reason: string;

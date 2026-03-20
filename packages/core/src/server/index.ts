@@ -17,6 +17,7 @@ import { BuildService } from '../build';
 import { ServerSession } from '../types';
 import { injectBuildConfigFields } from '../build/gradle-injector';
 import { HotReloadService } from '../build/hot-reload-service';
+import { JsCompilerService } from '../build/js-compiler-service';
 import { AdbHelper } from '../build/gradle';
 
 export interface ServerConfig {
@@ -41,6 +42,7 @@ export class JetStartServer extends EventEmitter {
   private sessionManager: SessionManager;
   private buildService: BuildService;
   private hotReloadService: HotReloadService | null = null;
+  private jsCompiler: JsCompilerService | null = null;
   private currentSession: ServerSession | null = null;
   private buildMutex: boolean = false;  // Prevent concurrent builds
   private latestApkPath: string | null = null;  // Store latest built APK path
@@ -115,6 +117,7 @@ export class JetStartServer extends EventEmitter {
 
       // Initialize Hot Reload Service
       this.hotReloadService = new HotReloadService(this.config.projectPath);
+      this.jsCompiler = new JsCompilerService();
       const envCheck = await this.hotReloadService.checkEnvironment();
       if (envCheck.ready) {
         log('🔥 True hot reload enabled (DEX-based)');
@@ -352,6 +355,31 @@ export class JetStartServer extends EventEmitter {
   /**
    * Handle UI file updates - uses TRUE hot reload (DEX-based) when available
    */
+
+  /**
+   * Compile a .kt file to a browser ES module and broadcast to web clients.
+   * Physical devices use DEX (already sent above). This targets browsers only.
+   */
+  private async sendJsPreview(filePath: string): Promise<void> {
+    if (!this.jsCompiler?.isAvailable() || !this.currentSession || !this.wsHandler) return;
+    try {
+      const result = await this.jsCompiler.compile(filePath);
+      if (result.success && result.jsBase64) {
+        this.wsHandler.sendJsUpdate(
+          this.currentSession.id,
+          result.jsBase64,
+          path.basename(filePath),
+          result.byteSize ?? 0,
+          result.screenFunctionName ?? 'Screen',
+        );
+      } else {
+        log(`[JsCompiler] Web preview skipped: ${result.error?.slice(0, 100)}`);
+      }
+    } catch (err: any) {
+      log(`[JsCompiler] Web preview error: ${err.message}`);
+    }
+  }
+
   private async handleUIUpdate(filePath: string): Promise<void> {
     if (!this.currentSession || !this.wsHandler) return;
 
@@ -368,6 +396,8 @@ export class JetStartServer extends EventEmitter {
             result.classNames
           );
           success(`Hot reload complete! (${result.compileTime + result.dexTime}ms)`);
+          // Run JS compilation in parallel — does not block DEX delivery
+          this.sendJsPreview(filePath).catch(() => {});
           return;
         }
 
