@@ -20,7 +20,7 @@ Issue Detected
          │
          ▼
 ┌─────────────────┐
-│ Identify Source │ ← CLI, CORE, CLIENT, BUILD
+│ Identify Source │
 └────────┬────────┘
          │
          ▼
@@ -101,14 +101,14 @@ jetstart logs --source build --lines 50
 
 **Symptoms:**
 - Save file, no update appears
-- Or full Gradle build triggers (20s) instead of DSL reload (\<100ms)
+- Or full Gradle build triggers (20s) instead of hot reload (\<100ms)
 
 **Diagnosis:**
 ```bash
 jetstart logs --source core
 
 # Look for:
-# ✓ "🚀 UI-only changes detected" = DSL reload working
+# ✓ "🔥 Hot reload starting for: MainActivity.kt" = hot reload working
 # ✗ "📦 Non-UI changes detected" = Full build (not hot reload)
 ```
 
@@ -124,7 +124,7 @@ fun MyScreen() {
 // ✓ GOOD: Pure UI only
 @Composable
 fun MyScreen() {
-    Text("Hello World")  // DSL hot reload works!
+    Text("Hello World")  // hot reload works!
 }
 ```
 
@@ -253,53 +253,34 @@ adb devices
 - Emulator window should show Android home screen
 - Wait 30-60 seconds after launching
 
-### Issue: DSL Parse Errors
+### Issue: Hot Reload Compilation Fails
 
 **Symptoms:**
 ```
-WARN [CORE] [DSL] Failed to parse UI file: Syntax error
+WARN [CORE] [HotReload] Compilation failed: Unresolved reference: SomeClass
 INFO [CORE] Falling back to full Gradle build...
 ```
 
-**Cause:** DSL Parser can't understand complex Compose code
+**Cause:** The changed `.kt` file references a class that `kotlinc` cannot resolve from the cached classpath. This usually means a new dependency was added, or a class from another module changed.
 
-**Solution:** Simplify UI or use explicit DSL:
+**Solutions:**
 
-```kotlin
-// Complex Compose (DSL can't parse)
-@Composable
-fun MyScreen() {
-    LazyColumn {
-        items(myList) { item ->
-            Text(item.name)
-        }
-    }
-}
+1. Run a full Gradle build to refresh the classpath cache:
+   ```bash
+   ./gradlew assembleDebug
+   ```
+   After the Gradle build, `jetstart dev` will pick up any new JARs automatically.
 
-// Simplified for DSL
-@Composable
-fun MyScreen() {
-    Column {
-        Text("Item 1")
-        Text("Item 2")
-        Text("Item 3")
-    }
-}
+2. If using a recently added dependency, make sure it was compiled into the Gradle cache first:
+   ```bash
+   ./gradlew dependencies
+   ```
 
-// Or explicit DSL JSON
-fun getDefaultDSL(): String = """
-{
-  "version": "1.0",
-  "screen": {
-    "type": "Column",
-    "children": [
-      {"type": "Text", "text": "Item 1"},
-      {"type": "Text", "text": "Item 2"}
-    ]
-  }
-}
-""".trimIndent()
-```
+3. If you see consistent `kotlinc` failures on a file that should compile fine, check `KOTLIN_HOME` points to a compatible version:
+   ```bash
+   kotlinc -version
+   # Should match or be compatible with your project's Kotlin version in build.gradle
+   ```
 
 ## Debugging Tools
 
@@ -353,12 +334,12 @@ adb pull /sdcard/Download/app.apk ./
 5. Filter: **WS** (WebSocket)
 6. See real-time messages:
    - `build-start`
-   - `ui-update` (DSL JSON)
+   - `core:dex-reload` (compiled DEX bytecode)
    - `build-complete`
 
 **Useful for:**
 - Debugging connection issues
-- Inspecting DSL JSON payload
+- Inspecting `core:dex-reload` DEX payloads and `core:js-update` messages
 - Monitoring hot reload messages
 - Checking session tokens
 
@@ -394,7 +375,7 @@ jetstart:core Creating session +10ms
 jetstart:core Starting HTTP server +5ms
 jetstart:websocket Client connected +2s
 jetstart:build File change detected +5s
-jetstart:dsl Parsing MainActivity.kt +2ms
+jetstart:build Hot reload starting for: MainActivity.kt +2ms
 ```
 
 ## Debug Strategies
@@ -598,7 +579,7 @@ Hot reload not working - always triggers full build
 2. `jetstart dev`
 3. Edit MainActivity.kt
 4. Save file
-5. See full build instead of DSL reload
+5. See full build instead of hot reload
 
 **Logs:**
 ```
@@ -606,14 +587,14 @@ Hot reload not working - always triggers full build
 12:34:56 INFO [CORE] 📦 Non-UI changes detected, triggering full Gradle build
 ```
 
-**Expected:** DSL hot reload (<100ms)
+**Expected:** Hot reload (<100ms)
 **Actual:** Full Gradle build (20s)
 ```
 
 ## Related Documentation
 
 **Learn more:**
-- [Hot Reload Explained](./hot-reload-explained.md) - Understand DSL vs Gradle
+- [Hot Reload Explained](./hot-reload-explained.md) - Understand the hot reload pipeline
 - [Using QR Codes](./using-qr-codes.md) - Connection debugging
 - [Working with Emulators](./working-with-emulators.md) - Emulator issues
 - [Performance Optimization](./performance-optimization.md) - Speed improvements

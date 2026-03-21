@@ -87,12 +87,18 @@ jetstart build --output ./dist
 
 **Options:**
 - `-o, --output <path>` - Output directory (default: `./build`)
-- `-r, --release` - Build release version (optimized)
-- `--sign` - Sign the APK (requires keystore)
+- `-r, --release` - Release build: R8 minification, `debuggable=false`, dev credentials stripped
+- `--sign` - Sign with `keystore.properties` in project root (required for Play Store)
+- `--self-sign` - Auto-generate a test keystore via `keytool` and sign (not for Play Store)
+- `--bundle` - Build AAB (Android App Bundle) instead of APK
+- `--flavor <n>` - Build a specific product flavor
 
-**Example:**
+**Examples:**
 ```bash
 jetstart build --release --sign
+jetstart build --release --self-sign
+jetstart build --release --bundle
+jetstart build --release --flavor staging
 ```
 
 ### `jetstart logs`
@@ -227,6 +233,9 @@ interface BuildOptions {
   output?: string;
   release?: boolean;
   sign?: boolean;
+  selfSign?: boolean;
+  bundle?: boolean;
+  flavor?: string;
 }
 ```
 

@@ -94,9 +94,9 @@ const server = new JetStartServer(config);
 ```
 
 **Methods:**
-- `start()` - Start the server
-- `stop()` - Stop the server
-- `rebuild()` - Trigger a manual rebuild
+- `start()` - Start all servers and begin watching for file changes
+- `stop()` - Gracefully shut down all servers
+- `on(event, handler)` - Listen for server events
 - `getSession()` - Get current session
 
 **Events:**
@@ -106,23 +106,21 @@ const server = new JetStartServer(config);
 - `client:connected` - Client connected
 - `client:disconnected` - Client disconnected
 
-### BuildService
+### HotReloadService
 
-Manages Gradle builds and build caching.
+Orchestrates the Kotlin → DEX hot reload pipeline: `kotlinc` compilation, `$Override` class generation, and `d8` DEX conversion.
 
 ```typescript
-import { BuildService } from '@jetstart/core';
+import { HotReloadService } from '@jetstart/core';
 
-const buildService = new BuildService({
-  projectPath: '/path/to/project',
-  watchEnabled: true,
-});
+const service = new HotReloadService(projectPath);
+const result = await service.hotReload(filePath);
+// result.dexBase64, result.classNames, result.compileTime, result.dexTime
 ```
 
 **Methods:**
-- `build(options)` - Build the project
-- `startWatching()` - Start watching for file changes
-- `stopWatching()` - Stop watching
+- `hotReload(filePath)` - Compile file and return DEX payload
+- `checkEnvironment()` - Verify kotlinc, d8, and classpath are available
 
 ### SessionManager
 
@@ -139,15 +137,18 @@ const session = await sessionManager.createSession({
 });
 ```
 
-### DSLParser
+### HotReloadService
 
-Parses Kotlin Compose code to DSL for hot reload.
+Orchestrates the full hot reload pipeline for a changed Kotlin file: kotlinc compilation, $Override class generation, and DEX conversion via d8.
 
 ```typescript
-import { DSLParser } from '@jetstart/core';
+import { HotReloadService } from '@jetstart/core';
 
-const parser = new DSLParser();
-const dsl = parser.parse(kotlinCode);
+const service = new HotReloadService(projectPath);
+const result = await service.hotReload('/path/to/MainActivity.kt');
+// result.dexBase64 - send as core:dex-reload
+// result.classNames - list of patched class names
+// result.compileTime, result.dexTime - timing metrics
 ```
 
 ## HTTP Server
@@ -287,7 +288,9 @@ The Core package exports the following:
 - `JetStartServer` - Main server class
 - `BuildService` - Build manager
 - `SessionManager` - Session manager
-- `DSLParser` - DSL parser
+- `HotReloadService` - Hot reload pipeline
+- `KotlinCompiler` - Kotlin to .class compiler
+- `DexGenerator` - .class to DEX converter
 - `WebSocketHandler` - WebSocket handler
 
 **Functions:**

@@ -37,6 +37,9 @@ jetstart build --output ./dist
 | `-o, --output <path>` | string | `./build` | Output directory for APK files |
 | `-r, --release` | boolean | false | Build release variant (optimized) |
 | `--sign` | boolean | false | Sign the APK (requires keystore) |
+| `--self-sign` | boolean | false | Auto-generate a test keystore and sign (not for Play Store) |
+| `--bundle` | boolean | false | Build AAB (Android App Bundle) instead of APK |
+| `--flavor <n>` | string | - | Build a specific product flavor |
 
 ## Build Types
 

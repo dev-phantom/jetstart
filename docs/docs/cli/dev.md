@@ -48,7 +48,8 @@ jetstart dev --no-qr
 | `-p, --port <port>` | number | 8765 | HTTP server port |
 | `-H, --host <host>` | string | auto-detected | Host address for client connections |
 | `--qr / --no-qr` | boolean | true | Display QR code for device pairing |
-| `--open / --no-open` | boolean | true | Open browser automatically |
+| `--no-open` | boolean | false | Do not open browser automatically |
+| `--web` | boolean | false | Open Web Emulator automatically |
 | `--emulator` | boolean | false | Deploy to running Android emulator |
 | `--avd <name>` | string | - | Target specific emulator by AVD name |
 
@@ -114,8 +115,8 @@ When you run `jetstart dev`, the following happens:
          │                                    │
          ▼                                    ▼
 ┌──────────────────┐              ┌──────────────────┐
-│ DSL Hot Reload   │              │  Gradle Build    │
-│ (&lt;100ms)      │              │  (10-30s)        │
+│ DEX Hot Reload   │              │  Gradle Build    │
+│ (<100ms)      │              │  (10-30s)        │
 └────────┬─────────┘              └────────┬─────────┘
          │                                 │
          └────────────┬────────────────────┘
@@ -164,7 +165,7 @@ Scan QR or connect manually:
 
 **Step 3: Scan with JetStart Android app**
 1. Open JetStart app on your device
-2. Tap "Scan QR Code"
+2. Tap "Create Connection"
 3. Point camera at terminal
 4. Connection established automatically!
 
@@ -255,9 +256,9 @@ File Changed
 └─────────┘  └─────────┘
 ```
 
-### UI-Only Changes (Fast Path)
+### Kotlin File Changes (Fast Path — DEX Hot Reload)
 
-Files that trigger **DSL hot reload**:
+Files that trigger **DEX hot reload** (Kotlin → .class → DEX):
 - `MainActivity.kt`
 - `**/screens/*.kt`
 - `**/components/*.kt`
@@ -276,12 +277,12 @@ fun HelloScreen() {
 ```bash
 # Console output
 Files changed: MainActivity.kt
-🚀 UI-only changes detected, using DSL hot reload
-✓ DSL generated: 245 bytes
-✓ UI hot reload sent in `<100ms`⚡
+🔥 Hot reload starting for: MainActivity.kt
+Compiling with kotlinc... generating DEX with d8...
+✓ core:dex-reload sent in `<100ms`⚡
 ```
 
-### Full Rebuild (Slow Path)
+### Non-Kotlin Changes (Slow Path — Full Gradle Build)
 
 Files that trigger **full Gradle build**:
 - Build configuration (`build.gradle`, `settings.gradle`)
@@ -440,10 +441,10 @@ When you save a UI file:
 
 ```bash
 Files changed: MainActivity.kt
-🚀 UI-only changes detected, using DSL hot reload
-Parsing UI file: MainActivity.kt
-DSL generated: 312 bytes
-✓ UI hot reload sent in <100ms ⚡
+🔥 Hot reload starting for: MainActivity.kt
+Compiling with kotlinc...
+Generating DEX with d8... 2 classes
+✓ core:dex-reload sent in `<100ms`⚡
 ```
 
 **Timeline:**

@@ -99,7 +99,7 @@ Scan QR or connect manually:
 
 **3. Open JetStart Android app**
 - Launch JetStart app on your device
-- Tap **"Scan QR Code"** button
+- Tap **"Create Connection"** button
 
 **4. Align camera with QR code**
 - Hold phone 6-12 inches from screen

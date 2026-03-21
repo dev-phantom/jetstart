@@ -48,25 +48,6 @@ egrep -c '(vmx|svm)' /proc/cpuinfo
 # Output > 0 means supported
 ```
 
-### Hardware Acceleration
-
-**Required for acceptable performance** (\<1s boot vs 5+ minutes)
-
-**Windows:**
-- **Intel:** Install [Intel HAXM](https://github.com/intel/haxm/releases)
-- **AMD:** Enable WHPX (Windows Hypervisor Platform)
-
-**macOS:**
-- Built-in Hypervisor.framework (macOS 10.10+)
-- No additional installation needed
-
-**Linux:**
-- KVM (Kernel Virtual Machine)
-```bash
-sudo apt install qemu-kvm libvirt-daemon-system
-sudo usermod -aG kvm $USER
-```
-
 ## JetStart Emulator Manager
 
 JetStart includes built-in emulator management - no Android Studio required!
@@ -188,45 +169,6 @@ jetstart android-emulator
 # Terminal 2: Deploy to that emulator
 cd my-app
 jetstart dev --emulator --avd JetStart_Pixel_7_API_34
-```
-
-## Manual Emulator Management
-
-### Using Android SDK Tools
-
-**If you prefer command-line:**
-
-**List emulators:**
-```bash
-emulator -list-avds
-```
-
-**Start emulator:**
-```bash
-emulator @JetStart_Pixel_7_API_34
-```
-
-**Start in background:**
-```bash
-emulator @JetStart_Pixel_7_API_34 -no-window &
-```
-
-**Stop emulator:**
-```bash
-adb -s emulator-5554 emu kill
-```
-
-### Integration with JetStart
-
-**After starting manually, connect:**
-```bash
-# Start emulator manually
-emulator @My_Emulator &
-
-# Deploy JetStart app
-cd my-app
-jetstart dev --emulator
-# Will detect the running emulator automatically
 ```
 
 ## Performance Optimization
@@ -562,32 +504,6 @@ adb shell screenrecord /sdcard/demo.mp4
 
 # Pull video
 adb pull /sdcard/demo.mp4
-```
-
-### Multiple Instances
-
-**Run 2+ emulators simultaneously:**
-
-```bash
-# Terminal 1
-emulator @Emulator_1 -port 5554 &
-
-# Terminal 2
-emulator @Emulator_2 -port 5556 &
-
-# Check both running
-adb devices
-# emulator-5554  device
-# emulator-5556  device
-```
-
-**Deploy to specific emulator:**
-```bash
-# Install to first emulator
-adb -s emulator-5554 install app.apk
-
-# Install to second emulator
-adb -s emulator-5556 install app.apk
 ```
 
 ## Best Practices
