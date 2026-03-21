@@ -362,6 +362,10 @@ cd packages/client
 ./gradlew test
 ```
 
+:::tip Important
+The JetStart Client is built using standard Kotlin and Jetpack Compose Gradle properties. It is **not** a JetStart-managed project itself. Therefore, you must use standard `./gradlew` commands (or Android Studio) to build it. Running `jetstart build` from the CLI will not work for this specific package.
+:::
+
 ### Output Location
 
 - Debug APK: `app/build/outputs/apk/debug/app-debug.apk`

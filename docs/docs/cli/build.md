@@ -590,7 +590,7 @@ jetstart build --release --sign
 
 **2. Create App Bundle (recommended):**
 ```bash
-./gradlew bundleRelease
+jetstart build --release --bundle
 ```
 
 **3. Upload to Play Console:**

@@ -215,31 +215,16 @@ export default function JetStartLanding() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <motion.div
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs mb-6 border"
-              style={{
-                backgroundColor: colors.altBg,
-                borderColor: 'rgba(37, 255, 121, 0.2)',
-                color: colors.primary,
-              }}
-            >
-              <motion.div
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: colors.primary }}
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-              Android development reimagined
-            </motion.div>
+     
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-5 md:mb-6 leading-tight tracking-tight">
-              Build Android apps
+              Native Android Development,
               <br />
-              in <span style={{ color: colors.primary }}>VS Code</span>
+              <span style={{ color: colors.primary }}>Reimagined.</span>
             </h1>
 
             <p className="text-lg md:text-xl text-gray-400 mb-8 md:mb-10 leading-relaxed max-w-xl mx-auto md:mx-0">
-              Develop with Kotlin + Jetpack Compose. Preview on mobile, desktop, or web—instantly.
+              Pure Kotlin & Jetpack Compose. Real-time previews on your device, desktop, or browser with sub-100ms hot reload.
             </p>
 
             <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-12 md:mb-16">
@@ -354,14 +339,14 @@ export default function JetStartLanding() {
                 step: '01',
                 title: 'Install CLI',
                 description:
-                  'Single command installation via npm. No complex setup or configuration required.',
+                  'Install the CLI globally via npm. No heavy IDEs or complex SDK configurations required to start.',
                 tech: ['npm', 'CLI'],
                 command: 'npm install -g @jetstart/cli',
               },
               {
                 step: '02',
                 title: 'Create Project',
-                description: 'Scaffold a new Android project with Jetpack Compose in seconds.',
+                description: 'Generate a production-ready Jetpack Compose project template in seconds.',
                 tech: ['Kotlin', 'Compose'],
                 command: 'jetstart create my-app',
               },
@@ -369,7 +354,7 @@ export default function JetStartLanding() {
                 step: '03',
                 title: 'Start Building',
                 description:
-                  'Launch dev server and see changes instantly on mobile, desktop, or web.',
+                  'Start the dev server and see your UI updates instantly across all your preview targets.',
                 tech: ['Hot Reload', 'Live Preview'],
                 command: 'jetstart dev',
               },
@@ -461,7 +446,7 @@ export default function JetStartLanding() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">One codebase. Three previews.</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">Write Once. Preview Anywhere.</h2>
             <p className="text-gray-400 text-base md:text-lg">Choose how you want to see your app</p>
           </motion.div>
 
@@ -516,8 +501,7 @@ export default function JetStartLanding() {
                 <div className="order-2 md:order-1">
                   <h3 className="text-xl md:text-3xl font-bold mb-3 md:mb-4">Mobile Client</h3>
                   <p className="text-sm md:text-base text-gray-400 mb-6 leading-relaxed">
-                    Scan a QR code and instantly stream your app to your phone. Like Expo Go, but
-                    for native Android with Kotlin & Compose.
+                    Scan a QR code to stream your app directly to your Android device. High-performance native preview with zero rebuild cycles.
                   </p>
                   <div className="space-y-3">
                     {[
@@ -569,8 +553,7 @@ export default function JetStartLanding() {
                 <div>
                   <h3 className="text-xl md:text-3xl font-bold mb-3 md:mb-4">Desktop Emulator</h3>
                   <p className="text-sm md:text-base text-gray-400 mb-6 leading-relaxed">
-                    Full Android emulator environment. Test hardware features, system APIs, and real
-                    device behavior on your machine.
+                    Full AVD integration for system-level testing. Verify hardware interactions and system APIs with ease.
                   </p>
                   <div className="space-y-3">
                     {['AVD compatible', 'Hardware simulation', 'System-level testing'].map(
@@ -620,8 +603,7 @@ export default function JetStartLanding() {
                 <div>
                   <h3 className="text-xl md:text-3xl font-bold mb-3 md:mb-4">Web Emulator</h3>
                   <p className="text-sm md:text-base text-gray-400 mb-6 leading-relaxed">
-                    Preview your Android app directly in the browser. No SDK, no setup—just instant
-                    feedback for rapid prototyping.
+                    Hardware-accelerated web preview for instant feedback. Iterate on your UI in the browser without an emulator or device.
                   </p>
                   <div className="space-y-3">
                     {['Zero installation', 'Browser-based preview', 'Shareable demo links'].map(
@@ -674,9 +656,9 @@ export default function JetStartLanding() {
               viewport={{ once: true }}
             >
               <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">
-                Traditional Android IDEs
+                Stop Waiting
                 <br />
-                <span className="text-gray-500">slow you down</span>
+                <span className="text-gray-500">for Gradle.</span>
               </h2>
               <div className="space-y-4">
                 {[
@@ -712,7 +694,7 @@ export default function JetStartLanding() {
               viewport={{ once: true }}
             >
               <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">
-                <span style={{ color: colors.primary }}>JetStart is faster</span>
+                <span style={{ color: colors.primary }}>Start Building with JetStart.</span>
               </h2>
               <div className="space-y-4 pt-0 md:pt-8">
                 {[
@@ -920,7 +902,7 @@ export default function JetStartLanding() {
                 />
                 <span className="font-semibold">JetStart</span>
               </div>
-              <p className="text-xs md:text-sm text-gray-200">Launch Android apps at warp speed</p>
+              <p className="text-xs md:text-sm text-gray-200">Build Android apps faster than ever with instant hot reload.</p>
             </div>
             <div>
               <h3 className="font-semibold mb-2 md:mb-3 text-xs md:text-sm">Docs</h3>

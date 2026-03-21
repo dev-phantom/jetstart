@@ -1,4 +1,4 @@
-﻿---
+---
 title: CLI API Reference
 description: Complete command and option reference for the JetStart CLI
 ---
@@ -40,6 +40,7 @@ jetstart dev [options]
 | `-p, --port <port>` | number | `8765` | HTTP server port |
 | `-H, --host <host>` | string | auto-detected LAN IP | Host for QR code and client connections |
 | `--qr / --no-qr` | boolean | `true` | Show QR code in terminal |
+| `--open / --no-open` | boolean | `true` | Open browser automatically |
 | `--web` | boolean | `false` | Auto-open web emulator in browser |
 | `--emulator` | boolean | `false` | Deploy to a running AVD on first build, then hot reload |
 | `--avd <n>` | string | — | Target a specific AVD by name (requires `--emulator`) |

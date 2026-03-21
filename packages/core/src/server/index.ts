@@ -27,6 +27,8 @@ export interface ServerConfig {
   displayHost?: string; // IP address to display in logs/QR codes (for client connections)
   /** Override the URL injected into BuildConfig for emulator builds. Emulators reach the host at 10.0.2.2, not the local network IP. */
   emulatorHost?: string;
+  /** Enable web emulator support (initializes kotlinc-js compiler). */
+  webEnabled?: boolean;
   projectPath?: string;
   projectName?: string;
 }
@@ -38,7 +40,7 @@ export class JetStartServer extends EventEmitter {
   private wsServer: any;
   private logsServer: LogsServer;
   private wsHandler: WebSocketHandler | null = null;
-  private config: Required<Omit<ServerConfig, 'emulatorHost'>> & { displayHost: string; emulatorHost?: string };
+  private config: Required<Omit<ServerConfig, 'emulatorHost' | 'webEnabled'>> & { displayHost: string; emulatorHost?: string; webEnabled: boolean };
   private sessionManager: SessionManager;
   private buildService: BuildService;
   private hotReloadService: HotReloadService | null = null;
@@ -64,6 +66,7 @@ export class JetStartServer extends EventEmitter {
       projectPath: config.projectPath || process.cwd(),
       projectName: config.projectName || path.basename(config.projectPath || process.cwd()),
       emulatorHost: config.emulatorHost,
+      webEnabled: config.webEnabled ?? false,
     };
 
     this.sessionManager = new SessionManager();
@@ -74,11 +77,6 @@ export class JetStartServer extends EventEmitter {
       watchEnabled: true,
     });
     this.adbHelper = new AdbHelper();
-
-    // Hook into logger events
-    // This creates a circular import if we import logger here, but we imported 'log' etc.
-    // We need to import loggerEvents.
-    // The previous tool replacement added loggerEvents export.
   }
 
   async start(): Promise<ServerSession> {
@@ -117,7 +115,9 @@ export class JetStartServer extends EventEmitter {
 
       // Initialize Hot Reload Service
       this.hotReloadService = new HotReloadService(this.config.projectPath);
-      this.jsCompiler = new JsCompilerService();
+      if (this.config.webEnabled) {
+        this.jsCompiler = new JsCompilerService();
+      }
       const envCheck = await this.hotReloadService.checkEnvironment();
       if (envCheck.ready) {
         log('🔥 True hot reload enabled (DEX-based)');

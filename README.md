@@ -91,6 +91,7 @@ jetstart dev                            # Start dev server with hot reload
 jetstart dev --emulator                 # Also deploy to a running AVD via ADB
 jetstart dev --emulator --avd Pixel7    # Target a specific AVD by name
 jetstart dev --web                      # Auto-open the browser web emulator
+jetstart dev --no-open                  # Do not open browser automatically
 jetstart dev --no-qr                    # Skip printing the QR code
 jetstart build                          # Debug APK build via Gradle
 jetstart build --release                # Release APK (dev credentials stripped)

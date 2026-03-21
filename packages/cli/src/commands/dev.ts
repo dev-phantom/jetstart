@@ -88,6 +88,7 @@ export async function devCommand(options: DevOptions) {
       // Android emulators reach the host at 10.0.2.2 (not the LAN IP).
       // Inject this into BuildConfig so the emulator app connects correctly.
       emulatorHost: options.emulator ? '10.0.2.2' : undefined,
+      webEnabled: !!options.web,
       projectPath,
       projectName,
     });
@@ -150,7 +151,7 @@ export async function devCommand(options: DevOptions) {
     }
 
     // Auto-open browser for Web Emulator if requested
-    if (options.web) {
+    if (options.web && options.open !== false) {
       info('Opening Web Emulator...');
       openBrowser(localUrl);
     }

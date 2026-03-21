@@ -1,11 +1,15 @@
 ---
-title: Web
+title: Web (Experimental)
 description: Web-based emulator and development interface for JetStart
 ---
 
-# Web
+# Web (Experimental)
 
 The Web package (`@jetstart/web`) provides a browser-based development interface that allows developers to preview their apps, monitor builds, and view logs without needing a physical Android device.
+
+:::caution
+The Web package is currently **experimental** and under active development. Some features may be unstable or subject to significant changes. Use with caution in production environments.
+:::
 
 ## Overview
 

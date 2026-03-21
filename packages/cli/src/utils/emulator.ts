@@ -206,6 +206,8 @@ export class AVDManager {
    * Create a new AVD
    */
   async createAVD(options: CreateAVDOptions): Promise<void> {
+    await this.ensureSDKRoot();
+
     const {
       name,
       device = 'pixel_5',
