@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import {{PACKAGE_NAME}}.ui.NotesScreen
+import com.jetstart.hotreload.HotReload
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,18 +39,10 @@ class MainActivity : AppCompatActivity() {
                     // Observe reload version - forces recomposition when DEX hot reload happens
                     val reloadVersion by HotReload.reloadVersion.collectAsState()
 
-                    // Check if we should render from DSL (hot reload mode)
-                    val dsl by DSLInterpreter.currentDSL.collectAsState()
-
                     // Use reloadVersion as key to force recomposition of entire tree
                     key(reloadVersion) {
-                        if (dsl != null) {
-                            // Hot reload mode: render from DSL sent by server
-                            DSLInterpreter.RenderDSL(dsl!!)
-                        } else {
-                            // Normal mode: render actual Compose code
-                            AppContent()
-                        }
+                        // Normal mode: render actual Compose code
+                        AppContent()
                     }
                 }
             }

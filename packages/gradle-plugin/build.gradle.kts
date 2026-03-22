@@ -40,3 +40,12 @@ tasks.test {
 kotlin {
     jvmToolchain(17)
 }
+
+publishing {
+    repositories {
+        maven {
+            name = "LocalCLI"
+            url = uri("$rootDir/../cli/maven-repo")
+        }
+    }
+}

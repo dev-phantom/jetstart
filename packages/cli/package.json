@@ -8,9 +8,11 @@
     "jetstart": "./bin/jetstart.js"
   },
   "scripts": {
+    "build:java": "node scripts/build-java.js",
+    "prebuild": "npm run build:java",
     "build": "tsc",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist maven-repo",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -23,6 +25,12 @@
     "android",
     "kotlin",
     "jetpack-compose"
+  ],
+  "files": [
+    "bin",
+    "dist",
+    "maven-repo",
+    "scripts"
   ],
   "author": "Phantom",
   "license": "MIT",
@@ -43,7 +51,7 @@
     "commander": "^11.1.0",
     "dotenv": "^16.3.1",
     "extract-zip": "^2.0.1",
-    "fs-extra": "^11.2.0",
+    "fs-extra": "11.3.4",
     "inquirer": "^8.2.6",
     "ora": "^5.4.1",
     "qrcode-terminal": "^0.12.0",
