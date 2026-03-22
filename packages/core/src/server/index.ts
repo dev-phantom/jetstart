@@ -4,6 +4,7 @@
  */
 
 import * as path from 'path';
+import * as fs from 'fs';
 import * as os from 'os';
 import { EventEmitter } from 'events';
 import { createHttpServer } from './http';
@@ -14,14 +15,20 @@ import { DEFAULT_CORE_PORT, DEFAULT_WS_PORT } from '@jetstart/shared';
 import { SessionManager } from '../utils/session';
 import { BuildService } from '../build';
 import { ServerSession } from '../types';
-import { DSLParser } from '../build/dsl-parser';
 import { injectBuildConfigFields } from '../build/gradle-injector';
+import { HotReloadService } from '../build/hot-reload-service';
+import { JsCompilerService } from '../build/js-compiler-service';
+import { AdbHelper } from '../build/gradle';
 
 export interface ServerConfig {
   httpPort?: number;
   wsPort?: number;
   host?: string;
   displayHost?: string; // IP address to display in logs/QR codes (for client connections)
+  /** Override the URL injected into BuildConfig for emulator builds. Emulators reach the host at 10.0.2.2, not the local network IP. */
+  emulatorHost?: string;
+  /** Enable web emulator support (initializes kotlinc-js compiler). */
+  webEnabled?: boolean;
   projectPath?: string;
   projectName?: string;
 }
@@ -33,12 +40,18 @@ export class JetStartServer extends EventEmitter {
   private wsServer: any;
   private logsServer: LogsServer;
   private wsHandler: WebSocketHandler | null = null;
-  private config: Required<ServerConfig> & { displayHost: string };
+  private config: Required<Omit<ServerConfig, 'emulatorHost' | 'webEnabled'>> & { displayHost: string; emulatorHost?: string; webEnabled: boolean };
   private sessionManager: SessionManager;
   private buildService: BuildService;
+  private hotReloadService: HotReloadService | null = null;
+  private jsCompiler: JsCompilerService | null = null;
   private currentSession: ServerSession | null = null;
   private buildMutex: boolean = false;  // Prevent concurrent builds
   private latestApkPath: string | null = null;  // Store latest built APK path
+  private useTrueHotReload: boolean = false;  // Use DEX-based hot reload (DISABLED - use APK builds instead)
+  private adbHelper: AdbHelper;  // Auto-install APKs via ADB
+  private autoInstall: boolean = true;  // Auto-install APK after build
+  private isFileChangeBuild: boolean = false;  // Track if build is from file change
 
   constructor(config: ServerConfig = {}) {
     super();
@@ -52,6 +65,8 @@ export class JetStartServer extends EventEmitter {
       displayHost: displayHost,
       projectPath: config.projectPath || process.cwd(),
       projectName: config.projectName || path.basename(config.projectPath || process.cwd()),
+      emulatorHost: config.emulatorHost,
+      webEnabled: config.webEnabled ?? false,
     };
 
     this.sessionManager = new SessionManager();
@@ -61,11 +76,7 @@ export class JetStartServer extends EventEmitter {
       cachePath: path.join(os.tmpdir(), 'jetstart-cache'),
       watchEnabled: true,
     });
-
-    // Hook into logger events
-    // This creates a circular import if we import logger here, but we imported 'log' etc.
-    // We need to import loggerEvents.
-    // The previous tool replacement added loggerEvents export.
+    this.adbHelper = new AdbHelper();
   }
 
   async start(): Promise<ServerSession> {
@@ -93,12 +104,29 @@ export class JetStartServer extends EventEmitter {
       });
 
       // Inject server URL into build.gradle for hot reload
-      const serverUrl = `ws://${this.config.displayHost}:${this.config.wsPort}`;
+      // For Android emulators, use 10.0.2.2 (host gateway) in BuildConfig; physical phones use the network IP
+      const buildConfigHost = this.config.emulatorHost || this.config.displayHost;
+      const serverUrl = `ws://${buildConfigHost}:${this.config.wsPort}`;
       await injectBuildConfigFields(this.config.projectPath, [
         { type: 'String', name: 'JETSTART_SERVER_URL', value: serverUrl },
         { type: 'String', name: 'JETSTART_SESSION_ID', value: this.currentSession.id }
       ]);
       log(`Injected server URL: ${serverUrl}`);
+
+      // Initialize Hot Reload Service
+      this.hotReloadService = new HotReloadService(this.config.projectPath);
+      if (this.config.webEnabled) {
+        this.jsCompiler = new JsCompilerService();
+      }
+      const envCheck = await this.hotReloadService.checkEnvironment();
+      if (envCheck.ready) {
+        log('🔥 True hot reload enabled (DEX-based)');
+        this.useTrueHotReload = true;
+      } else {
+        log('True hot reload unavailable - file changes will trigger full Gradle builds');
+        log(`Issues: ${envCheck.issues.join(', ')}`);
+        this.useTrueHotReload = false;
+      }
 
       // Start HTTP server
       this.httpServer = await createHttpServer({
@@ -112,10 +140,21 @@ export class JetStartServer extends EventEmitter {
       const wsResult = await createWebSocketServer({
         port: this.config.wsPort,
         logsServer: this.logsServer,
+        adbHelper: this.adbHelper,  // Enable wireless ADB auto-connect
+        expectedSessionId: this.currentSession?.id,   // Reject old-session devices
+        expectedToken:     this.currentSession?.token, // Validate token too
+        projectName:       this.config.projectName,
         onClientConnected: async (sessionId: string) => {
-          // Trigger initial build when client connects
-          log(`Triggering initial build for connected client (session: ${sessionId})`);
-          await this.handleRebuild();
+          log(`Client connected (session: ${sessionId}). Triggering initial build...`);
+          // If APK already built, just notify this new client - no rebuild needed
+          if (this.latestApkPath && fs.existsSync(this.latestApkPath)) {
+            log(`APK already built, re-sending build complete to new client`);
+            const downloadUrl = `http://${this.config.displayHost}:${this.config.httpPort}/download/app.apk`;
+            this.wsHandler?.sendBuildComplete(sessionId, downloadUrl);
+          } else {
+            this.isFileChangeBuild = false; // Don't auto-install for initial build
+            await this.handleRebuild();
+          }
         },
       });
       this.wsServer = wsResult.server;
@@ -126,25 +165,28 @@ export class JetStartServer extends EventEmitter {
 
       // Start watching for file changes
       this.buildService.startWatching(this.config.projectPath, async (files) => {
-        log(`Files changed: ${files.map(f => path.basename(f)).join(', ')}`);
+        log(`Files changed: ${files.map(f => f.split(/[/\\]/).pop()).join(', ')}`);
 
-        // Check if only UI files changed (MainActivity.kt, screens/, components/)
-        const uiFiles = files.filter(f =>
-          f.includes('MainActivity.kt') ||
-          f.includes('/screens/') ||
-          f.includes('\\screens\\') ||
-          f.includes('/components/') ||
-          f.includes('\\components\\')
-        );
+        // Check if all changed files support hot reload (.kt files that aren't in build directory)
+        const hotReloadFiles = files.filter(f => {
+          const normalized = f.replace(/\\/g, '/');
+          // Support hot reload for all .kt files EXCEPT those in /build/ directory
+          return normalized.endsWith('.kt') &&
+                 !normalized.includes('/build/') &&
+                 !normalized.includes('build.gradle');
+        });
 
-        // If ALL changed files are UI files, use DSL hot reload (FAST)
-        if (uiFiles.length > 0 && uiFiles.length === files.length) {
-          log('🚀 UI-only changes detected, using DSL hot reload');
-          this.handleUIUpdate(uiFiles[0]);
+        // Use TRUE hot reload for Kotlin files (sends DEX via WebSocket - no USB needed!)
+        if (hotReloadFiles.length > 0 && hotReloadFiles.length === files.length && this.useTrueHotReload) {
+          log('🔥 Kotlin files changed, using TRUE hot reload (DEX via WebSocket)');
+          for (const file of hotReloadFiles) {
+            await this.handleUIUpdate(file);
+          }
         } else {
-          // Otherwise, full Gradle build
-          log('📦 Non-UI changes detected, triggering full Gradle build');
+          // Build files or mixed changes - use full Gradle build
+          log('📦 Build files changed, triggering Gradle build + ADB install');
           this.buildService.clearCache();
+          this.isFileChangeBuild = true;  // Mark as file change build for auto-install
           await this.handleRebuild();
         }
       });
@@ -202,7 +244,7 @@ export class JetStartServer extends EventEmitter {
       this.emit('build:start');
     });
 
-    this.buildService.on('build:complete', (result) => {
+    this.buildService.on('build:complete', async (result) => {
       success(`Build completed in ${result.buildTime}ms`);
       if (this.wsHandler && this.currentSession) {
         // Store the APK path
@@ -212,6 +254,45 @@ export class JetStartServer extends EventEmitter {
         const downloadUrl = `http://${this.config.displayHost}:${this.config.httpPort}/download/app.apk`;
         this.wsHandler.sendBuildComplete(this.currentSession.id, downloadUrl);
         log(`APK download URL: ${downloadUrl}`);
+
+        // Auto-install APK via ADB only for file change builds (not initial builds)
+        if (this.autoInstall && this.latestApkPath && this.isFileChangeBuild) {
+          const readyDevices = this.adbHelper.getDevices();
+
+          if (readyDevices.length > 0) {
+            log(`📱 Auto-installing APK on ${readyDevices.length} device(s)...`);
+            const installResult = await this.adbHelper.installApk(this.latestApkPath);
+            if (installResult.success) {
+              success('📱 APK auto-installed! App will restart with new code.');
+              // Launch the app
+              // Read actual package name from jetstart.config.json
+              let appPackageName = 'com.example.app';
+              try {
+                const configPath = path.join(this.config.projectPath, 'jetstart.config.json');
+                if (fs.existsSync(configPath)) {
+                  const cfg = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                  appPackageName = cfg.packageName || appPackageName;
+                }
+              } catch (_) { /* empty */ }
+              await this.adbHelper.launchApp(appPackageName, '.MainActivity');
+            } else {
+              error(`Auto-install failed: ${installResult.error}`);
+            }
+          } else {
+            // Check if devices are connecting
+            const allDevices = this.adbHelper.getAllDeviceStates();
+            if (allDevices.length > 0) {
+              const states = allDevices.map(d => `${d.id} (${d.state})`).join(', ');
+              log(`⏳ Devices found but not ready: ${states}`);
+              log('ℹ️  Device may need user authorization on the phone.');
+              log('ℹ️  Auto-install will retry on the next file change.');
+            } else {
+              log('ℹ️  No devices connected for auto-install. Scan QR or download APK manually.');
+            }
+          }
+          // Reset flag after handling
+          this.isFileChangeBuild = false;
+        }
       }
       // Re-emit for external listeners (e.g., dev command) with result
       this.emit('build:complete', result);
@@ -272,39 +353,66 @@ export class JetStartServer extends EventEmitter {
   }
 
   /**
-   * Handle UI file updates using DSL hot reload (FAST)
+   * Handle UI file updates - uses TRUE hot reload (DEX-based) when available
    */
-  private handleUIUpdate(filePath: string): void {
-    if (!this.currentSession || !this.wsHandler) {
-      return;
-    }
 
+  /**
+   * Compile a .kt file to a browser ES module and broadcast to web clients.
+   * Physical devices use DEX (already sent above). This targets browsers only.
+   */
+  private async sendJsPreview(filePath: string): Promise<void> {
+    if (!this.jsCompiler?.isAvailable() || !this.currentSession || !this.wsHandler) return;
     try {
-      log(`Parsing UI file: ${path.basename(filePath)}`);
-      const parseResult = DSLParser.parseFile(filePath);
-
-      if (parseResult.success && parseResult.dsl) {
-        const dslContent = JSON.stringify(parseResult.dsl);
-        log(`DSL generated: ${dslContent.length} bytes`);
-
-        // Send DSL update via WebSocket (instant hot reload!)
-        this.wsHandler.sendUIUpdate(
+      const result = await this.jsCompiler.compile(filePath);
+      if (result.success && result.jsBase64) {
+        this.wsHandler.sendJsUpdate(
           this.currentSession.id,
-          dslContent,
-          [path.basename(filePath)]
+          result.jsBase64,
+          path.basename(filePath),
+          result.byteSize ?? 0,
+          result.screenFunctionName ?? 'Screen',
         );
-
-        success(`UI hot reload sent in <100ms ⚡`);
       } else {
-        error(`Failed to parse UI file: ${parseResult.errors?.join(', ')}`);
-        // Fallback to full build
-        log('Falling back to full Gradle build...');
-        this.handleRebuild();
+        log(`[JsCompiler] Web preview skipped: ${result.error?.slice(0, 100)}`);
       }
     } catch (err: any) {
-      error(`UI update failed: ${err.message}`);
-      // Fallback to full build
-      this.handleRebuild();
+      log(`[JsCompiler] Web preview error: ${err.message}`);
     }
+  }
+
+  private async handleUIUpdate(filePath: string): Promise<void> {
+    if (!this.currentSession || !this.wsHandler) return;
+
+    // TRUE hot reload: compile to DEX and push to device via WebSocket
+    if (this.useTrueHotReload && this.hotReloadService) {
+      try {
+        log(`Hot reloading: ${path.basename(filePath)}...`);
+        const result = await this.hotReloadService.hotReload(filePath);
+
+        if (result.success && result.dexBase64) {
+          this.wsHandler.sendDexReload(
+            this.currentSession.id,
+            result.dexBase64,
+            result.classNames
+          );
+          success(`Hot reload complete! (${result.compileTime + result.dexTime}ms)`);
+          // Run JS compilation in parallel — does not block DEX delivery
+          this.sendJsPreview(filePath).catch(() => {});
+          return;
+        }
+
+        // DEX compilation failed — fall through to full Gradle rebuild
+        error(`Hot reload compile failed: ${result.errors[0] ?? 'unknown'}`);
+        log('Triggering full Gradle rebuild...');
+      } catch (err: any) {
+        error(`Hot reload error: ${err.message}`);
+        log('Triggering full Gradle rebuild...');
+      }
+    }
+
+    // Fall back to full Gradle build (catches build-file changes, new dependencies, etc.)
+    this.buildService.clearCache();
+    this.isFileChangeBuild = true;
+    await this.handleRebuild();
   }
 }

@@ -4,6 +4,7 @@
  */
 
 import path from 'path';
+import * as os from 'os';
 import fs from 'fs-extra';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
@@ -198,6 +199,14 @@ export async function createCommand(name: string, options: CreateOptions) {
         packageName: packageName!,
         template: options.template || 'default',
       });
+
+      // Install bundled Java dependencies to local Maven repository (~/.m2)
+      //  CLI Bundling
+      const bundledRepoPath = path.resolve(__dirname, '../../maven-repo');
+      if (await fs.pathExists(bundledRepoPath)) {
+        const m2RepoPath = path.join(os.homedir(), '.m2', 'repository');
+        await fs.copy(bundledRepoPath, m2RepoPath, { overwrite: true });
+      }
 
       stopSpinner(spinner, true, 'Project structure created');
 

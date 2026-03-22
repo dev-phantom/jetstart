@@ -28,11 +28,28 @@ jetstart build --release
 
 **Output:**
 ```
-✓ Build completed successfully!
+JetStart Build RELEASE APK
 
-Output: /my-app/build/outputs/apk/release/app-release-unsigned.apk
-Size: 5.2 MB
-Type: release
+✔ Validated · com.jetstart.testapp
+
+⚠ Building UNSIGNED release APK.
+⚠ Unsigned APKs CANNOT be installed on Android — you will get "App not installed".
+ℹ Options:
+ℹ   --sign        Sign with your keystore (required for Play Store)
+ℹ   --self-sign   Auto-generate a test keystore and sign (good for device testing)
+
+✔ Dev-server credentials stripped · debuggable=false · R8 enabled
+...
+
+...
+
+BUILD SUCCESSFUL in 4m 29s
+45 actionable tasks: 37 executed, 8 from cache
+[Build] build.gradle restored
+
+✔ Build complete in 270.8s
+
+ℹ Output:  \my-app\build\app-release-unsigned.apk
 ```
 
 **What happened:**
@@ -283,12 +300,12 @@ Results in 4 smaller APKs instead of 1 large universal APK.
 ### Build AAB
 
 ```bash
-./gradlew bundleRelease
+jetstart build --bundle
 ```
 
 **Output:**
 ```
-build/outputs/bundle/release/app-release.aab
+build/app-release.aab
 ```
 
 ### Sign AAB

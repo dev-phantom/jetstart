@@ -49,6 +49,7 @@ jetstart dev --no-qr
 | `-H, --host <host>` | string | auto-detected | Host address for client connections |
 | `--qr / --no-qr` | boolean | true | Display QR code for device pairing |
 | `--open / --no-open` | boolean | true | Open browser automatically |
+| `--web` | boolean | false | Open Web Emulator automatically |
 | `--emulator` | boolean | false | Deploy to running Android emulator |
 | `--avd <name>` | string | - | Target specific emulator by AVD name |
 
@@ -114,8 +115,8 @@ When you run `jetstart dev`, the following happens:
          │                                    │
          ▼                                    ▼
 ┌──────────────────┐              ┌──────────────────┐
-│ DSL Hot Reload   │              │  Gradle Build    │
-│ (&lt;100ms)      │              │  (10-30s)        │
+│ DEX Hot Reload   │              │  Gradle Build    │
+│ (<100ms)      │              │  (10-30s)        │
 └────────┬─────────┘              └────────┬─────────┘
          │                                 │
          └────────────┬────────────────────┘
@@ -164,7 +165,7 @@ Scan QR or connect manually:
 
 **Step 3: Scan with JetStart Android app**
 1. Open JetStart app on your device
-2. Tap "Scan QR Code"
+2. Tap "Create Connection"
 3. Point camera at terminal
 4. Connection established automatically!
 
@@ -255,9 +256,9 @@ File Changed
 └─────────┘  └─────────┘
 ```
 
-### UI-Only Changes (Fast Path)
+### Kotlin File Changes (Fast Path — DEX Hot Reload)
 
-Files that trigger **DSL hot reload**:
+Files that trigger **DEX hot reload** (Kotlin → .class → DEX):
 - `MainActivity.kt`
 - `**/screens/*.kt`
 - `**/components/*.kt`
@@ -274,14 +275,30 @@ fun HelloScreen() {
 ```
 
 ```bash
-# Console output
-Files changed: MainActivity.kt
-🚀 UI-only changes detected, using DSL hot reload
-✓ DSL generated: 245 bytes
-✓ UI hot reload sent in `<100ms`⚡
+[Core] Files changed: NotesScreen.kt
+[Core] 🔥 Kotlin files changed, using TRUE hot reload (DEX via WebSocket)
+[Core] Hot reloading: NotesScreen.kt...
+[Core] 🔥 Hot reload starting for: NotesScreen.kt
+[Core] Compiling NotesScreen.kt...
+[Core] Found bundled Compose compiler (Kotlin 2.0+)
+[Core] Using Compose compiler plugin
+[Core] Using argument file: C:\Users\PC\AppData\Local\Temp\jetstart-compile\1774108403280\kotlinc-args.txt
+(node:24468) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[Core] Compiled 8 class files
+[Core] Compilation completed in 21061ms (8 classes)
+[Core] ℹ️ No classes found in C:\Users\PC\Documents\test-app\app\src\main\java\com\jetstart\testapp\ui\NotesScreen.kt - using direct class hot reload
+[Core] Generated 0 override classes
+[Core] Generating DEX from 8 class files...
+[Core] Generated DEX: 56748 bytes
+[Core] DEX generated in 5493ms (56748 bytes)
+✔ [Core] 🔥 Hot reload complete in 26570ms (compile: 21061ms, dex: 5493ms)
+[Core] Sending DEX reload: 75664 base64 chars, 8 classes
+[ConnectionManager] Broadcasting core:dex-reload to 0 connected clients
+✔ [Core] Hot reload complete! (26554ms)
 ```
 
-### Full Rebuild (Slow Path)
+### Non-Kotlin Changes (Slow Path — Full Gradle Build)
 
 Files that trigger **full Gradle build**:
 - Build configuration (`build.gradle`, `settings.gradle`)
@@ -301,11 +318,28 @@ dependencies {
 
 ```bash
 # Console output
-Files changed: build.gradle
-📦 Non-UI changes detected, triggering full Gradle build
-Build started...
-Build completed in 12.5s
-✓ APK ready: app/build/outputs/apk/debug/app-debug.apk
+[Core] Files changed: build.gradle
+[Core] 📦 Build files changed, triggering Gradle build + ADB install
+[Core] Build started
+[Gradle] Using system Gradle (faster than wrapper)
+[Gradle] Running: C:\Gradle\gradle-8.2.1\bin\gradle.bat assembleDebug --parallel --build-cache --configure-on-demand --daemon --console=plain
+[Gradle] Working directory: C:\Users\PC\Documents\my-app
+...
+
+...
+BUILD SUCCESSFUL in 2m 44s
+36 actionable tasks: 18 executed, 18 from cache
+
+[Gradle] Process exited with code: 0
+[Gradle] Found APK at: C:\Users\PC\Documents\test-app\app\build\outputs\apk\debug\app-debug.apk (12.35 MB)
+✔ [Core] Build completed in 166480ms
+[Core] APK download URL: http://192.168.43.220:8765/download/app.apk
+* daemon not running; starting now at tcp:5037
+* daemon started successfully
+[Core] ⏳ Devices found but not ready: 06148330AU135735 (unauthorized)
+[Core] ℹ️  Device may need user authorization on the phone.
+[Core] ℹ️  Auto-install will retry on the next file change.
+✔ [Core] Build completed successfully: C:\Users\PC\Documents\test-app\app\build\outputs\apk\debug\app-debug.apk
 ```
 
 ### Debouncing
@@ -314,9 +348,9 @@ File changes are debounced by **100ms** to batch multiple rapid edits:
 
 ```
 File Save #1 ────┐
-File Save #2 ─────┤
-File Save #3 ──────┤── 100ms ──> Trigger Build
-                   │
+File Save #2 ────┤
+File Save #3 ────┤── 100ms ──> Trigger Build
+                 │
             (Waiting period)
 ```
 
@@ -393,83 +427,85 @@ For best connection stability, create a WiFi hotspot:
 ### Typical Output
 
 ```bash
-$ jetstart dev
 
 Starting JetStart development server...
 
-✓ Emulator deployment enabled
-Starting JetStart Core server...
-Injected server URL: ws://192.168.1.100:8766
+[ADB] Found at: C:\Android\platform-tools\adb.exe
+[Core] Starting JetStart Core server...
+[Logs] Server listening on port 8767
+[Core] Injected buildConfigFields into build.gradle
+[Core] Injected server URL: ws://192.168.43.220:8766
+[Core] [JsCompiler] kotlinc-js ready: kotlinc-js.bat
+[Core] Found kotlinc at: C:\kotlinc\bin\kotlinc.bat
+[Core] Found d8 at: C:\Android\build-tools\34.0.0\d8.bat (build-tools 34.0.0)
+[Core] Using Android SDK: android-34
+[Core] Added 242 transforms-3 JARs to classpath
+[Core] Built static classpath with 242 entries + 1 project entries
+[Core] 🔥 True hot reload enabled (DEX-based)
+[Core] HTTP server listening on 0.0.0.0:8765
+[Core] WebSocket server listening on port 8766
 
-✓ JetStart Core is running!
-HTTP Server: http://192.168.1.100:8765
-WebSocket Server: ws://192.168.1.100:8766
-Session ID: a1b2c3
-Session Token: xyz789
+✔ [Core] JetStart Core is running!
+[Core] HTTP Server: http://192.168.43.220:8765   
+[Core] WebSocket Server: ws://192.168.43.220:8766
+[Core] Session ID: YZj0l1Ms
+[Core] Session Token: fMLoUwp6w3Cm
 
-✓ JetStart dev server is running!
+ℹ Emulator deployment not configured: deployer=false, packageName=null
+
+✔ JetStart dev server is running!
 
 ℹ Local:    http://localhost:8765
-ℹ Network:  http://192.168.1.100:8765
-ℹ Project:  my-app
+ℹ Network:  http://192.168.43.220:8765
+ℹ Project:  test-app
 
-[QR Code displayed here]
+Scan QR or connect manually:
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+█ ▄▄▄▄▄ █▀█ █▄   ▀▀▀▄▀██▄▀█ ▄▄▄▄▄ █
+█ █   █ █▀▀▀█ ▄▀ ███▄ ▄█ ▄█ █   █ █
+█ █▄▄▄█ █▀ █▀▀██▄▄▀ ▄▄ ▄███ █▄▄▄█ █
+█▄▄▄▄▄▄▄█▄▀ ▀▄█ █ █▄▀ ▀▄█ █▄▄▄▄▄▄▄█
+█▄ ▄  ▀▄ ▄▄▀▄▀▀▀▀▄ ▀▀▄█▄▄█ ▀ █▄▀ ▀█
+█  ▄█▄▄▄▀▀█▄█▀ ▄ ▄████ ▄█▄█▄▄▀▄ █▀█
+█▄ █ ▄█▄▀▄ ▄█▄█▄ ▀ █▀ ▀▀ █▀▀█▄ ▀▄ █
+█▀▀▀█▄█▄ █▀█ ▄█▀█▀█▀▀  ▀▀▄ ▀ ██▀█▀█
+█ ▄▄▄▄▄ █▄ ██▀ ▄ ▄▄▄█▀ ▄▄ █▄█ █ ▀▀█
+█ █   █ █ ▄▄█▄█▄▄▀▄█▄▀▀▄█  ▄▄ ▄▀ ▀█
+█ █▄▄▄█ █ ▄▄ ▄█▀  █▀█ ▀▄▀█   ▀▄▀███
+█▄▄▄▄▄▄▄█▄▄▄▄█████▄▄▄█▄▄█▄███▄██▄██
 
+
+ℹ IP: 192.168.43.220
+ℹ Session: YZj0l1Ms
+ℹ Token: fMLoUwp6w3Cm
 ℹ Watching for file changes...
 ℹ Press Ctrl+C to stop
 ```
+
+
 
 ### What Each Line Means
 
 | Output | Explanation |
 |--------|-------------|
 | `Starting JetStart development server...` | CLI command initializing |
-| `✓ Emulator deployment enabled` | Emulator detected and configured |
-| `Injected server URL: ws://...` | BuildConfig updated with server URL |
-| `HTTP Server: http://...` | REST API and APK download endpoint |
-| `WebSocket Server: ws://...` | Real-time communication channel |
-| `Session ID: a1b2c3` | Unique session identifier |
-| `Session Token: xyz789` | Security token for this session |
-| `Watching for file changes...` | File watcher active |
+| `[ADB] Found at: ...` | ADB detected for auto-install support |
+| `[Logs] Server listening on port 8767` | Log aggregation server started |
+| `[Core] Injected buildConfigFields into build.gradle` | Server URL and session ID written into your app's `BuildConfig` |
+| `[Core] Injected server URL: ws://...` | The WebSocket URL the app will connect to |
+| `[Core] Found kotlinc at: ...` | Kotlin compiler located (required for hot reload) |
+| `[Core] Found d8 at: ...` | Android DEX tool located (converts `.class` → `.dex`) |
+| `[Core] Using Android SDK: android-34` | Target platform detected from your SDK |
+| `[Core] 🔥 True hot reload enabled (DEX-based)` | All tools present — sub-100ms hot reload is active |
+| `[Core] HTTP server listening on 0.0.0.0:8765` | REST API bound to all interfaces |
+| `[Core] WebSocket server listening on port 8766` | Real-time communication channel open |
+| `✔ [Core] JetStart Core is running!` | Core engine fully initialized |
+| `[Core] Session ID / Token` | Unique session credentials for client pairing |
+| `ℹ Emulator deployment not configured` | No `--emulator` flag; use QR code or manual connect |
+| `Scan QR or connect manually:` | QR code rendered for the JetStart Client app |
+| `ℹ Watching for file changes...` | File watcher active — save a `.kt` file to trigger hot reload |
 
 ## Real-Time Features
-
-### Hot Reload Events
-
-When you save a UI file:
-
-```bash
-Files changed: MainActivity.kt
-🚀 UI-only changes detected, using DSL hot reload
-Parsing UI file: MainActivity.kt
-DSL generated: 312 bytes
-✓ UI hot reload sent in <100ms ⚡
-```
-
-**Timeline:**
-1. **0ms** - File saved
-2. **5-10ms** - Change detected
-3. **10-30ms** - DSL parsed
-4. **35-45ms** - WebSocket broadcast
-5. **50-80ms** - Client receives update
-6. **80-100ms** - UI re-rendered
-
-### Build Events
-
-When full rebuild is needed:
-
-```bash
-Files changed: strings.xml
-📦 Non-UI changes detected, triggering full Gradle build
-Build started
-Executing Gradle: ./gradlew assembleDebug
-Compiling Kotlin sources...
-Processing resources...
-Creating DEX files...
-Packaging APK...
-✓ Build completed in 14.2s
-APK download URL: http://192.168.1.100:8765/download/app.apk
-```
 
 ### Client Connection
 
@@ -746,33 +782,6 @@ docker run -p 8765:8765 -p 8766:8766 -v $(pwd):/app jetstart-dev
 ```
 
 ## Performance Optimization
-
-### Large Projects
-
-For projects with many files:
-
-**1. Exclude unnecessary directories:**
-
-Create `.jetstartignore`:
-```
-# Ignore patterns
-node_modules/
-build/
-.gradle/
-.idea/
-*.test.kt
-test/
-```
-
-**2. Increase debounce time:**
-```json
-// jetstart.config.json
-{
-  "fileWatcher": {
-    "debounceMs": 300  // Default: 100ms
-  }
-}
-```
 
 ### Network Optimization
 

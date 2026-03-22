@@ -108,31 +108,32 @@ npx jetstart create my-app --template minimal
 After creation, your project will look like this:
 
 ```
-my-app/
+my-awesome-app/
 ├── app/
-│   ├── build.gradle                 # App-level Gradle config
+│   ├── build.gradle              # App-level Gradle configuration
+│   ├── proguard-rules.pro        # ProGuard rules
 │   └── src/
 │       └── main/
+│           ├── AndroidManifest.xml
 │           ├── java/
-│           │   └── com/jetstart/myapp/
-│           │       ├── MainActivity.kt     # Entry point
-│           │       └── JetStart.kt         # Hot reload engine
-│           ├── res/
-│           │   ├── values/
-│           │   │   ├── strings.xml         # String resources
-│           │   │   └── colors.xml          # Color resources
-│           │   └── drawable/               # Images and icons
-│           └── AndroidManifest.xml         # App configuration
-├── gradle/
-│   └── wrapper/                     # Gradle wrapper files
-├── build.gradle                     # Root Gradle config
-├── settings.gradle                  # Gradle settings
-├── gradlew                          # Gradle wrapper (Unix)
-├── gradlew.bat                      # Gradle wrapper (Windows)
-├── jetstart.config.json             # JetStart configuration
-├── local.properties                 # SDK location (auto-generated)
-├── .gitignore                       # Git ignore rules
-└── README.md                        # Project documentation
+│           │   ├── com/jetstart/hotreload/
+│           │   │   └── IncrementalChange.java   # ⚠️ Core Interface (Do not edit)
+│           │   └── com/example/myapp/           # Your app package
+│           │       ├── MainActivity.kt          # App entry point
+│           │       ├── JetStart.kt              # ⚠️ Hot Reload Engine (Do not edit)
+│           │       ├── data/                    # Data models
+│           │       ├── logic/                   # Business logic
+│           │       └── ui/                      # UI screens & components
+│           │           ├── NotesScreen.kt
+│           │           └── NotesViewModel.kt
+│           └── res/                              # Android resources
+├── build.gradle                  # Root build file
+├── settings.gradle
+├── gradle.properties
+├── jetstart.config.json         # JetStart configuration
+├── gradlew                       # Gradle wrapper (Linux/macOS)
+├── gradlew.bat                   # Gradle wrapper (Windows)
+└── README.md
 ```
 
 ### Key Files
@@ -142,26 +143,76 @@ my-app/
 package com.jetstart.myapp
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.jetstart.myapp.ui.NotesScreen
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Initialize hot reload - reads from BuildConfig injected by jetstart dev
+        try {
+            val serverUrl = BuildConfig.JETSTART_SERVER_URL
+            val sessionId = BuildConfig.JETSTART_SESSION_ID
+            HotReload.connect(this, serverUrl, sessionId)
+        } catch (e: Exception) {
+            // BuildConfig not available yet, hot reload will be disabled
+            android.util.Log.w("MainActivity", "Hot reload not configured: ${e.message}")
+        }
+
         setContent {
             MaterialTheme {
-                JetStartApp(this)
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    // Observe reload version - forces recomposition when DEX hot reload happens
+                    val reloadVersion by HotReload.reloadVersion.collectAsState()
+
+                    // Check if we should render from DSL (hot reload mode)
+                    val dsl by DSLInterpreter.currentDSL.collectAsState()
+
+                    // Use reloadVersion as key to force recomposition of entire tree
+                    key(reloadVersion) {
+                        if (dsl != null) {
+                            // Hot reload mode: render from DSL sent by server
+                            DSLInterpreter.RenderDSL(dsl!!)
+                        } else {
+                            // Normal mode: render actual Compose code
+                            AppContent()
+                        }
+                    }
+                }
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        HotReload.disconnect()
+    }
+}
+
+/**
+ * Main App Content
+ */
+@Composable
+fun AppContent() {
+    NotesScreen()
 }
 ```
 
 **JetStart.kt** - Hot reload engine
 - Handles WebSocket connection to dev server
-- Receives UI updates in real-time
-- Parses DSL and renders UI
+- Receives DEX patches via core:dex-reload in real-time
+- Loads new classes via custom ClassLoader (no reinstall)
 - Manages state flow
 
 **jetstart.config.json** - Project configuration
@@ -210,27 +261,65 @@ jetstart dev
 ```
 
 **Output:**
-```
-✓ JetStart dev server is running!
+```bash
+
+Starting JetStart development server...
+
+[ADB] Found at: C:\Android\platform-tools\adb.exe
+[Core] Starting JetStart Core server...
+[Logs] Server listening on port 8767
+[Core] Injected buildConfigFields into build.gradle
+[Core] Injected server URL: ws://192.168.43.220:8766
+[Core] [JsCompiler] kotlinc-js ready: kotlinc-js.bat
+[Core] Found kotlinc at: C:\kotlinc\bin\kotlinc.bat
+[Core] Found d8 at: C:\Android\build-tools\34.0.0\d8.bat (build-tools 34.0.0)
+[Core] Using Android SDK: android-34
+[Core] Added 242 transforms-3 JARs to classpath
+[Core] Built static classpath with 242 entries + 1 project entries
+[Core] 🔥 True hot reload enabled (DEX-based)
+[Core] HTTP server listening on 0.0.0.0:8765
+[Core] WebSocket server listening on port 8766
+
+✔ [Core] JetStart Core is running!
+[Core] HTTP Server: http://192.168.43.220:8765   
+[Core] WebSocket Server: ws://192.168.43.220:8766
+[Core] Session ID: YZj0l1Ms
+[Core] Session Token: fMLoUwp6w3Cm
+
+ℹ Emulator deployment not configured: deployer=false, packageName=null
+
+✔ JetStart dev server is running!
 
 ℹ Local:    http://localhost:8765
-ℹ Network:  http://192.168.1.100:8765
-ℹ Project:  my-app
+ℹ Network:  http://192.168.43.220:8765
+ℹ Project:  test-app
 
 Scan QR or connect manually:
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+█ ▄▄▄▄▄ █▀█ █▄   ▀▀▀▄▀██▄▀█ ▄▄▄▄▄ █
+█ █   █ █▀▀▀█ ▄▀ ███▄ ▄█ ▄█ █   █ █
+█ █▄▄▄█ █▀ █▀▀██▄▄▀ ▄▄ ▄███ █▄▄▄█ █
+█▄▄▄▄▄▄▄█▄▀ ▀▄█ █ █▄▀ ▀▄█ █▄▄▄▄▄▄▄█
+█▄ ▄  ▀▄ ▄▄▀▄▀▀▀▀▄ ▀▀▄█▄▄█ ▀ █▄▀ ▀█
+█  ▄█▄▄▄▀▀█▄█▀ ▄ ▄████ ▄█▄█▄▄▀▄ █▀█
+█▄ █ ▄█▄▀▄ ▄█▄█▄ ▀ █▀ ▀▀ █▀▀█▄ ▀▄ █
+█▀▀▀█▄█▄ █▀█ ▄█▀█▀█▀▀  ▀▀▄ ▀ ██▀█▀█
+██▄ ▄▄▀▄█  ▀▄▀▀▀▀█▄█▀ ▄▄▀▀▀▀▀▄▄█▀▀█
+█ █▀▀▀▄▄█ ▄▀█▀ ▄ ██▀█   ▀▄▄▀ ▄█ ▀██
+█ ▄ ▄█▄▄▄ ███▄█▄▄ ▄▀█ ▀ ▀▀▀▀▀▄▀█▀ █
+█ █▄ █ ▄▄▄██ ▄█▀ ███▀ ▀▀▀█ █ ▄█▀▀██
+█▄██▄▄▄▄▄▀ ▄▄▀▀▀▄ ▄█ ▀█ ▀ ▄▄▄  ▀▀▀█
+█ ▄▄▄▄▄ █▄ ██▀ ▄ ▄▄▄█▀ ▄▄ █▄█ █ ▀▀█
+█ █   █ █ ▄▄█▄█▄▄▀▄█▄▀▀▄█  ▄▄ ▄▀ ▀█
+█ █▄▄▄█ █ ▄▄ ▄█▀  █▀█ ▀▄▀█   ▀▄▀███
+█▄▄▄▄▄▄▄█▄▄▄▄█████▄▄▄█▄▄█▄███▄██▄██
 
-███████████████████████████
-██ ▄▄▄▄▄ █▀ ██▀▄█ ▄▄▄▄▄ ██
-██ █   █ █▀▀▀ ▄ █ █   █ ██
-██ █▄▄▄█ █ ▄█▀▀██ █▄▄▄█ ██
-███████████████████████████
 
-ℹ IP: 192.168.1.100
-ℹ Session: a1b2c3
-ℹ Token: xyz789
-
-Watching for file changes...
-Press Ctrl+C to stop
+ℹ IP: 192.168.43.220
+ℹ Session: YZj0l1Ms
+ℹ Token: fMLoUwp6w3Cm
+ℹ Watching for file changes...
+ℹ Press Ctrl+C to stop
 ```
 
 ## Step 4: Connect Your Device
@@ -247,8 +336,12 @@ Press Ctrl+C to stop
 1. **Download and Install JetStart Client app:**
 
    **Download:**
-   - Visit [https://github.com/dev-phantom/jetstart/releases](https://github.com/dev-phantom/jetstart/releases)
-   - Download the latest release APK (e.g., `jetstart-client-v1.2.0.apk`)
+   <a href="/downloads/jetstart-client.apk" download className="">
+     📥 Download JetStart Client APK
+   </a>
+
+   Alternatively, visit [GitHub Releases](https://github.com/dev-phantom/jetstart/releases) to download the latest APK (e.g., `jetstart-client-v1.2.0.apk`).
+
 
    **Disable Play Protect** (required):
    :::warning Important
@@ -269,7 +362,7 @@ Press Ctrl+C to stop
 
 3. **Scan QR code:**
    - Open JetStart Client app
-   - Tap "Scan QR Code"
+   - Tap "Create Connection"
    - Point camera at terminal QR code
    - Connection established automatically!
    - Your app will build and install automatically
@@ -358,7 +451,7 @@ jetstart logs
 You'll see:
 ```
 12:34:56 INFO [CORE] [FileWatcher] Change detected: MainActivity.kt
-12:34:56 DEBUG [CORE] [HotReload] UI-only change - using DSL reload
+12:34:56 DEBUG [CORE] [HotReload] Hot reload starting for: MainActivity.kt
 12:34:56 INFO [CLIENT] [UI] Applying hot reload update
 12:34:56 DEBUG [CLIENT] [Renderer] UI updated in 87ms
 ```
@@ -494,7 +587,7 @@ Congratulations! You've created your first JetStart app. 🎉
 
 **Continue learning:**
 
-1. **[Hot Reload Explained](./hot-reload-explained.md)** - Understand DSL vs Gradle builds
+1. **[Hot Reload Explained](./hot-reload-explained.md)** - Understand the hot reload DEX pipeline
 2. **[Using QR Codes](./using-qr-codes.md)** - Master device pairing
 3. **[Working with Emulators](./working-with-emulators.md)** - Emulator workflows
 4. **[Debugging Tips](./debugging-tips.md)** - Debug like a pro

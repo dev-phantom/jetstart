@@ -1,0 +1,36 @@
+# Build
+/build
+/app/build
+.gradle
+.kotlin
+*.hprof
+
+# IDE
+.idea
+*.iml
+.vscode
+.DS_Store
+
+# JetStart
+.jetstart
+
+# Android
+local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+captures/
+.externalNativeBuild
+.cxx
+
+# Log files
+*.log
+
+# Keystore files
+*.jks
+*.keystore

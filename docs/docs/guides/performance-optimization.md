@@ -24,7 +24,7 @@ Comprehensive guide to optimizing every aspect of JetStart development - from \<
 
 ## Hot Reload Optimization
 
-### Maximize DSL Usage
+### Maximize Hot Reload Usage
 
 **Goal:** \<100ms updates instead of 20s Gradle builds
 
@@ -33,12 +33,12 @@ Comprehensive guide to optimizing every aspect of JetStart development - from \<
 **✓ Optimized structure:**
 ```
 my-app/src/main/java/
-├── MainActivity.kt          ← Pure UI (DSL reload)
+├── MainActivity.kt          ← Pure UI (hot reload)
 ├── screens/
-│   ├── HomeScreen.kt       ← Pure UI (DSL reload)
-│   └── ProfileScreen.kt    ← Pure UI (DSL reload)
+│   ├── HomeScreen.kt       ← Pure UI (hot reload)
+│   └── ProfileScreen.kt    ← Pure UI (hot reload)
 ├── components/
-│   └── CustomButton.kt     ← Pure UI (DSL reload)
+│   └── CustomButton.kt     ← Pure UI (hot reload)
 └── viewmodels/
     └── HomeViewModel.kt    ← Logic (Gradle build)
 ```
@@ -51,14 +51,14 @@ my-app/src/main/java/
 
 **Impact:**
 - Before: 20s per change (full Gradle build)
-- After: 87ms per change (DSL reload)
+- After: 87ms per change (hot reload)
 - **230x faster iteration**
 
 ### File Organization Best Practices
 
 **DO:**
 ```kotlin
-// screens/HomeScreen.kt (DSL hot reload)
+// screens/HomeScreen.kt (hot reload)
 @Composable
 fun HomeScreen() {
     Column(
@@ -95,8 +95,8 @@ fun HomeScreen() {
 ```bash
 jetstart logs --source core
 
-# DSL reload (fast):
-🚀 UI-only changes detected, using DSL hot reload
+# Hot reload (fast):
+🔥 Hot reload starting for: MainActivity.kt
 UI hot reload sent in <100ms ⚡
 
 # Gradle build (slow):
@@ -105,8 +105,8 @@ Build completed in 18,432ms
 ```
 
 **Metrics to track:**
-- DSL reload percentage (target: >80%)
-- Average DSL reload time (target: \<100ms)
+- Hot reload percentage (target: >80%)
+- Average hot reload time (target: \<100ms)
 - Gradle build frequency (minimize)
 
 ## Build Performance
@@ -534,7 +534,8 @@ jetstart logs --source core --level debug
 
 # Watch for:
 # - File change detection time
-# - DSL parse time
+# - kotlinc compilation time
+# - d8 DEX generation time
 # - WebSocket send time
 # - Build completion time
 ```
@@ -542,9 +543,10 @@ jetstart logs --source core --level debug
 **Example metrics:**
 ```
 [CORE] [FileWatcher] Change detected in 12ms
-[CORE] [DSL] Parsed MainActivity.kt in 8ms
-[CORE] [WebSocket] UI update sent in 3ms
-Total: 23ms (well under 100ms target)
+[CORE] [HotReload] kotlinc compiled in 48ms
+[CORE] [HotReload] d8 DEX generated in 15ms
+[CORE] [WebSocket] core:dex-reload sent in 3ms
+Total: 78ms (well under 100ms target)
 ```
 
 ## Optimization Checklist
@@ -552,7 +554,7 @@ Total: 23ms (well under 100ms target)
 **Development workflow:**
 - [ ] Use WiFi hotspot for connection
 - [ ] Keep UI and logic files separate
-- [ ] Monitor hot reload type (DSL vs Gradle)
+- [ ] Monitor hot reload vs Gradle build ratio
 - [ ] Use modern terminal (Windows Terminal, iTerm2)
 - [ ] Configure VS Code file exclusions
 
@@ -582,8 +584,8 @@ Total: 23ms (well under 100ms target)
 
 | Scenario | Time | Target | Status |
 |----------|------|--------|--------|
-| DSL reload (simple Text) | 65ms | \<100ms | ✓ |
-| DSL reload (complex layout) | 95ms | \<100ms | ✓ |
+| Hot reload (simple change) | 65ms | \<100ms | ✓ |
+| Hot reload (complex change) | 95ms | \<100ms | ✓ |
 | Gradle build (small change) | 12s | \<20s | ✓ |
 | Gradle build (full rebuild) | 25s | \<30s | ✓ |
 
@@ -610,7 +612,7 @@ Total: 23ms (well under 100ms target)
 
 **For fastest hot reload:**
 - Separate UI files from logic files
-- Use DSL reload for 80%+ of changes
+- Use hot reload for 80%+ of changes
 - Keep Compose code simple
 - Monitor reload times
 
@@ -643,7 +645,7 @@ Total: 23ms (well under 100ms target)
 ## Related Documentation
 
 **Learn more:**
-- [Hot Reload Explained](./hot-reload-explained.md) - DSL vs Gradle optimization
+- [Hot Reload Explained](./hot-reload-explained.md) - hot reload vs Gradle optimization
 - [Working with Emulators](./working-with-emulators.md) - Emulator performance
 - [Debugging Tips](./debugging-tips.md) - Performance debugging
 

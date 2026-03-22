@@ -1,352 +1,185 @@
----
+﻿---
 title: Overview
 description: High-level architecture of the JetStart system
 ---
 
 # Architecture Overview
 
-JetStart is built as a modular system with multiple packages working together to provide fast Android development with hot reload capabilities.
+JetStart is a modular monorepo of TypeScript and Kotlin packages that work together to deliver instant hot reload for Android Jetpack Compose.
 
 ## System Architecture
-
-JetStart follows a client-server architecture with the following components:
 
 ```mermaid
 graph TB
     subgraph "Developer Machine"
-        CLI[CLI Package]
-        Core[Core Package]
-        Web[Web Package]
+        CLI["@jetstart/cli"]
+        Core["@jetstart/core"]
+        Web["@jetstart/web"]
+        Logs["@jetstart/logs"]
     end
-    
-    subgraph "Shared Layer"
-        Shared[Shared Package]
+
+    subgraph "Shared Contract"
+        Shared["@jetstart/shared\n(types, protocol, constants)"]
     end
-    
+
     subgraph "Android Device"
-        Client[Client App]
+        Client["Client App\n(Kotlin + Compose)"]
+        Runtime["hot-reload-runtime\n(ClassLoader)"]
     end
-    
-    CLI -->|Commands| Core
-    Core -->|Uses| Shared
-    CLI -->|Uses| Shared
-    Web -->|Uses| Shared
-    Client -->|WebSocket| Core
-    Client -->|HTTP| Core
-    Web -->|WebSocket| Core
+
+    CLI -->|starts| Core
+    Core -->|uses| Shared
+    CLI -->|uses| Shared
+    Web -->|uses| Shared
+    Logs -->|uses| Shared
+    Client -->|WebSocket :8766| Core
+    Client -->|HTTP :8765| Core
+    Web -->|WebSocket :8766| Core
+    Core -->|log events| Logs
 ```
 
 ## Core Components
 
-### 1. CLI Package (`@jetstart/cli`)
+### @jetstart/cli
 
-The command-line interface that developers interact with.
+The `jetstart` command-line tool. Developers interact with JetStart entirely through this package.
 
-**Responsibilities:**
-- Project creation and scaffolding
-- Starting development servers
-- Building APKs
-- Managing Android emulators
-- Environment auditing
+- Project creation and scaffolding (`jetstart create`)
+- Starting the development server (`jetstart dev`)
+- Building APKs with release security hardening (`jetstart build`)
+- Streaming live device logs (`jetstart logs`)
+- Android emulator management (`jetstart android-emulator`)
+- Environment dependency auditing (`jetstart install-audit`)
 
-**Key Features:**
-- User-friendly command interface
-- Dependency management
-- Project template generation
+### @jetstart/core
 
-### 2. Core Package (`@jetstart/core`)
+The server that does the real work. Runs three networked services and owns the entire hot reload pipeline.
 
-The central server that orchestrates all development activities.
+**Servers:**
 
-**Responsibilities:**
-- HTTP server (serves APKs and REST API)
-- WebSocket server (real-time communication)
-- Build management (Gradle integration)
-- Session management (device pairing)
-- File watching (auto-rebuild)
-- DSL parsing (hot reload)
+| Service | Port | Purpose |
+|---|---|---|
+| HTTP (Express) | `8765` | REST API, APK downloads, web emulator redirect |
+| WebSocket | `8766` | Real-time comms with devices and browser |
+| (Logs delegated to @jetstart/logs) | `8767` | Log aggregation |
 
-**Key Features:**
-- Express HTTP server
-- WebSocket communication
-- Gradle build orchestration
-- QR code generation
-- Build caching
+**Hot reload pipeline:**
+```
+File change (chokidar)
+  → KotlinCompiler  (kotlinc + Compose plugin → .class files)
+  → OverrideGenerator  ($Override companion classes, InstantRun-style)
+  → DexGenerator  (d8 → classes.dex, minApi 24)
+  → WebSocketHandler.sendDexReload()  (core:dex-reload to all Android clients)
+```
 
-### 3. Shared Package (`@jetstart/shared`)
+### @jetstart/shared
 
-Common code shared across all packages.
+Single source of truth for all TypeScript types, the WebSocket protocol definition, validation helpers, and constants. Every other TypeScript package imports from here.
 
-**Responsibilities:**
-- Type definitions (TypeScript interfaces)
-- Protocol definitions (WebSocket messages)
-- Validation functions
-- Constants (ports, versions)
+### @jetstart/web
 
-**Key Features:**
-- Type-safe communication
-- Consistent protocols
-- Shared utilities
+React + Vite web emulator hosted at `https://web.jetstart.site`. Auto-opened when the HTTP server redirects `http://localhost:8765`. Receives `core:js-update` (compiled Kotlin/JS ES module) and renders a live Compose UI preview in the browser.
 
-### 4. Client Package (Android App)
+### @jetstart/logs
 
-The Android mobile application that runs on devices.
+Standalone WebSocket log server on port `8767`. Maintains an in-memory ring buffer of up to 10,000 log entries. The `jetstart logs` CLI command connects here to stream logs to the terminal.
 
-**Responsibilities:**
-- QR code scanning
-- WebSocket connection to Core
-- APK download and installation
-- Hot reload UI updates
-- Log streaming
+### Client App (Android)
 
-**Key Features:**
-- Jetpack Compose UI
-- Camera-based QR scanning
-- WebSocket client
-- APK installer
+The Kotlin/Compose companion app. Scans the QR code, authenticates with the session token, triggers the initial build, downloads and installs the APK, and then loads incoming DEX patches via `hot-reload-runtime` for all subsequent changes.
 
-### 5. Web Package (`@jetstart/web`)
-
-Browser-based development interface (optional).
-
-**Responsibilities:**
-- Web-based emulator
-- Build monitoring
-- Log viewing
-- Connection management
-
-**Key Features:**
-- React-based UI
-- WebSocket client
-- Real-time updates
-
-## Data Flow
-
-### Development Workflow
+## Hot Reload Data Flow
 
 ```mermaid
 sequenceDiagram
     participant Dev as Developer
-    participant CLI as CLI
+    participant CLI as jetstart dev
     participant Core as Core Server
-    participant Client as Android Client
-    
+    participant Client as Android App
+
     Dev->>CLI: jetstart dev
-    CLI->>Core: Start server
-    Core->>Core: Create session
-    Core->>Core: Generate QR code
-    Core-->>CLI: Display QR code
-    
+    CLI->>Core: Start servers
+    Core->>Core: Generate sessionId + token
+    Core-->>CLI: Print QR code
+
     Dev->>Client: Scan QR code
-    Client->>Core: WebSocket connect
-    Core->>Client: Connection confirmed
-    Core->>Core: Trigger initial build
-    Core->>Client: Send APK download URL
-    Client->>Core: Download APK
+    Client->>Core: WebSocket open
+    Client->>Core: client:connect {sessionId, token}
+    Core->>Client: core:connected
+    Core->>Core: Trigger initial Gradle build
+    Core->>Client: core:build-complete {downloadUrl}
+    Client->>Core: GET /download/app-debug.apk
     Client->>Client: Install APK
-    
-    Dev->>Dev: Edit code
-    Core->>Core: Detect file change
-    Core->>Core: Parse DSL
-    Core->>Client: Send hot reload (WebSocket)
-    Client->>Client: Update UI (<100ms)
-```
 
-### Hot Reload Flow
-
-```mermaid
-graph LR
-    A[File Change] --> B{Change Type?}
-    B -->|UI Only| C[DSL Parser]
-    B -->|Logic/Deps| D[Gradle Build]
-    C --> E[Generate DSL JSON]
-    E --> F[WebSocket Send]
-    F --> G[Client Updates UI]
-    D --> H[Build APK]
-    H --> I[Send Download URL]
-    I --> J[Client Downloads APK]
-    J --> K[Install APK]
+    Dev->>Dev: Edit MainActivity.kt
+    Core->>Core: kotlinc → .class → $Override → d8 → .dex
+    Core->>Client: core:dex-reload {dexBase64, classNames}
+    Client->>Client: ClassLoader loads DEX
+    Client->>Client: Compose recomposition
+    Note over Client: UI updated in under 100ms
 ```
 
 ## Communication Protocols
 
-### HTTP (REST API)
+### HTTP (port 8765)
 
-Used for:
-- APK file downloads
-- Session management
-- Health checks
-- Server status
+| Endpoint | Purpose |
+|---|---|
+| `GET /` | Redirects to web emulator with session params |
+| `GET /health` | Health check |
+| `GET /version` | Server version |
+| `POST /session/create` | Create session + QR code |
+| `GET /session/:id` | Get session info |
+| `GET /download/:filename` | Download built APK |
 
-**Default Port:** 8765
+### WebSocket (port 8766)
 
-### WebSocket
+Key message types:
 
-Used for:
-- Real-time hot reload updates
-- Build status updates
-- Log streaming
-- Connection management
+| Direction | Type | Purpose |
+|---|---|---|
+| Client → Core | `client:connect` | Auth with sessionId + token |
+| Client → Core | `client:log` | Forward device logs |
+| Client → Core | `client:heartbeat` | Keep-alive (every 30s) |
+| Core → Client | `core:connected` | Auth confirmed |
+| Core → Client | `core:build-complete` | APK ready with download URL |
+| Core → Client | `core:dex-reload` | Hot reload: base64 DEX + class names |
+| Core → Client | `core:js-update` | Web emulator: base64 ES module |
 
-**Default Port:** 8766
-
-**Message Types:**
-- `client:connect` - Client connection request
-- `core:build-complete` - Build finished notification
-- `core:reload` - Hot reload DSL data
-- `client:heartbeat` - Keep-alive ping
-
-See [WebSocket Protocol](./websocket-protocol.md) for details.
+See [WebSocket Protocol](./websocket-protocol.md) for the complete specification.
 
 ## Package Dependencies
 
 ```
-CLI ──┐
-      ├──> Shared
-Core ─┤
-      │
-Web ──┘
+@jetstart/cli  ──► @jetstart/core ──► @jetstart/shared
+@jetstart/web  ─────────────────────► @jetstart/shared
+@jetstart/logs ─────────────────────► @jetstart/shared
 
-Client (Android) - No dependencies on other packages
-                   Implements shared protocols
+packages/client          (Kotlin — no npm deps, implements WS protocol independently)
+packages/gradle-plugin   (Kotlin — no npm deps)
+packages/hot-reload-runtime (Kotlin — the ClassLoader used by the client app)
 ```
 
-**Dependency Graph:**
-- CLI depends on Core and Shared
-- Core depends on Shared
-- Web depends on Shared
-- Client is independent (implements protocols)
+## Security Model
 
-## Build Process
+**Session tokens** — Every `jetstart dev` run generates a fresh `sessionId` and `token`. Both are embedded in the QR code. Any device presenting the wrong `sessionId` is closed immediately with WebSocket code `4001`; wrong `token` with `4002`. A device built during a previous session cannot reconnect to a new one — the user must rescan the QR.
 
-1. **File Change Detected**
-   - Core watches project files using chokidar
-   - Detects changes to Kotlin/Compose files
-
-2. **Change Analysis**
-   - DSL Parser analyzes if change is UI-only
-   - Determines if hot reload is possible
-
-3. **Hot Reload Path** (UI changes)
-   - Parse Kotlin to DSL JSON
-   - Send via WebSocket to clients
-   - Clients update UI instantly
-
-4. **Full Build Path** (logic/dependencies)
-   - Trigger Gradle build
-   - Compile Kotlin code
-   - Package APK
-   - Send download URL to clients
-   - Clients download and install
-
-## Session Management
-
-Sessions provide secure pairing between clients and the dev server:
-
-1. **Session Creation**
-   - Core creates session with unique ID and token
-   - Session stored in memory
-   - QR code generated with session data
-
-2. **Client Connection**
-   - Client scans QR code or enters session details
-   - WebSocket connection authenticated with session token
-   - Connection linked to session
-
-3. **Session Lifecycle**
-   - Sessions expire after 1 hour of inactivity
-   - Sessions cleaned up on server restart
-   - Multiple clients can connect to same session
-
-## File Structure
-
-```
-jetstart/
-├── packages/
-│   ├── shared/          # Shared types and protocols
-│   ├── core/           # Build server
-│   ├── cli/            # Command-line interface
-│   ├── client/         # Android app
-│   └── web/            # Web interface
-├── docs/               # Documentation
-└── .github/            # CI/CD workflows
-```
-
-## Technology Stack
-
-**Backend (Core/CLI/Web/Shared):**
-- TypeScript
-- Node.js 18+
-- Express (HTTP server)
-- WebSocket (real-time)
-- Chokidar (file watching)
-- Gradle (Android builds)
-
-**Client (Android):**
-- Kotlin
-- Jetpack Compose
-- OkHttp (HTTP client)
-- WebSocket client
-- ML Kit (QR scanning)
-
-**Web:**
-- React 18
-- TypeScript
-- Vite
-- WebSocket API
-
-## Scalability Considerations
-
-**Current Design:**
-- Single Core server instance per project
-- Multiple clients can connect to one session
-- Sessions stored in memory (not persistent)
-
-**Future Improvements:**
-- Persistent session storage
-- Multiple server instances
-- Load balancing
-- Cloud-based Core servers
-
-## Security
-
-**Session Security:**
-- Short-lived tokens (1 hour expiry)
-- Session IDs not guessable
-- Tokens required for WebSocket connection
-
-**Network Security:**
-- Local network only (not exposed to internet)
-- QR codes contain local IPs
-- No authentication for local development (by design)
-
-**Future Enhancements:**
-- TLS/SSL support
-- Token refresh mechanism
-- Rate limiting
+**Release builds** — `jetstart build --release` strips the dev-server URL and session token from `BuildConfig` before compiling, and restores `build.gradle` to its original state even if the build fails. No dev credentials appear in production binaries.
 
 ## Performance
 
-**Hot Reload:**
-- `<100ms` for UI updates
-- DSL parsing: ~10-50ms
-- WebSocket transmission: ~5-10ms
-
-**Full Builds:**
-- Gradle incremental builds: 10-30s
-- Clean builds: 30-60s
-- APK download: 500ms-2s (depends on size)
-
-**Optimizations:**
-- Build caching (Gradle)
-- Incremental compilation
-- DSL parsing cache
-- WebSocket message compression (future)
+| Operation | Typical time |
+|---|---|
+| Hot reload (Kotlin → DEX → device) | 62 – 135 ms |
+| Initial Gradle debug build (incremental) | 10 – 30 s |
+| Initial Gradle debug build (clean) | 30 – 60 s |
+| APK download over local Wi-Fi | 500 ms – 2 s |
 
 ## Related Documentation
 
-- [Hot Reload System](./hot-reload-system.md) - Hot reload mechanism details
-- [Build System](./build-system.md) - Build process details
-- [WebSocket Protocol](./websocket-protocol.md) - Communication protocol
-- [Session Management](./session-management.md) - Session lifecycle
-- [Package Structure](./package-structure.md) - Detailed package structure
+- [Hot Reload System](./hot-reload-system.md) — full pipeline details
+- [Build System](./build-system.md) — Gradle build and ADB integration
+- [WebSocket Protocol](./websocket-protocol.md) — complete message specification
+- [Session Management](./session-management.md) — session lifecycle
+- [Package Structure](./package-structure.md) — detailed monorepo layout
+

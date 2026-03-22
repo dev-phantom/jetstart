@@ -28,6 +28,14 @@ export interface CoreClientConfig {
   onBuildStatus?: (status: any) => void;
   onUIUpdate?: (dslContent: string, screens?: string[], hash?: string) => void;
   onReload?: (reloadType: 'full' | 'hot') => void;
+  /** Called when the server sends a DEX hot reload (Kotlin file changed). */
+  onDexReload?: (classNames: string[], dexBase64Length: number) => void;
+  /**
+   * Called when the server sends a compiled Kotlin→JS ES module for web preview.
+   * jsBase64 is the full .mjs file base64-encoded. screenFunctionName is the
+   * @Composable function the browser should call to get the component tree.
+   */
+  onJsUpdate?: (jsBase64: string, sourceFile: string, byteSize: number) => void;
   onDisconnect?: (reason: string) => void;
   onLog?: (log: LogEntry) => void;
   onStateChange?: (state: WSState) => void;
@@ -185,6 +193,22 @@ export class CoreClient {
 
         case 'core:reload':
           this.config.onReload?.(message.reloadType);
+          break;
+
+        case 'core:dex-reload':
+          this.config.onDexReload?.(
+            message.classNames || [],
+            (message.dexBase64 || '').length
+          );
+          break;
+
+        // @ts-ignore — core:js-update is in shared protocol, TS union may be stale
+        case 'core:js-update':
+          this.config.onJsUpdate?.(
+            (message as any).jsBase64 || '',
+            (message as any).sourceFile || '',
+            (message as any).byteSize || 0
+          );
           break;
         
         case 'core:log':

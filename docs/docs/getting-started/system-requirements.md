@@ -12,7 +12,8 @@ This page outlines the hardware and software requirements for developing with Je
 
 JetStart works on all major operating systems:
 
-- **Windows** 10 or later
+- **Windows** 10, 11 (Recommended)
+- **Windows** 7, 8.1 (Service Pack 1, with custom Node.js 18 builds)
 - **macOS** 11 (Big Sur) or later
 - **Linux** - Most modern distributions (Ubuntu 20.04+, Fedora 34+, Arch, etc.)
 
@@ -35,35 +36,47 @@ JetStart can automatically install missing dependencies! Run `jetstart create my
 :::
 
 ### Optional
-
 These tools enhance your development experience:
 
 | Tool | Purpose |
 |------|---------|
-| **Android Studio** | Full IDE with emulator support |
-| **VS Code** | Lightweight code editor |
+| **VS Code / Vim / Any Editor** | Lightweight code editing (Recommended for 4GB RAM) |
 | **Git** | Version control |
-| **adb** | Android Debug Bridge (included with Android SDK) |
+| **adb** | Android Debug Bridge |
+
+### Android Device (Requirements)
+
+To run the JetStart Client and preview your apps:
+- **Android Version**: 7.0 (API 24) or later
+- **RAM**: 2GB+ (Recommended)
+- **Connection**: Wi-Fi or Hotspot (Same network as your laptop)
 
 ## Hardware Requirements
 
-### Minimum
-
+### Minimum (Optimized for Low-End Systems)
 - **CPU:** Dual-core processor (2GHz+)
 - **RAM:** 4 GB
 - **Storage:** 10 GB free space
 - **Network:** Wi-Fi or Ethernet connection
 
 ### Recommended
-
 - **CPU:** Quad-core processor (3GHz+)
 - **RAM:** 8 GB or more
 - **Storage:** 20 GB free space (SSD preferred)
-- **Network:** Fast Wi-Fi (5GHz) or Ethernet
 
-:::info Why These Requirements?
-JetStart runs a local development server and Gradle builds, which benefit from faster processors and more RAM. The storage requirement is mainly for the Android SDK and build cache.
+## 4GB RAM Optimization
+JetStart is designed to run on systems where Android Studio cannot. If you are on a 4GB RAM system, follow these tips for the best experience:
+
+1. **Avoid Heavy IDEs**: Use VS Code, Sublime, or Vim instead of Android Studio.
+2. **Use Physical Devices**: Testing on a physical phone via Wi-Fi/Hotspot uses almost zero laptop RAM.
+3. **The Emulators**: If you don't have a device, use the included **Android Emulator** or **Web Emulator**. The **Web Emulator** runs in a browser tab and is significantly lighter than a full Android Virtual Device (AVD).
+4. **Configure Gradle**: Limit Gradle's memory usage by adding `org.gradle.jvmargs=-Xmx1g` to your `gradle.properties` file.
+5. **Close Background Apps**: Close heavy browser tabs (like Discord or large web apps) while building.
+
+:::info JetStart Efficiency
+By removing the 2GB+ RAM overhead of Android Studio, JetStart leaves the entire 4GB of your system available for the Kotlin compiler and Gradle, making development viable on older hardware.
 :::
+
 
 ## Android SDK Requirements
 
@@ -169,37 +182,42 @@ jetstart install-audit
 ```bash
 🔍 Auditing development environment...
 
-Development Tools
-┌──────────┬────────────┬──────────────┬────────┐
-│ Tool     │ Required   │ Installed    │ Status │
-├──────────┼────────────┼──────────────┼────────┤
-│ Node.js  │ 18.0.0+    │ 20.11.0      │ ✓ OK   │
-│ npm      │ 9.0.0+     │ 10.4.0       │ ✓ OK   │
-│ Java     │ 17.0.0+    │ 17.0.9       │ ✓ OK   │
-│ Gradle   │ 8.0.0+     │ 8.5.0        │ ✓ OK   │
-└──────────┴────────────┴──────────────┴────────┘
+JetStart Installation Audit
 
-Android SDK Components
-┌────────────────────────┬────────────┬────────┐
-│ Component              │ Installed  │ Status │
-├────────────────────────┼────────────┼────────┤
-│ cmdline-tools          │ Latest     │ ✓ OK   │
-│ platform-tools         │ 34.0.5     │ ✓ OK   │
-│ build-tools;34.0.0     │ 34.0.0     │ ✓ OK   │
-│ platforms;android-34   │ 2          │ ✓ OK   │
-│ platforms;android-24   │ 2          │ ✓ OK   │
-└────────────────────────┴────────────┴────────┘
+Development Tools:
+------------------------------------------
+✓ Node.js        24.11.1    OK
+✓ npm            11.6.2     OK
+✓ Java/JDK       17.0.17    OK
+✓ Gradle         8.5.0      OK
 
-Environment Variables
-┌──────────────────┬─────────────────────────┬────────┐
-│ Variable         │ Value                   │ Status │
-├──────────────────┼─────────────────────────┼────────┤
-│ JAVA_HOME        │ C:\Program Files\...    │ ✓ OK   │
-│ ANDROID_HOME     │ C:\Android              │ ✓ OK   │
-└──────────────────┴─────────────────────────┴────────┘
+Android SDK:
+------------------------------------------
+✓ Android SDK    Unknown    OK
+✓ cmdline-tools  19.0       OK
+✓ build-tools    34.0.0     OK
+✓ platform-tools 1.0.41     OK
+✓ emulator       36.3.10    OK
+
+Android Platforms:
+------------------------------------------
+✓ API 34 (Target) Unknown    OK
+✓ API 24 (Minimum) 2         OK
+
+Environment Variables:
+------------------------------------------
+✓ JAVA_HOME      OK
+✓ ANDROID_HOME   Unknown         OK
+
+Summary:
+------------------------------------------
+✓ 12 components OK
+✓ 0 warnings
+✓ 0 errors
 
 ✅ All requirements met!
 ```
+
 
 ## JSON Output
 

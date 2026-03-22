@@ -118,16 +118,14 @@ sessions/
 cache/
 
 # Test/Example projects (don't commit test projects)
-my-app/
 my-awesome-app/
 test-app/
 
-# Claude Code
-.claude
-.claude-worktrees
-claude.md
 test-consolidation
 # Kotlin / Android build output
 packages/client/app/build/
+packages/hot-reload-runtime/build/
+packages/gradle-plugin/build/
+packages/cli/maven-repo/
 *.d.ts.map
 *.js.map

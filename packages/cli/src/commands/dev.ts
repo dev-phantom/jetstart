@@ -14,6 +14,20 @@ import { DEFAULT_CORE_PORT, DEFAULT_WS_PORT } from '@jetstart/shared';
 import { DevOptions } from '../types';
 import { EmulatorDeployer } from '../utils/emulator-deployer';
 import { openBrowser } from '../utils/open';
+import { execSync } from 'child_process';
+
+
+/** Stop all Gradle daemons so the project folder can be deleted freely. */
+function stopGradleDaemons(projectPath: string): void {
+  try {
+    const isWin = process.platform === 'win32';
+    const gradle = isWin ? 'gradle.bat' : 'gradle';
+    execSync(`"${gradle}" --stop`, { cwd: projectPath, stdio: 'ignore', timeout: 10000 });
+    log('Gradle daemons stopped');
+  } catch {
+    // Daemon may already be gone — not an error
+  }
+}
 
 export async function devCommand(options: DevOptions) {
   try {
@@ -71,6 +85,10 @@ export async function devCommand(options: DevOptions) {
       wsPort,
       host: '0.0.0.0', // Bind to all interfaces for maximum compatibility
       displayHost: host, // Use detected IP for display and client connections
+      // Android emulators reach the host at 10.0.2.2 (not the LAN IP).
+      // Inject this into BuildConfig so the emulator app connects correctly.
+      emulatorHost: options.emulator ? '10.0.2.2' : undefined,
+      webEnabled: !!options.web,
       projectPath,
       projectName,
     });
@@ -133,7 +151,7 @@ export async function devCommand(options: DevOptions) {
     }
 
     // Auto-open browser for Web Emulator if requested
-    if (options.web) {
+    if (options.web && options.open !== false) {
       info('Opening Web Emulator...');
       openBrowser(localUrl);
     }
@@ -146,6 +164,7 @@ export async function devCommand(options: DevOptions) {
     process.on('SIGINT', async () => {
       console.log();
       log('Shutting down dev server...');
+      stopGradleDaemons(projectPath);
       await server.stop();
       process.exit(0);
     });
@@ -153,6 +172,7 @@ export async function devCommand(options: DevOptions) {
     process.on('SIGTERM', async () => {
       console.log();
       log('Shutting down dev server...');
+      stopGradleDaemons(projectPath);
       await server.stop();
       process.exit(0);
     });
@@ -169,29 +189,52 @@ export async function devCommand(options: DevOptions) {
 
 function getLocalIP(): string {
   const interfaces = os.networkInterfaces();
-  const addresses: string[] = [];
+  const preferredAddresses: string[] = [];
+  const otherAddresses: string[] = [];
 
   for (const name of Object.keys(interfaces)) {
     const iface = interfaces[name];
     if (!iface) continue;
+
+    // Skip virtual interfaces (Hyper-V, WSL, VPN, Docker, etc.)
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('vethernet') ||
+        lowerName.includes('wsl') ||
+        lowerName.includes('docker') ||
+        lowerName.includes('vmware') ||
+        lowerName.includes('virtualbox') ||
+        lowerName.includes('vbox')) {
+      continue;
+    }
 
     for (const alias of iface) {
       // Handle both 'IPv4' string (Node.js 18+) and numeric 4 (older versions)
       const isIPv4 = alias.family === 'IPv4' || (alias.family as any) === 4;
 
       if (isIPv4 && !alias.internal) {
-        // Prefer addresses starting with 192.168 (typical home/hotspot network)
-        if (alias.address.startsWith('192.168')) {
-          return alias.address;
+        // Prefer real network addresses (Wi-Fi, Ethernet, Hotspot)
+        if (alias.address.startsWith('192.168') ||
+            alias.address.startsWith('10.') ||
+            alias.address.startsWith('172.')) {
+          // Wi-Fi and regular network interfaces are preferred
+          if (lowerName.includes('wi-fi') || lowerName.includes('wifi') ||
+              lowerName.includes('wlan') || lowerName.includes('ethernet')) {
+            return alias.address; // Return immediately for real interfaces
+          }
+          preferredAddresses.push(alias.address);
+        } else {
+          otherAddresses.push(alias.address);
         }
-        addresses.push(alias.address);
       }
     }
   }
 
-  // Return first non-internal IPv4 address found
-  if (addresses.length > 0) {
-    return addresses[0];
+  // Return first preferred address, then other addresses, then localhost
+  if (preferredAddresses.length > 0) {
+    return preferredAddresses[0];
+  }
+  if (otherAddresses.length > 0) {
+    return otherAddresses[0];
   }
 
   return 'localhost';

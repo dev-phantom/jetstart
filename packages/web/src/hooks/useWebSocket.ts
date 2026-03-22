@@ -22,6 +22,10 @@ export interface UseWebSocketReturn {
   error: Error | null;
   currentDSL: string | null;
   dslHash: string | null;
+  /** Last DEX hot reload info — null until a Kotlin file is hot-reloaded. */
+  dexReloadInfo: { classNames: string[]; count: number; timestamp: number } | null;
+  /** Latest compiled JS module for web live preview — null until first hot reload. */
+  jsUpdate: { jsBase64: string; sourceFile: string; byteSize: number; timestamp: number } | null;
   connect: () => void;
   disconnect: () => void;
   sendStatus: (status: SessionStatus, message?: string) => void;
@@ -50,6 +54,8 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
   });
   const [currentDSL, setCurrentDSL] = useState<string | null>(null);
   const [dslHash, setDslHash] = useState<string | null>(null);
+  const [dexReloadInfo, setDexReloadInfo] = useState<{ classNames: string[]; count: number; timestamp: number } | null>(null);
+  const [jsUpdate, setJsUpdate] = useState<{ jsBase64: string; sourceFile: string; byteSize: number; timestamp: number } | null>(null);
 
   const clientRef = useRef<CoreClient | null>(null);
 
@@ -109,6 +115,16 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
           apkInfo: null,
           downloadUrl: null,
         });
+      },
+
+      onJsUpdate: (jsBase64, sourceFile, byteSize) => {
+        console.log('[JsPreview] Received JS module:', sourceFile, byteSize, 'bytes');
+        setJsUpdate({ jsBase64, sourceFile, byteSize, timestamp: Date.now() });
+      },
+
+      onDexReload: (classNames, dexBase64Length) => {
+        console.log('DEX hot reload:', classNames.length, 'classes,', dexBase64Length, 'bytes');
+        setDexReloadInfo({ classNames, count: classNames.length, timestamp: Date.now() });
       },
 
       onUIUpdate: (dslContent, _screens, hash) => {
@@ -182,6 +198,8 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     error,
     currentDSL,
     dslHash,
+    dexReloadInfo,
+    jsUpdate,
     connect,
     disconnect,
     sendStatus,

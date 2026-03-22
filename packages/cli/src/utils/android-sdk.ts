@@ -2,14 +2,14 @@
  * Android SDK Manager wrapper
  */
 
-import { spawn, ChildProcess } from 'child_process';
+import { spawn } from 'child_process';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 import { downloadAndExtract } from './downloader';
 import { findAndroidSDK, getDefaultSDKPath } from './system-tools';
-import { startSpinner, stopSpinner, updateSpinner } from './spinner';
-import { success, error as logError, warning, info } from './logger';
+import { startSpinner, stopSpinner } from './spinner';
+import { success, error as warning, info } from './logger';
 
 export interface SDKComponent {
   name: string;
@@ -494,7 +494,7 @@ class MockAndroidSDKManager {
     info('[MOCK] Updating all components');
   }
 
-  async isComponentInstalled(component: string): Promise<boolean> {
+  async isComponentInstalled(_component: string): Promise<boolean> {
     return true;
   }
 
