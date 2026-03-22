@@ -4,6 +4,21 @@
 * feat!: v2.0.0 complete rewrite with DEX-based hot reload and web emulator ([9797be8](https://github.com/dev-phantom/jetstart/commit/9797be87244171e07e8af2fb8b16f974b553f59f))
 
 
+### Bug Fixes
+
+* retrigger v2.0.0 publish after stale tag removal ([b0ecd2e](https://github.com/dev-phantom/jetstart/commit/b0ecd2ebe36b1e629a5051932d7a7c5eba9b9dc7))
+
+
+### BREAKING CHANGES
+
+* New WebSocket protocol, DEX hot reload replaces DSL pipeline, kotlinc-js web preview added. CLI flags and session authentication changed.
+
+# [2.0.0](https://github.com/dev-phantom/jetstart/compare/v1.7.0...v2.0.0) (2026-03-22)
+
+
+* feat!: v2.0.0 complete rewrite with DEX-based hot reload and web emulator ([9797be8](https://github.com/dev-phantom/jetstart/commit/9797be87244171e07e8af2fb8b16f974b553f59f))
+
+
 ### BREAKING CHANGES
 
 * New WebSocket protocol, DEX hot reload replaces DSL pipeline, kotlinc-js web preview added. CLI flags and session authentication changed.
