@@ -47,4 +47,22 @@ cliPkg.version = newVersion;
 fs.writeFileSync(cliPkgPath, JSON.stringify(cliPkg, null, 2) + '\n');
 console.log(`✓ Updated packages/cli to ${newVersion}`);
 
+// Update packages/web
+const webPkgPath = path.join(__dirname, '../packages/web/package.json');
+if (fs.existsSync(webPkgPath)) {
+  const webPkg = JSON.parse(fs.readFileSync(webPkgPath, 'utf8'));
+  webPkg.version = newVersion;
+  fs.writeFileSync(webPkgPath, JSON.stringify(webPkg, null, 2) + '\n');
+  console.log(`✓ Updated packages/web to ${newVersion}`);
+}
+
+// Update packages/sanity-studio
+const sanityPkgPath = path.join(__dirname, '../packages/sanity-studio/package.json');
+if (fs.existsSync(sanityPkgPath)) {
+  const sanityPkg = JSON.parse(fs.readFileSync(sanityPkgPath, 'utf8'));
+  sanityPkg.version = newVersion;
+  fs.writeFileSync(sanityPkgPath, JSON.stringify(sanityPkg, null, 2) + '\n');
+  console.log(`✓ Updated packages/sanity-studio to ${newVersion}`);
+}
+
 console.log(`\n✅ All packages updated to ${newVersion}`);
