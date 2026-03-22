@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/dev-phantom/jetstart/compare/v2.0.1...v2.0.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* remove @jetstart/template from publish list (template bundled inside CLI) ([22e7a3e](https://github.com/dev-phantom/jetstart/commit/22e7a3ee3858305e5823add106c597ec78eb818a))
+
 ## [2.0.1](https://github.com/dev-phantom/jetstart/compare/v2.0.0...v2.0.1) (2026-03-22)
 
 

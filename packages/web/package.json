@@ -1,6 +1,6 @@
 {
   "name": "@jetstart/web",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Web-based emulator and development interface for JetStart",
   "type": "module",
   "scripts": {
