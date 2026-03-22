@@ -10,6 +10,7 @@ const packages = [
   { name: '@jetstart/shared', dir: 'packages/shared' },
   { name: '@jetstart/logs', dir: 'packages/logs' },
   { name: '@jetstart/core', dir: 'packages/core' },
+  { name: '@jetstart/template', dir: 'packages/template' },
   { name: '@jetstart/cli', dir: 'packages/cli' }
 ];
 
