@@ -44,10 +44,11 @@ function buildVariableMap(options: TemplateOptions): Record<string, string> {
  * same relative traversal works.
  */
 function getTemplateDir(): string {
-  // __dirname at compile time: packages/cli/dist/utils/
-  // __dirname at dev time:     packages/cli/src/utils/
-  // Either way, go up 3 levels to packages/, then into template/base/
-  return path.resolve(__dirname, '..', '..', '..', 'template', 'base');
+  // Published:  __dirname = .../node_modules/@jetstart/cli/dist/utils
+  //             2 levels up = @jetstart/cli root → template/base ✅
+  // Local dev:  __dirname = packages/cli/dist/utils or src/utils
+  //             2 levels up = packages/cli → template/base ✅
+  return path.resolve(__dirname, '..', '..', 'template', 'base');
 }
 
 /**
