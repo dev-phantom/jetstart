@@ -21,7 +21,7 @@
 
   --ifm-background-color: #222222;
   --ifm-navbar-background-color: #222222;
-  --ifm-footer-background-color: #1E1E1E;
+  --ifm-footer-background-color: #222222;
   --ifm-code-background: #1E1E1E;
 
   --ifm-heading-color: #FFFFFF;
@@ -41,11 +41,16 @@
 
   --ifm-background-color: #222222;
   --ifm-navbar-background-color: #222222;
-  --ifm-footer-background-color: #1E1E1E;
+  --ifm-footer-background-color: #222222;
   --ifm-code-background: #1E1E1E;
 
   --ifm-heading-color: #FFFFFF;
   --ifm-font-color-base: #FFFFFF;
   --ifm-link-color: #25FF79;
   --ifm-menu-color: #FFFFFF;
+}
+
+/* Specific override for Docusaurus dark footer style */
+.footer--dark {
+  --ifm-footer-background-color: #222222;
 }

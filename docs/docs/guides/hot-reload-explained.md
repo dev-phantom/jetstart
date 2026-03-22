@@ -1,543 +1,212 @@
----
+﻿---
 sidebar_position: 2
 title: Hot Reload Explained
-description: Deep dive into JetStart's two-tier hot reload system
+description: Deep dive into JetStart's Kotlin-to-DEX hot reload pipeline
 ---
 
 # Hot Reload Explained
 
-Understanding JetStart's blazing-fast hot reload system and how it achieves \<100ms UI updates without compromising on development experience.
+Understanding exactly how JetStart achieves sub-100ms live updates on real Android devices — and why it is fundamentally different from Gradle-based workflows.
 
-## The Two-Tier System
+## The Core Idea
 
-JetStart uses **two distinct reload strategies** depending on what changed:
+Traditional Android development compiles your entire project, packages it into an APK, installs that APK through the package manager, and restarts the app. That process takes 30 – 60 seconds even for a one-line change.
+
+JetStart's hot reload compiles **only the changed file**, converts the result to DEX bytecode, and loads it directly into the already-running Android process. The app never stops. The Activity never restarts. You see the result in under 100ms.
+
+## The Real Pipeline
 
 ```
-File Change Detected
+You save MainActivity.kt
         │
         ▼
-  ┌─────────────┐
-  │ What type?  │
-  └─────┬───────┘
+   KotlinCompiler
+   ─────────────
+   kotlinc + Compose compiler plugin
+   Classpath: android.jar + Compose + AndroidX from ~/.gradle cache
+   Output: .class files in a temp directory
         │
-   ┌────┴────┐
-   │         │
-  UI       Non-UI
-   │         │
-   ▼         ▼
-┌──────┐  ┌──────────┐
-│ DSL  │  │  Gradle  │
-│ <100ms│  │ 10-30s  │
-└──────┘  └──────────┘
+        ▼
+   OverrideGenerator
+   ─────────────────
+   Generates $Override companion classes for each modified class
+   (InstantRun pattern — patches at method level, not class level)
+        │
+        ▼
+   DexGenerator
+   ────────────
+   Android's d8 tool: .class files → classes.dex  (--min-api 24)
+        │
+        ▼
+   WebSocketHandler.sendDexReload()
+   ────────────────────────────────
+   Broadcasts core:dex-reload to all connected Android clients
+   Payload: base64-encoded DEX + list of patched class names
+        │
+        ▼
+   Android Custom ClassLoader
+   ──────────────────────────
+   Decodes DEX, loads new class definitions into the running process
+   Jetpack Compose triggers recomposition with the updated code
+        │
+        ▼
+   UI updated on device — typically 62–135ms from file save
 ```
 
-### Tier 1: DSL Hot Reload (\<100ms)
+## Two Reload Paths
 
-**When:** UI-only changes (layouts, text, colors, styling)
+### Path 1: DEX Hot Reload (Android devices)
 
-**How it works:**
-1. File watcher detects change in MainActivity.kt or screens/
-2. DSL Parser extracts Compose UI structure from Kotlin code
-3. Converts to JSON DSL representation
-4. Sends JSON via WebSocket to client
-5. Client re-renders UI instantly
+Every `.kt` file change that compiles successfully goes through the full pipeline above. The result is a `core:dex-reload` WebSocket message carrying the real compiled bytecode:
 
-**Performance:** \<100ms from save to screen update
-
-### Tier 2: Full Gradle Build (10-30s)
-
-**When:** Non-UI changes (business logic, dependencies, resources)
-
-**How it works:**
-1. File watcher detects change
-2. Clears build cache
-3. Runs full Gradle compilation
-4. Packages new APK
-5. Sends download URL to client
-6. Client downloads and installs APK
-7. Relaunches app
-
-**Performance:** 10-30 seconds depending on project size
-
-## DSL Hot Reload Deep Dive
-
-### What is DSL?
-
-**DSL = Domain-Specific Language**
-
-JetStart's DSL is a JSON representation of Jetpack Compose UI:
-
-**Kotlin Compose:**
-```kotlin
-@Composable
-fun MyScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Hello JetStart!",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Blue
-        )
-        Button(onClick = { /* ... */ }) {
-            Text("Click Me")
-        }
-    }
-}
-```
-
-**Converted to DSL JSON:**
 ```json
 {
-  "version": "1.0",
-  "screen": {
-    "type": "Column",
-    "horizontalAlignment": "Center",
-    "children": [
-      {
-        "type": "Text",
-        "text": "Hello JetStart!",
-        "style": "h4",
-        "color": "#0000FF"
-      },
-      {
-        "type": "Button",
-        "text": "Click Me",
-        "onClick": "handleClick"
-      }
-    ]
-  }
-}
-```
-
-### DSL Parser Workflow
-
-```
-┌───────────────────┐
-│  MainActivity.kt  │
-└─────────┬─────────┘
-          │
-          ▼
-┌─────────────────────┐
-│    DSL Parser       │
-│  ┌───────────────┐  │
-│  │ 1. Read file  │  │
-│  │ 2. Find @Composable │
-│  │ 3. Extract UI │  │
-│  │ 4. Convert to JSON │
-│  └───────────────┘  │
-└─────────┬───────────┘
-          │
-          ▼
-┌───────────────────┐
-│   DSL JSON        │
-│   (342 bytes)     │
-└─────────┬─────────┘
-          │
-          ▼
-┌───────────────────┐
-│   WebSocket       │
-│   Send to client  │
-└─────────┬─────────┘
-          │
-          ▼
-┌───────────────────┐
-│   Android Client  │
-│   Re-render UI    │
-│   in <100ms       │
-└───────────────────┘
-```
-
-### Supported UI Elements
-
-**Layouts:**
-- Column (vertical stacking)
-- Row (horizontal stacking)
-- Box (layered positioning)
-
-**Text:**
-- Text (with fontSize, fontWeight, color)
-- Styles: h1, h2, h3, h4, body1, body2, caption
-
-**Interactive:**
-- Button (with onClick handlers)
-- TextField (future)
-- Switch (future)
-
-**Styling:**
-- Colors: hex codes or named colors
-- Modifiers: fillMaxSize, padding, size
-- Alignment: Start, Center, End, Top, Bottom
-
-### What Triggers DSL Reload
-
-**✓ These trigger DSL hot reload:**
-
-```kotlin
-// Text changes
-Text("Hello") → Text("Hello World")
-
-// Color changes
-color = Color.Red → color = Color.Blue
-
-// Layout changes
-Column(...) → Row(...)
-
-// Style changes
-fontSize = 16.sp → fontSize = 24.sp
-
-// Component additions
-Column { Text("A") } → Column { Text("A"); Button {} }
-```
-
-**✗ These trigger full Gradle build:**
-
-```kotlin
-// State management
-var count by remember { mutableStateOf(0) }
-
-// Function logic
-fun calculate() { /* logic */ }
-
-// Imports
-import androidx.compose.material3.*
-
-// Dependencies
-implementation "androidx.compose.material3:material3"
-
-// Resources
-R.drawable.icon
-R.string.app_name
-```
-
-## File Watching System
-
-### What Gets Watched
-
-```
-project/
-├── app/src/main/java/           ✓ Watched
-│   ├── MainActivity.kt          ✓ DSL candidate
-│   ├── screens/                 ✓ DSL candidates
-│   └── components/              ✓ DSL candidates
-├── app/src/main/res/            ✓ Watched → Full build
-│   ├── values/                  ✓ Full build
-│   ├── drawable/                ✓ Full build
-│   └── layout/                  ✓ Full build
-├── build.gradle                 ✓ Watched → Full build
-└── jetstart.config.json         ✓ Watched → Full build
-```
-
-### File Change Detection
-
-JetStart uses **Chokidar** for file watching:
-
-**Features:**
-- **Debouncing:** 300ms delay to batch rapid changes
-- **Cross-platform:** Works on Windows, macOS, Linux
-- **Efficient:** Uses native OS file watchers (inotify, FSEvents, ReadDirectoryChangesW)
-- **Ignore patterns:** Skips node_modules, .git, build, .gradle
-
-**Implementation (from server/index.ts:102-124):**
-```typescript
-// Watch for file changes
-this.buildService.startWatching(projectPath, async (files) => {
-  // Check if only UI files changed
-  const uiFiles = files.filter(f =>
-    f.includes('MainActivity.kt') ||
-    f.includes('/screens/') ||
-    f.includes('/components/')
-  );
-
-  // ALL changed files are UI files → DSL reload
-  if (uiFiles.length > 0 && uiFiles.length === files.length) {
-    log('🚀 UI-only changes detected, using DSL hot reload');
-    this.handleUIUpdate(uiFiles[0]);
-  } else {
-    // Otherwise → Full Gradle build
-    log('📦 Non-UI changes detected, triggering full Gradle build');
-    await this.handleRebuild();
-  }
-});
-```
-
-## WebSocket Communication
-
-### Protocol Messages
-
-**1. Build Start**
-```json
-{
-  "type": "build-start",
+  "type": "core:dex-reload",
   "sessionId": "a1b2c3",
-  "timestamp": 1699564320000
+  "dexBase64": "ZGV4CjAzNQA...",
+  "classNames": [
+    "com.example.app.MainActivity",
+    "com.example.app.MainActivity$Override"
+  ]
 }
 ```
 
-**2. UI Update (DSL)**
+The `$Override` suffix marks the InstantRun-style companion class that carries the new method implementations.
+
+### Path 2: JS Module Update (Web Emulator)
+
+Simultaneously, `kotlinc-js` compiles the same changed file to a JavaScript ES module. This is sent as `core:js-update` to browser-based web emulator clients:
+
 ```json
 {
-  "type": "ui-update",
+  "type": "core:js-update",
   "sessionId": "a1b2c3",
-  "dslContent": "{\"version\":\"1.0\",\"screen\":{...}}",
-  "affectedFiles": ["MainActivity.kt"],
-  "timestamp": 1699564320000
+  "jsBase64": "aW1wb3J0IHt...",
+  "sourceFile": "MainActivity.kt",
+  "byteSize": 4096
 }
 ```
 
-**3. Build Complete (APK)**
-```json
-{
-  "type": "build-complete",
-  "sessionId": "a1b2c3",
-  "downloadUrl": "http://192.168.1.100:8765/download/app.apk",
-  "timestamp": 1699564350000
-}
+The browser dynamically imports the module and re-renders the Compose UI preview in HTML. Android clients ignore this message entirely.
+
+### Path 3: Full Gradle Build (fallback)
+
+For changes the hot reload pipeline cannot handle:
+
+| Trigger | Why it needs a full build |
+|---|---|
+| Resource file changed (`.xml`, drawable) | Not Kotlin bytecode — must be processed by AAPT |
+| `build.gradle` changed | Dependency graph may have changed |
+| New `import` statement | May reference a class not in the cached classpath |
+| Compilation error | `kotlinc` failed — nothing to load |
+
+Full builds produce an APK that the client downloads and installs. This is the only path that requires reinstallation.
+
+## The $Override Pattern Explained
+
+The standard JVM ClassLoader cannot replace a class that is already loaded. The `$Override` pattern works around this:
+
+1. For a class `MainActivity`, the generator creates `MainActivity$Override` with the new method bodies.
+2. The DEX is loaded by a custom ClassLoader that sits above the app's default loader.
+3. When a patched method is called, the runtime checks for an `$Override` companion first and dispatches to it if found.
+
+This means **individual methods can be patched** without reloading the entire class or restarting the Activity. It is the same technique Android Studio's older Instant Run feature used, reimplemented in the JetStart toolchain.
+
+If `$Override` generation fails for a class, JetStart falls back to loading the updated class directly (replacing the whole class) — slightly less targeted but still correct.
+
+## What kotlinc Needs to Compile Your File
+
+The classpath for hot reload compilation is built once per session and cached:
+
+```
+android.jar          (from $ANDROID_HOME/platforms/<latest>)
+Compose runtime JARs (from ~/.gradle/caches/modules-2/files-2.1/androidx.compose.*)
+Compose UI JARs      (material3, foundation, animation, ...)
+AndroidX JARs        (core, activity, lifecycle, savedstate, ...)
+Kotlin stdlib JARs   (from ~/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/*)
+transforms-3 JARs    (all classes.jar from ~/.gradle/caches/transforms-3/)
+Project build outputs (app/build/tmp/kotlin-classes/debug — always fresh)
 ```
 
-**4. Build Error**
-```json
-{
-  "type": "build-error",
-  "sessionId": "a1b2c3",
-  "error": "Compilation failed",
-  "details": [...],
-  "timestamp": 1699564350000
-}
-```
+On Windows, all of these are written to an `@argfile` so the command line does not exceed the OS length limit.
 
-### Connection Flow
+## File Watching Details
 
-```
-┌──────────────┐                    ┌──────────────┐
-│   Dev Server │                    │ Android App  │
-│   Port 8766  │                    │   Client     │
-└──────┬───────┘                    └──────┬───────┘
-       │                                   │
-       │◄──────── WebSocket Connect ───────│
-       │         ws://192.168.1.100:8766   │
-       │                                   │
-       │──────── build-start ─────────────►│
-       │                                   │
-       │──────── ui-update (DSL) ─────────►│
-       │         87ms from file save       │
-       │                                   │
-       │◄──────── update-applied ──────────│
-       │         "UI updated successfully" │
-       │                                   │
-```
+**`FileWatcher`** uses chokidar with a 300ms debounce. It watches:
 
-## Performance Benchmarks
+- `**/*.kt`
+- `**/*.xml`
+- `**/*.gradle`
+- `**/*.gradle.kts`
 
-### DSL Hot Reload
+Ignored paths: `node_modules`, `build`, `.gradle`, `.git`, `dist`.
 
-| Step | Duration | Notes |
-|------|----------|-------|
-| File save → Detection | 10-20ms | Chokidar debounce (300ms config, but immediate for single changes) |
-| Parse Kotlin → DSL JSON | 5-15ms | Simple regex parsing |
-| JSON stringify | 1-2ms | ~500 bytes typical |
-| WebSocket send | 2-5ms | Local network |
-| Client receive → Parse | 5-10ms | JSON.parse() |
-| UI re-render | 40-60ms | Jetpack Compose recomposition |
-| **Total** | **63-112ms** | **Average: 87ms** |
+The 300ms debounce batches rapid saves (e.g. auto-format on save) into a single build trigger. A single manual save typically fires well before the debounce window expires.
 
-### Full Gradle Build
+## Timing Breakdown
 
-| Step | Duration | Notes |
-|------|----------|-------|
-| File save → Detection | 10-20ms | Same as DSL |
-| Cache clear | 50-100ms | Delete build artifacts |
-| Gradle compilation | 8-25s | Depends on project size |
-| APK packaging | 1-3s | DEX, resources, signing |
-| WebSocket send URL | 2-5ms | Just sends HTTP URL |
-| Client download APK | 500-2000ms | ~5-10 MB APK over WiFi |
-| APK installation | 2-5s | Android package manager |
-| App relaunch | 1-2s | Cold start |
-| **Total** | **13-38s** | **Average: 22s** |
+| Step | Typical time |
+|---|---|
+| File save → chokidar event | 5 – 15 ms |
+| `kotlinc` compilation (1 file) | 30 – 60 ms |
+| `$Override` class generation | 5 – 15 ms |
+| `d8` DEX conversion | 10 – 20 ms |
+| WebSocket broadcast (LAN) | 2 – 5 ms |
+| Android ClassLoader + recomposition | 10 – 20 ms |
+| **End-to-end** | **62 – 135 ms** |
 
-## When DSL Falls Back to Gradle
+The slowest step is almost always `kotlinc` — it starts a JVM process. Subsequent reloads in the same session reuse the cached classpath, keeping compilation fast.
 
-DSL hot reload will **automatically fall back** to full Gradle build if:
+## What Hot Reload Supports
 
-1. **Parse error:** DSL Parser can't extract UI structure
-2. **Non-composable changes:** State, logic, or resources changed
-3. **Mixed file changes:** Both UI and non-UI files changed simultaneously
-4. **Complex Compose:** Advanced features DSL doesn't support yet
+✅ Any change to `@Composable` function bodies
+✅ Text, color, size, modifier, layout changes
+✅ Adding or removing composable children
+✅ Logic changes inside composable functions
+✅ Changes to any Kotlin class that compiles independently
 
-**Example fallback scenario:**
-```kotlin
-// Initially: DSL reload works ✓
-@Composable
-fun MyScreen() {
-    Text("Hello")
-}
+❌ New external library dependencies
+❌ `build.gradle` / `settings.gradle` changes
+❌ Android resource file changes (`.xml`, drawables, strings)
+❌ `AndroidManifest.xml` changes
+❌ Files with compilation errors
 
-// Add state: Fallback to Gradle build ✗
-@Composable
-fun MyScreen() {
-    var count by remember { mutableStateOf(0) }
-    Text("Count: $count")
-}
-```
+## Checking Your Environment
 
-## Optimizing for Fast Reload
+Before the first hot reload, JetStart verifies the toolchain is present:
 
-### Best Practices
-
-**✓ DO:**
-- Keep UI code in separate files (MainActivity.kt, screens/*)
-- Use simple Compose structures (Column, Row, Text, Button)
-- Change only text, colors, sizes, layouts
-- Save files individually (not bulk save)
-
-**✗ DON'T:**
-- Mix UI and business logic in same file
-- Use complex state management in UI files
-- Edit build.gradle and MainActivity.kt simultaneously
-- Save 10+ files at once (triggers multiple builds)
-
-### File Organization
-
-**Good structure (optimized for DSL):**
-```
-app/src/main/java/com/myapp/
-├── MainActivity.kt          ← Entry point only
-├── screens/
-│   ├── HomeScreen.kt        ← Pure UI, DSL reload
-│   ├── ProfileScreen.kt     ← Pure UI, DSL reload
-│   └── SettingsScreen.kt    ← Pure UI, DSL reload
-├── components/
-│   ├── CustomButton.kt      ← Pure UI, DSL reload
-│   └── Header.kt            ← Pure UI, DSL reload
-└── viewmodels/
-    └── HomeViewModel.kt     ← Logic, triggers Gradle build
-```
-
-**Bad structure (forces full builds):**
-```
-app/src/main/java/com/myapp/
-├── MainActivity.kt          ← UI + logic mixed
-└── Utils.kt                 ← UI + helpers mixed
-```
-
-## Troubleshooting
-
-### Issue: "DSL reload not working"
-
-**Symptoms:**
-- Every change triggers 20s Gradle build
-- Never see "UI hot reload sent in \<100ms"
-
-**Causes:**
-1. File not in watched directories
-2. Non-UI code in same file
-3. Parse errors
-
-**Solution:**
 ```bash
-# Check logs
-jetstart logs --source core
-
-# Look for:
-# "🚀 UI-only changes detected" ← DSL reload
-# "📦 Non-UI changes detected"   ← Gradle build
+# Checked automatically on jetstart dev
+# You can also check manually by looking at the startup output:
+#   "kotlinc not found"   → install Kotlin or set KOTLIN_HOME
+#   "d8 not found"        → install Android build-tools via sdkmanager
+#   "Cannot build classpath" → set ANDROID_HOME
 ```
 
-### Issue: "Changes appear, but break app"
+| Required tool | How to provide it |
+|---|---|
+| `kotlinc` | Set `KOTLIN_HOME` or install Kotlin system-wide |
+| `d8` | Install Android build-tools: `sdkmanager "build-tools;34.0.0"` |
+| `android.jar` | Install an Android platform: `sdkmanager "platforms;android-34"` |
+| Compose JARs | Build the project with Gradle once — they land in `~/.gradle/caches` |
 
-**Cause:** DSL doesn't support advanced Compose features
+## Optimizing for Fastest Reloads
 
-**Solution:**
-Add explicit DSL JSON:
+**Do:**
+- Keep each `@Composable` file focused — only UI code, minimal imports
+- Build with Gradle once before starting `jetstart dev` (populates the classpath cache)
+- Stay on a stable LAN/hotspot connection to minimize WebSocket latency
+- Use Kotlin 2.0+ for the bundled Compose compiler plugin (avoids a Gradle cache lookup)
 
-```kotlin
-fun getDefaultDSL(): String {
-    return """
-    {
-      "version": "1.0",
-      "screen": {
-        "type": "Column",
-        "children": [
-          {"type": "Text", "text": "Hello"}
-        ]
-      }
-    }
-    """.trimIndent()
-}
-```
+**Avoid:**
+- Editing `build.gradle` mid-session (forces a full Gradle build and server restart)
+- Adding new dependencies while `jetstart dev` is running
+- Bulk-saving 10+ files at once (triggers multiple concurrent compilations)
 
-### Issue: "Slow hot reload (5+ seconds)"
+## See Also
 
-**Causes:**
-- Network latency (phone on cellular)
-- Large APK download (full build triggered)
-- Multiple concurrent builds
+- [Hot Reload System Architecture](../architecture/hot-reload-system.md) — internal component details
+- [Build System](../architecture/build-system.md) — how full Gradle builds work
+- [WebSocket Protocol](../architecture/websocket-protocol.md) — `core:dex-reload` and `core:js-update` message specs
+- [Performance Optimization](./performance-optimization.md) — speed up your workflow
 
-**Solution:**
-```bash
-# Use WiFi hotspot for lowest latency
-# Check which reload type is being used
-jetstart logs --level debug
-
-# If seeing full builds, separate UI and logic files
-```
-
-## Under the Hood
-
-### DSL Parser Source
-
-From `packages/core/src/build/dsl-parser.ts:15-32`:
-
-```typescript
-static parseFile(filePath: string): ParseResult {
-  try {
-    if (!fs.existsSync(filePath)) {
-      return { success: false, errors: [`File not found`] };
-    }
-
-    const content = fs.readFileSync(filePath, 'utf-8');
-    return this.parseContent(content, filePath);
-  } catch (error) {
-    return { success: false, errors: [`Failed to read file`] };
-  }
-}
-```
-
-### Hot Reload Decision Logic
-
-From `packages/core/src/server/index.ts:105-123`:
-
-```typescript
-// Check if ALL changed files are UI files
-const uiFiles = files.filter(f =>
-  f.includes('MainActivity.kt') ||
-  f.includes('/screens/') ||
-  f.includes('/components/')
-);
-
-if (uiFiles.length > 0 && uiFiles.length === files.length) {
-  // DSL hot reload (FAST)
-  log('🚀 UI-only changes detected, using DSL hot reload');
-  this.handleUIUpdate(uiFiles[0]);
-} else {
-  // Full Gradle build (SLOW)
-  log('📦 Non-UI changes detected, triggering full Gradle build');
-  this.buildService.clearCache();
-  await this.handleRebuild();
-}
-```
-
-## Next Steps
-
-**Learn more:**
-- [DSL Rendering Architecture](../architecture/dsl-rendering.md) - How Android client renders DSL
-- [WebSocket Protocol](../architecture/websocket-protocol.md) - Communication protocol details
-- [Build System Architecture](../architecture/build-system.md) - Gradle integration
-- [Performance Optimization](./performance-optimization.md) - Speed up your workflow
-
-**Related:**
-- [Creating First App](./creating-first-app.md) - See hot reload in action
-- [Debugging Tips](./debugging-tips.md) - Debug hot reload issues
-- [File Watching](../architecture/file-watching.md) - Technical details

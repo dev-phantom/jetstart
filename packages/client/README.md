@@ -1,48 +1,58 @@
-# JetStart Client (Android)
+﻿# JetStart Client (Android)
 
-Android client app for JetStart wireless development.
+Android companion app for JetStart — pairs with `jetstart dev` to receive hot reload patches, download APKs, and stream device logs back to the development machine.
 
 ## Overview
 
-The JetStart Client is a Jetpack Compose Android app that:
+The JetStart Client is a Jetpack Compose app that acts as the bridge between the `@jetstart/core` server running on your development machine and the Android runtime. Once paired via QR code, it receives DEX patches over WebSocket and loads them live without reinstalling the app.
 
-- 📷 **Scans QR codes** from dev server
-- 🔌 **Connects wirelessly** via WebSocket
-- 📦 **Downloads & installs** APKs automatically
-- 🔥 **Supports hot reload** for live updates
-- 📊 **Streams logs** in real-time
-- 📱 **Displays build status** and connection info
+---
 
-## Features
+## How It Works
 
-### Screens
+1. **Scan** — the app scans the QR code printed by `jetstart dev`, which encodes `host|port|wsPort|sessionId|token|projectName`
+2. **Connect** — it opens a WebSocket to `ws://<host>:<wsPort>` and sends `client:connect` with the session credentials
+3. **Receive** — on `core:build-complete` it downloads the APK; on `core:dex-reload` it loads the DEX patch immediately via a custom ClassLoader
+4. **Stream** — all Logcat output is forwarded to the server as `client:log` messages, visible via `jetstart logs`
 
-1. **Home Screen** - Welcome screen with QR scanner and logs access
-2. **Scanner Screen** - QR code scanner for pairing with dev server
-3. **Connection Screen** - Shows connection and build status
-4. **Logs Screen** - Real-time log viewer with filtering
+---
 
-### Components
+## Screens
 
-- **StatusCard** - Animated status display
-- **LogItem** - Formatted log entry display
-- **QRScanner** - Camera-based QR scanner
+| Screen | Description |
+|---|---|
+| **Home** | Welcome screen with quick-connect button and recent session history |
+| **Scanner** | CameraX-based QR code scanner for device pairing |
+| **Connection** | Live connection status, build progress, and APK download/install controls |
+| **Logs** | Real-time log viewer with level and source filtering |
 
-### Network Layer
+---
 
-- **WebSocketClient** - Real-time communication with Core
-- **HttpClient** - APK downloads and REST API calls
-- **MessageHandler** - Processes WebSocket messages
+## Tech Stack
+
+| Technology | Purpose |
+|---|---|
+| Kotlin | Primary language |
+| Jetpack Compose | UI framework |
+| Material 3 | Design system |
+| Kotlin Coroutines | Async operations and Flow-based state |
+| OkHttp | WebSocket client and APK HTTP downloads |
+| Gson | JSON serialization for WebSocket messages |
+| ML Kit (Barcode) | QR code scanning |
+| CameraX | Camera access for the scanner screen |
+
+---
 
 ## Building
 
 ### Requirements
 
-- Android SDK 24+ (Android 7.0)
 - JDK 17
+- Android SDK — minSdk 24 (Android 7.0), targetSdk 34 (Android 14)
 - Gradle 8.2+
 
-### Build Commands
+### Commands
+
 ```bash
 # Debug build
 ./gradlew assembleDebug
@@ -50,97 +60,96 @@ The JetStart Client is a Jetpack Compose Android app that:
 # Release build
 ./gradlew assembleRelease
 
-# Install on device
+# Install on connected device
 ./gradlew installDebug
 
-# Run tests
-./gradlew test
-```
-
-## Architecture
-
-### Tech Stack
-
-- **Kotlin** - Primary language
-- **Jetpack Compose** - Modern UI toolkit
-- **Material 3** - Design system
-- **Coroutines** - Async operations
-- **OkHttp** - HTTP client
-- **Gson** - JSON serialization
-- **ML Kit** - QR code scanning
-- **CameraX** - Camera access
-
-### Package Structure
-```
-com.jetstart.client/
-├── MainActivity.kt
-├── ui/
-│   ├── screens/
-│   ├── components/
-│   └── theme/
-├── network/
-│   ├── WebSocketClient.kt
-│   ├── HttpClient.kt
-│   └── MessageHandler.kt
-├── data/
-│   ├── models/
-│   └── repository/
-└── utils/
-    ├── ApkInstaller.kt
-    ├── DeviceInfo.kt
-    └── Logger.kt
-```
-
-## Permissions
-
-The app requires:
-
-- **INTERNET** - Network communication
-- **ACCESS_NETWORK_STATE** - Network status
-- **CAMERA** - QR code scanning
-- **REQUEST_INSTALL_PACKAGES** - APK installation
-
-## Development
-
-### Running Locally
-
-1. Open project in Android Studio
-2. Sync Gradle
-3. Run on emulator or physical device
-
-### Testing
-```bash
 # Unit tests
 ./gradlew test
 
-# Instrumented tests
+# Instrumented tests (requires connected device or emulator)
 ./gradlew connectedAndroidTest
 ```
 
+---
+
+## Package Structure
+
+```
+com.jetstart.client/
+├── MainActivity.kt          # Entry point, Compose NavHost
+├── ui/
+│   ├── screens/
+│   │   ├── HomeScreen.kt
+│   │   ├── ScannerScreen.kt
+│   │   ├── ConnectionScreen.kt
+│   │   └── LogsScreen.kt
+│   ├── components/
+│   │   ├── StatusCard.kt    # Animated connection / build status display
+│   │   ├── LogItem.kt       # Formatted log entry row
+│   │   └── QRScanner.kt     # CameraX + ML Kit scanner composable
+│   └── theme/
+├── network/
+│   ├── WebSocketClient.kt   # OkHttp WS — send/receive JetStart protocol messages
+│   ├── HttpClient.kt        # APK download with progress
+│   └── MessageHandler.kt    # Routes incoming core:* messages to the right handler
+├── data/
+│   ├── models/              # Kotlin data classes mirroring shared WS message types
+│   └── repository/
+└── utils/
+    ├── ApkInstaller.kt      # Triggers Android package installer intent
+    ├── DeviceInfo.kt        # Collects model, API level, architecture
+    └── Logger.kt            # Logcat wrapper that also forwards via client:log
+```
+
+---
+
 ## WebSocket Protocol
 
-The client implements the JetStart WebSocket protocol:
+The client implements the JetStart WebSocket protocol defined in `@jetstart/shared`.
 
-**Sent by Client:**
-- `client:connect` - Initial connection
-- `client:status` - Status updates
-- `client:log` - Log messages
-- `client:heartbeat` - Keep-alive
+**Sent by client:**
 
-**Received from Core:**
-- `core:connected` - Connection confirmed
-- `core:build-start` - Build started
-- `core:build-complete` - APK ready
-- `core:build-error` - Build failed
-- `core:reload` - Trigger reload
+| Message | When |
+|---|---|
+| `client:connect` | Immediately after WebSocket opens — carries `sessionId`, `token`, `deviceInfo` |
+| `client:status` | When connection or build state changes |
+| `client:log` | Continuously — every Logcat entry is forwarded |
+| `client:heartbeat` | Every 30 seconds to keep the connection alive |
+| `client:disconnect` | When the user navigates away or the app is backgrounded |
+
+**Received from core:**
+
+| Message | Action |
+|---|---|
+| `core:connected` | Show project name; trigger initial build if needed |
+| `core:build-start` | Show build progress indicator |
+| `core:build-complete` | Offer APK download and install |
+| `core:build-error` | Show error notification |
+| `core:dex-reload` | Load DEX patch via custom ClassLoader immediately |
+| `core:disconnect` | Show reconnect prompt |
+
+---
 
 ## APK Installation
 
-The app supports two installation modes:
+When `core:build-complete` arrives, the app downloads the APK via the `/download/:filename` HTTP endpoint and triggers Android's native package installer (requires user confirmation via the system dialog).
 
-1. **Manual** - Uses Android's native installer (requires user confirmation)
-2. **Silent** - Uses ADB over TCP (requires developer mode)
+Silent installation via ADB over TCP is handled on the **server side** by `@jetstart/core`'s `AdbHelper` when `jetstart dev --emulator` is used — the client app itself does not perform silent installs.
+
+---
+
+## Permissions
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+```
+
+---
 
 ## License
 
-Apache-2.0
+MIT
+

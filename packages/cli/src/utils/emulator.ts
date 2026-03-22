@@ -10,7 +10,7 @@ import * as os from 'os';
 import { findAndroidSDK } from './system-tools';
 import { AndroidSDKManager } from './android-sdk';
 import { startSpinner, stopSpinner } from './spinner';
-import { success, error as logError, warning, info } from './logger';
+import { success, error as info } from './logger';
 
 const execAsync = promisify(exec);
 
@@ -206,6 +206,8 @@ export class AVDManager {
    * Create a new AVD
    */
   async createAVD(options: CreateAVDOptions): Promise<void> {
+    await this.ensureSDKRoot();
+
     const {
       name,
       device = 'pixel_5',

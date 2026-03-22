@@ -15,6 +15,7 @@ import { installAuditCommand } from './commands/install-audit';
 import { androidEmulatorCommand } from './commands/android-emulator';
 import { JETSTART_VERSION } from '@jetstart/shared';
 import {version} from '../package.json';
+import { cleanCommand } from './commands/clean';
 const program = new Command();
 
 program
@@ -52,6 +53,9 @@ program
   .option('-o, --output <path>', 'Output directory', './build')
   .option('-r, --release', 'Build release version', false)
   .option('--sign', 'Sign the APK')
+  .option('--self-sign', 'Auto-generate a test keystore and sign (device testing, NOT for Play Store)')
+  .option('--bundle', 'Build AAB (App Bundle) instead of APK — recommended for Play Store')
+  .option('--flavor <name>', 'Build a specific product flavor')
   .action(buildCommand);
 
 // Logs command
@@ -76,6 +80,14 @@ program
   .command('android-emulator')
   .description('Manage Android emulators (AVDs)')
   .action(androidEmulatorCommand);
+
+// Clean command
+program
+  .command('clean')
+  .description('Stop Gradle daemons and remove build artifacts — fixes "Folder In Use" errors')
+  .option('--build', 'Also delete app/build/ to free disk space (next build will be slower)')
+  .option('--daemons-only', 'Only stop Gradle daemons, do not touch build output')
+  .action(cleanCommand);
 
 // Error handling
 program.on('command:*', (operands) => {

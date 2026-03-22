@@ -1,11 +1,15 @@
 ---
-title: Web
+title: Web (Experimental)
 description: Web-based emulator and development interface for JetStart
 ---
 
-# Web
+# Web (Experimental)
 
 The Web package (`@jetstart/web`) provides a browser-based development interface that allows developers to preview their apps, monitor builds, and view logs without needing a physical Android device.
+
+:::caution
+The Web package is currently **experimental** and under active development. Some features may be unstable or subject to significant changes. Use with caution in production environments.
+:::
 
 ## Overview
 
@@ -86,15 +90,13 @@ npm test
    jetstart dev
    ```
 
-2. **Open the web emulator** in your browser (automatically opens at `http://localhost:8765`)
+2. **Open the web emulator** — the HTTP server at `http://localhost:8765` automatically redirects to `https://web.jetstart.site` with your session credentials as URL parameters, so the emulator connects without any manual input.
 
-3. **Enter connection details:**
-   - Session ID (from terminal output)
-   - Token (from terminal output)
+   Alternatively open `http://localhost:8765` directly in your browser.
 
-4. **Click "Connect"**
+3. **Manual connection** (if redirect is not used): enter the IP, port, Session ID and Token displayed in the terminal into the `ConnectionPanel`.
 
-The web interface will automatically connect to the Core server via WebSocket.
+The web emulator reads `sessionId`, `token`, `host`, `wsPort`, `version`, and `projectName` from URL parameters on load, constructs the WebSocket URL, and connects automatically. The URL is then cleared from the address bar.
 
 ## Architecture
 
@@ -118,9 +120,14 @@ The web interface will automatically connect to the Core server via WebSocket.
 - Manages connection state
 
 **`useLogs`** - Manages log entries and filtering
-- Stores log entries
-- Provides filtering functionality
-- Handles log updates
+- Stores up to 1000 log entries in memory
+- Provides filtering by level and source
+- Handles live log updates
+
+**`usePerformanceMetrics`** - Tracks hot reload and build timing
+- Build start/complete timing
+- Hot reload round-trip duration
+- Count of hot reload events in the session
 
 ### Services
 
@@ -174,9 +181,14 @@ The web package implements the JetStart WebSocket protocol to communicate with t
 **Received Messages:**
 - `core:connected` - Connection confirmed
 - `core:build-start` - Build started
-- `core:build-complete` - Build completed
+- `core:build-status` - Mid-build progress update
+- `core:build-complete` - Build completed with APK download URL
 - `core:build-error` - Build failed
-- `core:reload` - UI reload trigger
+- `core:dex-reload` - Hot reload DEX payload for Android devices (web client ignores this)
+- `core:js-update` - **Primary hot reload message for the web emulator**: base64-encoded Kotlin/JS ES module, dynamically imported and rendered by `ComposeRenderer`
+- `core:ui-update` - DSL JSON fallback for static UI preview
+- `core:log` - Device log broadcast
+- `core:reload` - Explicit reload trigger
 
 See [WebSocket Protocol](../api/websocket-protocol.md) for detailed message formats.
 

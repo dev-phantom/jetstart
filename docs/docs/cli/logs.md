@@ -6,7 +6,7 @@ description: Stream real-time application logs
 
 # jetstart logs
 
-Stream real-time application logs from all sources (CLI, Core server, Android client, build system) with powerful filtering and formatting options. Essential for debugging and monitoring your development workflow.
+Stream real-time application logs from all sources (CLI, Core server, Android client, build system) with filtering options. Essential for debugging and monitoring your development workflow.
 
 ## Prerequisites
 
@@ -35,8 +35,8 @@ jetstart logs --level error
 # Stream client logs only
 jetstart logs --source client
 
-# Get last 50 logs without streaming
-jetstart logs --lines 50 --no-follow
+# Show last 50 historical logs then continue streaming
+jetstart logs --lines 50
 ```
 
 ## Options
@@ -44,9 +44,17 @@ jetstart logs --lines 50 --no-follow
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `-f, --follow` | boolean | true | Stream logs continuously |
-| `-l, --level <level>` | string | all | Filter by log level |
+| `-l, --level <level>` | string | all | Filter by exact log level |
 | `-s, --source <source>` | string | all | Filter by log source |
-| `-n, --lines <number>` | number | 100 | Number of historical lines |
+| `-n, --lines <number>` | number | 100 | Number of historical lines to replay on connect |
+
+:::info Filtering is Exact Match
+`--level` filters by **exact match** only. For example, `--level info` shows only `INFO` logs — it does **not** include `WARN`, `ERROR`, or `FATAL`. To see all logs, omit `--level` entirely.
+:::
+
+:::caution Source Filtering
+`--source` accepts a **single source** only (e.g. `--source core`). Comma-separated values like `--source core,build` will not work. To see multiple sources, omit `--source` entirely.
+:::
 
 ## Log Sources
 
@@ -57,9 +65,9 @@ Command-line interface operations
 
 **Examples:**
 ```
-12:34:56 INFO [CLI] [Command] Starting dev server
-12:34:57 INFO [CLI] [Validation] Project structure valid
-12:34:58 INFO [CLI] [Network] IP detected: 192.168.1.100
+12:34:56 INFO [cli] [Command] Starting dev server
+12:34:57 INFO [cli] [Validation] Project structure valid
+12:34:58 INFO [cli] [Network] IP detected: 192.168.43.220
 ```
 
 **Use cases:**
@@ -72,9 +80,9 @@ Development server and orchestration
 
 **Examples:**
 ```
-12:35:00 INFO [CORE] [Server] HTTP server started on :8765
-12:35:01 INFO [CORE] [WebSocket] WebSocket server ready on :8766
-12:35:02 INFO [CORE] [Session] Created session: a1b2c3
+12:35:00 INFO [core] [Server] HTTP server started on :8765
+12:35:01 INFO [core] [WebSocket] WebSocket server ready on :8766
+12:35:02 INFO [core] [Session] Created session: GrX2yCBQ
 ```
 
 **Use cases:**
@@ -87,9 +95,9 @@ Android application logs
 
 **Examples:**
 ```
-12:35:10 INFO [CLIENT] [Connection] Connected to server
-12:35:11 DEBUG [CLIENT] [UI] MainActivity rendered in 45ms
-12:35:12 WARN [CLIENT] [Network] Slow connection detected
+12:35:10 INFO [client] [Connection] Connected to server
+12:35:11 DEBUG [client] [UI] MainActivity rendered in 45ms
+12:35:12 WARN [client] [Network] Slow connection detected
 ```
 
 **Use cases:**
@@ -103,9 +111,9 @@ Gradle build system
 
 **Examples:**
 ```
-12:35:20 INFO [BUILD] [Gradle] Starting compilation
-12:35:22 DEBUG [BUILD] [Compiler] Processing 42 Kotlin files
-12:35:25 INFO [BUILD] [Gradle] Build completed in 5.2s
+12:35:20 INFO [build] [Gradle] Starting compilation
+12:35:22 DEBUG [build] [Compiler] Processing 42 Kotlin files
+12:35:25 INFO [build] [Gradle] Build completed in 5.2s
 ```
 
 **Use cases:**
@@ -118,9 +126,9 @@ WebSocket and HTTP communication
 
 **Examples:**
 ```
-12:35:30 DEBUG [NETWORK] [WebSocket] Client connected: device-xyz
-12:35:31 DEBUG [NETWORK] [WebSocket] Sent ui-update message (312 bytes)
-12:35:32 WARN [NETWORK] [HTTP] Slow response: 250ms
+12:35:30 DEBUG [network] [WebSocket] Client connected: device-xyz
+12:35:31 DEBUG [network] [WebSocket] Sent ui-update message (312 bytes)
+12:35:32 WARN [network] [HTTP] Slow response: 250ms
 ```
 
 **Use cases:**
@@ -133,9 +141,9 @@ System-level operations
 
 **Examples:**
 ```
-12:35:40 INFO [SYSTEM] [FileWatcher] Watching 152 files
-12:35:41 DEBUG [SYSTEM] [Cache] Cache hit for build config
-12:35:42 WARN [SYSTEM] [Memory] High memory usage: 85%
+12:35:40 INFO [system] [FileWatcher] Watching 152 files
+12:35:41 DEBUG [system] [Cache] Cache hit for build config
+12:35:42 WARN [system] [Memory] High memory usage: 85%
 ```
 
 **Use cases:**
@@ -145,67 +153,16 @@ System-level operations
 
 ## Log Levels
 
-Hierarchical filtering from most to least verbose:
+Six log levels from most to least verbose:
 
-### VERBOSE
-Extremely detailed diagnostic information
-
-**Color:** Gray
-**Use case:** Deep debugging, protocol inspection
-**Example:**
-```
-12:34:56 VERBOSE [NETWORK] [WebSocket] Raw message: {"type":"core:ui-update","data"...}
-```
-
-### DEBUG
-Detailed information for debugging
-
-**Color:** Blue
-**Use case:** Development debugging, tracking flow
-**Example:**
-```
-12:34:57 DEBUG [BUILD] [DSL] Parsing MainActivity.kt
-```
-
-### INFO
-General informational messages
-
-**Color:** Green
-**Use case:** Normal operation tracking
-**Example:**
-```
-12:34:58 INFO [CORE] [Session] Client connected successfully
-```
-
-### WARN
-Warning messages (potential issues)
-
-**Color:** Yellow
-**Use case:** Non-critical issues, performance warnings
-**Example:**
-```
-12:34:59 WARN [CLIENT] [UI] Slow render detected: 120ms
-```
-
-### ERROR
-Error messages (failures)
-
-**Color:** Red
-**Use case:** Operation failures, exceptions
-**Example:**
-```
-12:35:00 ERROR [BUILD] [Gradle] Compilation failed: syntax error
-```
-
-### FATAL
-Critical errors (crashes)
-
-**Color:** Red (bold/background)
-**Use case:** Unrecoverable errors
-**Example:**
-```
-12:35:01 FATAL [CORE] [Server] Server crashed: Out of memory
-```
+| Level | Color | Use Case |
+|-------|-------|----------|
+| `verbose` | Gray | Deep debugging, protocol inspection |
+| `debug` | Blue | Development debugging, tracking flow |
+| `info` | Green | Normal operation tracking |
+| `warn` | Yellow | Non-critical issues, performance warnings |
+| `error` | Red | Operation failures, exceptions |
+| `fatal` | Red (background) | Unrecoverable errors, crashes |
 
 ## Output Format
 
@@ -215,58 +172,29 @@ Critical errors (crashes)
 [timestamp] [level] [source] [tag] message
 
 Example:
-12:34:56 INFO [CORE] [Session] Client connected: device-abc123
+17:32:00 INFO [core] [Core] WebSocket Server: ws://192.168.43.220:8766
 ```
 
 **Components:**
-- **Timestamp**: HH:MM:SS format
-- **Level**: Log severity (color-coded)
-- **Source**: Origin of log (CLI, CORE, etc.)
-- **Tag**: Specific component (Session, Build, etc.)
+- **Timestamp**: HH:MM:SS format (local time)
+- **Level**: Log severity (color-coded in terminal)
+- **Source**: Origin of log (cli, core, client, build, network, system)
+- **Tag**: Specific component
 - **Message**: Log content
-
-### JSON Format
-
-```bash
-jetstart logs --json
-```
-
-```json
-{
-  "id": "log-1234",
-  "timestamp": 1705334400000,
-  "level": "INFO",
-  "source": "CORE",
-  "tag": "Session",
-  "message": "Client connected: device-abc123",
-  "sessionId": "a1b2c3",
-  "metadata": {
-    "deviceId": "xyz789",
-    "ip": "192.168.1.50"
-  }
-}
-```
 
 ## Filtering
 
 ### By Log Level
 
 ```bash
-# Only errors and fatal
+# Only error logs
 jetstart logs --level error
 
-# Info and above (info, warn, error, fatal)
+# Only info logs
 jetstart logs --level info
-```
 
-**Level hierarchy:**
-```
---level verbose  →  All logs
---level debug    →  DEBUG, INFO, WARN, ERROR, FATAL
---level info     →  INFO, WARN, ERROR, FATAL
---level warn     →  WARN, ERROR, FATAL
---level error    →  ERROR, FATAL
---level fatal    →  FATAL only
+# Only warnings
+jetstart logs --level warn
 ```
 
 ### By Source
@@ -278,8 +206,8 @@ jetstart logs --source build
 # Only client logs
 jetstart logs --source client
 
-# Multiple sources (comma-separated)
-jetstart logs --source core,build,network
+# Only core server logs
+jetstart logs --source core
 ```
 
 ### Combined Filters
@@ -288,48 +216,32 @@ jetstart logs --source core,build,network
 # Build errors only
 jetstart logs --source build --level error
 
-# Recent 50 client warnings
-jetstart logs --source client --level warn --lines 50
-
-# All errors from any source
-jetstart logs --level error --follow
+# Core info logs with last 50 lines
+jetstart logs --source core --level info --lines 50
 ```
 
 ## Live Streaming
 
 ### Following Logs
 
-Stream logs in real-time:
+Stream logs in real-time (default behavior):
 
 ```bash
-jetstart logs --follow
+jetstart logs
 ```
 
 **Output:**
 ```
-12:34:56 INFO [CORE] [Server] Starting...
-12:34:57 INFO [CORE] [Server] Ready
+Connecting to JetStart logs service...
+
+ℹ Connected to logs service
+
+17:32:00 INFO [core] [Core] WebSocket Server: ws://192.168.43.220:8766
+17:32:00 INFO [core] [Core] Session ID: GrX2yCBQ
+17:32:00 INFO [core] [Core] Session Token: TPjDcvY9rA4X
 [live stream continues...]
 ^C  # Press Ctrl+C to stop
 ```
-
-**Use case:** Active development monitoring
-
-### Historical Logs
-
-View past logs without streaming:
-
-```bash
-jetstart logs --no-follow --lines 200
-```
-
-**Output:**
-```
-[Shows last 200 log entries]
-[Exits immediately]
-```
-
-**Use case:** Post-mortem debugging, log review
 
 ## WebSocket Connection
 
@@ -342,28 +254,27 @@ jetstart logs
 Connect to ws://localhost:8767
      │
      ▼
-Send subscription message
+Send subscription message with filters
      │
      ▼
-Receive log stream
+Receive historical logs (up to --lines)
      │
      ▼
-Format and display
+Stream new logs in real-time
 ```
 
 ### Connection Details
 
-**Default port:** 8767 (DEFAULT_LOGS_PORT)
+**Default port:** 8767 (`DEFAULT_LOGS_PORT`)
 **Protocol:** WebSocket
-**Auto-reconnect:** Yes (on disconnect)
 
-**Subscription message:**
+**Subscription message sent on connect:**
 ```json
 {
   "type": "subscribe",
   "filter": {
-    "levels": ["info", "warn", "error"],
-    "sources": ["core", "build"]
+    "levels": ["info"],
+    "sources": ["core"]
   },
   "maxLines": 100
 }
@@ -371,18 +282,15 @@ Format and display
 
 ### Disconnection Handling
 
-If connection drops:
+When the connection drops, the command exits:
 
 ```
-⚠ Connection lost to logs service
-🔄 Attempting to reconnect...
-✓ Reconnected successfully
+Closing connection...
+
+ℹ Disconnected from logs service
 ```
 
-**Auto-retry:**
-- Retry interval: 2 seconds
-- Max retries: Infinite
-- Exponential backoff: No (constant 2s)
+You will need to re-run `jetstart logs` to reconnect.
 
 ## Integration with Dev Server
 
@@ -395,69 +303,27 @@ jetstart dev
 
 **Terminal 2: Log monitoring**
 ```bash
-jetstart logs --follow --source client,build
-```
-
-### Coordinated Debugging
-
-**Scenario: Debug build issue**
-
-```bash
-# Terminal 1: Start dev server
-jetstart dev
-
-# Terminal 2: Watch build logs
-jetstart logs --source build --level debug --follow
-```
-
-When file changes:
-```
-Terminal 1:                    Terminal 2:
-Files changed: MainActivity.kt
-                              → 12:35:00 DEBUG [BUILD] [Gradle] Starting build
-                              → 12:35:01 DEBUG [BUILD] [Compiler] Processing...
-                              → 12:35:02 ERROR [BUILD] [Gradle] Syntax error line 42
-Build failed!                 → 12:35:02 ERROR [BUILD] [Gradle] Build failed
+jetstart logs --source core
 ```
 
 ### Automatic Log Routing
 
-Dev server automatically routes logs:
+Dev server automatically routes logs to the appropriate source:
 
-**Server logs** → CORE source
-**Build logs** → BUILD source
-**Client logs** → CLIENT source (via WebSocket)
-**Network logs** → NETWORK source
+**Server logs** → `core` source
+**Build logs** → `build` source
+**Client logs** → `client` source (via WebSocket)
+**Network logs** → `network` source
 
 All aggregated in logs service on port 8767.
 
 ## Advanced Usage
 
-### JSON Output Processing
-
-```bash
-# Parse with jq
-jetstart logs --json | jq 'select(.level == "ERROR")'
-
-# Filter errors to file
-jetstart logs --json | jq 'select(.level == "ERROR")' > errors.json
-
-# Count logs by source
-jetstart logs --json --no-follow --lines 1000 | \
-  jq -r '.source' | sort | uniq -c
-```
-
 ### Piping to Files
 
 ```bash
-# Save all logs
+# Save all logs to a file
 jetstart logs > app.log 2>&1
-
-# Save with timestamps
-jetstart logs --follow | ts '[%Y-%m-%d %H:%M:%S]' > timestamped.log
-
-# Rotate logs
-jetstart logs >> "logs-$(date +%Y%m%d).log" 2>&1
 ```
 
 ### Grep Integration
@@ -471,90 +337,39 @@ jetstart logs | grep -i "ERROR"
 
 # Multiple patterns
 jetstart logs | grep -E "error|warning|failed"
-
-# Context lines
-jetstart logs | grep -A 3 -B 3 "Exception"
-```
-
-### Custom Formatting
-
-```bash
-# Extract just messages
-jetstart logs --json | jq -r '.message'
-
-# Custom format
-jetstart logs --json | jq -r '"\(.timestamp) [\(.source)] \(.message)"'
-
-# Color-coded custom format
-jetstart logs --json | jq -r 'if .level == "ERROR" then "\u001b[31m\(.message)\u001b[0m" else .message end'
 ```
 
 ## Debugging Workflows
 
-### Track Client Connection
-
-```bash
-jetstart logs --source network,client --level debug --follow
-```
-
-**What to look for:**
-```
-DEBUG [NETWORK] [WebSocket] Client handshake initiated
-DEBUG [NETWORK] [WebSocket] Auth token validated
-INFO [CLIENT] [Connection] Connected to 192.168.1.100:8766
-```
-
 ### Debug Build Failures
 
 ```bash
-jetstart logs --source build --level error --follow
+jetstart logs --source build --level error
 ```
 
 **What to look for:**
 ```
-ERROR [BUILD] [Gradle] Compilation failed
-ERROR [BUILD] [Compiler] MainActivity.kt:42: Syntax error
-ERROR [BUILD] [Gradle] Build exited with code 1
+ERROR [build] [Gradle] Compilation failed
+ERROR [build] [Compiler] NotesScreen.kt:42: Syntax error
+ERROR [build] [Gradle] Build exited with code 1
 ```
 
 ### Monitor Hot Reload
 
 ```bash
-jetstart logs --source core --level debug | grep -i "reload\|dsl"
+jetstart logs --source core | grep -i "reload"
 ```
 
 **What to look for:**
 ```
-DEBUG [CORE] [FileWatcher] MainActivity.kt changed
-DEBUG [CORE] [DSL] Parsing UI file
-DEBUG [CORE] [DSL] Generated 312 bytes DSL
-INFO [CORE] [HotReload] UI update sent in 85ms
+INFO [core] [HotReload] Hot reload starting for: NotesScreen.kt
+INFO [core] [HotReload] Hot reload complete in 84ms
 ```
 
-### Track Performance
+### Track Client Connection
 
 ```bash
-jetstart logs --source client | grep -i "render\|latency\|slow"
-```
-
-**What to look for:**
-```
-WARN [CLIENT] [UI] Slow render: 120ms (threshold: 100ms)
-WARN [NETWORK] [WebSocket] High latency: 250ms
-INFO [CLIENT] [Performance] Frame rate: 58 FPS
-```
-
-### Monitor Memory/Resources
-
-```bash
-jetstart logs --source system --level warn --follow
-```
-
-**What to look for:**
-```
-WARN [SYSTEM] [Memory] High memory usage: 85%
-WARN [SYSTEM] [Disk] Low disk space: 5GB remaining
-WARN [SYSTEM] [CPU] High CPU usage: 95%
+jetstart logs --source client
 ```
 
 ## Troubleshooting
@@ -564,7 +379,6 @@ WARN [SYSTEM] [CPU] High CPU usage: 95%
 **Symptom:**
 ```
 ✗ Error: Failed to connect to logs service
-Connection refused at ws://localhost:8767
 ```
 
 **Causes & Solutions:**
@@ -583,18 +397,6 @@ jetstart logs
 # Check if port is in use
 netstat -ano | findstr :8767  # Windows
 lsof -i :8767                  # macOS/Linux
-
-# Kill conflicting process or use different port
-```
-
-**3. Firewall blocking:**
-```bash
-# Allow port through firewall
-# Windows
-New-NetFirewallRule -DisplayName "JetStart Logs" -Direction Inbound -Protocol TCP -LocalPort 8767 -Action Allow
-
-# Linux
-sudo ufw allow 8767/tcp
 ```
 
 ### Missing Logs
@@ -605,42 +407,34 @@ sudo ufw allow 8767/tcp
 
 **1. Level filter too restrictive:**
 ```bash
-# If using --level error, you won't see info/debug logs
-# Solution: Use lower level or remove filter
-jetstart logs --level verbose
+# --level is exact match, not hierarchical
+# Solution: Remove filter to see all logs
+jetstart logs
 ```
 
 **2. Source filter excluding logs:**
 ```bash
-# If using --source build, you won't see client logs
-# Solution: Include all sources or add source
-jetstart logs  # No filters = all logs
+# --source only accepts one source at a time
+# Solution: Remove filter to see all sources
+jetstart logs
 ```
 
 **3. Buffer overflow:**
 ```bash
 # Default buffer: 10,000 log entries
 # Old logs get dropped
-# Solution: Increase --lines or save to file
-jetstart logs --follow > all.log
-```
-
-**4. Timestamp range:**
-```bash
-# If logs are outside time range (API feature)
-# Solution: Check log timestamps
-jetstart logs --json | jq '.timestamp'
+# Solution: Save to file
+jetstart logs > all.log
 ```
 
 ### Garbled Output
 
 **Symptom:** Weird characters, broken colors
 
-**Causes & Solutions:**
+**Solutions:**
 
 **1. Terminal encoding:**
 ```bash
-# Set UTF-8 encoding
 # Windows CMD
 chcp 65001
 
@@ -648,127 +442,35 @@ chcp 65001
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 ```
 
-**2. Color support:**
-```bash
-# Disable colors if terminal doesn't support
-jetstart logs --no-color
-```
+## Buffer Management
 
-**3. Locale issues:**
-```bash
-# Set locale
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
-```
-
-### High Memory Usage
-
-**Symptom:** Logs command consuming too much memory
-
-**Solutions:**
-
-**1. Reduce buffer size:**
-```bash
-# Default --lines 100
-# Reduce for lower memory
-jetstart logs --lines 50
-```
-
-**2. Use JSON streaming:**
-```bash
-# Process logs in chunks
-jetstart logs --json | while read line; do
-  echo "$line" | jq '.message'
-done
-```
-
-**3. Filter aggressively:**
-```bash
-# Only subscribe to what you need
-jetstart logs --source client --level warn
-```
-
-## Performance Considerations
-
-### Network Bandwidth
-
-**Typical rates:**
-- Low activity: ~1-5 KB/s
-- Active development: ~10-50 KB/s
-- Heavy debugging: ~100-500 KB/s
-
-**Reduce bandwidth:**
-```bash
-# Filter to specific source
-jetstart logs --source build
-
-# Higher log level
-jetstart logs --level warn
-```
-
-### CPU Usage
-
-**Impact:**
-- Formatting: Low (`<5%` CPU)
-- JSON parsing: Medium (5-15% CPU)
-- Color rendering: Low (`<5%` CPU)
-
-**Reduce CPU:**
-```bash
-# Disable colors
-jetstart logs --no-color
-
-# Use raw JSON
-jetstart logs --json > logs.json
-```
-
-### Buffer Management
-
-**Circular buffer:**
+The logs server uses a circular buffer:
 - Max size: 10,000 entries
-- Oldest logs dropped when full
-- Efficient memory usage
+- Oldest logs are dropped when the buffer is full
+- Use `--lines` to control how many historical logs are replayed on connect
 
-**Persist logs:**
+**Persist logs to disk:**
 ```bash
-# Save to disk instead of memory
-jetstart logs --follow > persistent.log
+jetstart logs > persistent.log
 ```
 
 ## Best Practices
 
-1. **Use separate terminal for logs**
-   - Keep dev server output clean
-   - Dedicated log monitoring window
+1. **Use a separate terminal for logs** — keep dev server output clean
 
-2. **Filter aggressively during active dev**
+2. **Filter to what matters**
    ```bash
-   # Focus on what matters
    jetstart logs --source client --level warn
    ```
 
 3. **Save logs for bug reports**
    ```bash
-   # Capture complete session
    jetstart logs > bug-report-logs.txt
    ```
 
-4. **Use JSON for automation**
+4. **Grep for specific events**
    ```bash
-   # Parse programmatically
-   jetstart logs --json | node process-logs.js
-   ```
-
-5. **Grep for specific events**
-   ```bash
-   # Find connection issues
    jetstart logs | grep -i "connect\|disconnect"
-   ```
-
-6. **Monitor performance in production**
-   ```bash
-   # Track warnings and errors
-   jetstart logs --level warn --follow
    ```
 
 ## Related Commands

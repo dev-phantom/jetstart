@@ -1,6 +1,6 @@
 {
   "name": "jetstart",
-  "version": "1.7.0",
+  "version": "1.1.0",
   "description": "Fast, wireless Android development with Kotlin and Jetpack Compose",
   "private": true,
   "workspaces": [

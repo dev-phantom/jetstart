@@ -1,0 +1,62 @@
+plugins {
+    id 'com.android.library' version '8.2.0'
+    id 'org.jetbrains.kotlin.android' version '1.9.22'
+    id 'maven-publish'
+}
+
+android {
+    namespace 'com.jetstart.hotreload'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 34
+
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+}
+
+dependencies {
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+
+    // Android support (FileProvider for APK install)
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId = 'com.jetstart'
+                artifactId = 'hot-reload-runtime'
+                version = '1.0.0'
+            }
+        }
+        repositories {
+            maven {
+                name = "LocalCLI"
+                url = uri("$rootDir/../cli/maven-repo")
+            }
+        }
+    }
+}

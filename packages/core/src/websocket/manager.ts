@@ -95,9 +95,9 @@ export class ConnectionManager {
   }
 
   /**
-   * Broadcast to ALL clients regardless of session (use with caution)
+   * Broadcast to ALL clients regardless of session (for dev mode hot reload)
    */
-  private broadcastToAll(message: CoreMessage): void {
+  broadcastToAll(message: CoreMessage): void {
     const data = JSON.stringify(message);
     const connectionCount = Array.from(this.connections.values()).filter(c => c.ws.readyState === WebSocket.OPEN).length;
     console.log(`[ConnectionManager] Broadcasting ${message.type} to ${connectionCount} connected clients`);

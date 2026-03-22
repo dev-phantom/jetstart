@@ -14,7 +14,7 @@ The JetStart Client is a Jetpack Compose Android app that serves as the bridge b
 - 📷 **QR Code Scanning** - Instantly pair with your dev server by scanning a QR code
 - 🔌 **WebSocket Connection** - Real-time communication for hot reload updates
 - 📦 **Automatic APK Installation** - Downloads and installs your app builds automatically
-- 🔥 **Hot Reload Support** - Receives and applies UI updates in under 100ms
+- 🔥 **Hot Reload Support** - Receives `core:dex-reload` DEX patches and loads them via a custom ClassLoader in under 100ms
 - 📊 **Real-time Logs** - View application logs and build status
 - 📱 **Connection Management** - Monitor connection status and project information
 
@@ -171,7 +171,7 @@ jetstart dev
 
 **Step 2: Scan QR Code**
 1. Open JetStart Client app on your device
-2. Tap **"Scan QR Code"**
+2. Tap **"Create Connection"**
 3. Point camera at the QR code in your terminal
 4. Wait for automatic connection
 
@@ -255,11 +255,14 @@ The client implements the JetStart WebSocket protocol for real-time communicatio
 - `client:heartbeat` - Keep-alive ping
 
 **Messages Received from Server:**
-- `core:connected` - Connection confirmed
-- `core:build-start` - Build process started
-- `core:build-complete` - APK ready for download
-- `core:build-error` - Build failed
-- `core:reload` - Trigger UI reload
+- `core:connected` - Connection confirmed; initial build triggered
+- `core:build-start` - Gradle build started
+- `core:build-complete` - APK ready for download (includes `downloadUrl` and `apkInfo`)
+- `core:build-error` - Build failed with error details
+- `core:dex-reload` - **Hot reload payload**: base64-encoded DEX bytecode + patched class names; loaded via custom ClassLoader immediately
+- `core:js-update` - Web emulator ES module update (Android client ignores this)
+- `core:reload` - Explicit reload trigger
+- `core:log` - Broadcast of a device log entry back to dashboard clients
 
 See [WebSocket Protocol](../architecture/websocket-protocol.md) for detailed protocol documentation.
 
@@ -358,6 +361,10 @@ cd packages/client
 # Run tests
 ./gradlew test
 ```
+
+:::tip Important
+The JetStart Client is built using standard Kotlin and Jetpack Compose Gradle properties. It is **not** a JetStart-managed project itself. Therefore, you must use standard `./gradlew` commands (or Android Studio) to build it. Running `jetstart build` from the CLI will not work for this specific package.
+:::
 
 ### Output Location
 

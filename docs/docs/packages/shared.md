@@ -219,7 +219,9 @@ enum LogSource {
 - `core:build-status` - Build progress update
 - `core:build-complete` - Build finished (includes APK download URL)
 - `core:build-error` - Build failed (includes error message)
-- `core:reload` - Trigger UI reload with DSL data
+- `core:reload` - Trigger app reload (hot or full)
+- `core:dex-reload` - Hot reload: base64 DEX bytecode + class names
+- `core:js-update` - Web emulator: compiled Kotlin/JS ES module
 
 **Message Types:**
 ```typescript
@@ -229,8 +231,10 @@ interface ClientMessage {
 }
 
 interface CoreMessage {
-  type: 'core:connected' | 'core:build-start' | 'core:build-status' | 
-        'core:build-complete' | 'core:build-error' | 'core:reload';
+  type: 'core:connected' | 'core:build-start' | 'core:build-status' |
+        'core:build-complete' | 'core:build-error' | 'core:reload' |
+        'core:dex-reload' | 'core:js-update' | 'core:ui-update' |
+        'core:log' | 'core:disconnect';
   payload: any;
 }
 

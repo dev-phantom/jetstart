@@ -1,197 +1,383 @@
----
+﻿---
 title: WebSocket Protocol
-description: Detailed specification of the real-time communication protocol
+description: Complete specification of the JetStart real-time communication protocol
 ---
 
 # WebSocket Protocol
 
-JetStart uses WebSockets for real-time communication between the Core Release, Android Client, and Web Interface. The protocol ensures instant updates, build status notifications, and device logging.
+JetStart uses WebSockets for all real-time communication between the Core server, Android clients, and the web emulator. Every connection is session-scoped and token-authenticated.
 
 ## Connection Details
 
-- **Default Port:** `8766`
-- **Path:** `/`
-- **Subprotocols:** None currently used
+| Property | Value |
+|---|---|
+| Default port | `8766` |
+| Path | `/` |
+| Subprotocols | None |
+| Close code `4001` | Session mismatch — rescan QR code |
+| Close code `4002` | Token mismatch — rescan QR code |
 
-## Message Structure
+## Authentication
 
-All messages follow a base structure:
+Immediately after the WebSocket connection is established, the client must send `client:connect` with the correct `sessionId` and `token` (both encoded in the QR code). If either value does not match the active session, the server closes the connection immediately with the appropriate close code. Any further messages from an unauthenticated client are ignored.
+
+## Base Message Shape
+
+All messages share this base structure:
 
 ```typescript
 interface BaseMessage {
-  type: string;      // Unique message identifier
-  timestamp: number; // Unix timestamp
-  sessionId?: string; // Session ID (if authenticated)
+  type: string;       // Identifies the message
+  timestamp: number;  // Unix ms
+  sessionId?: string; // Required on most messages after authentication
 }
 ```
 
-## Client Messages (Client -> Core)
+---
 
-Messages sent from the Android Client or Web Interface to the Core Server.
+## Client → Core Messages
+
+Sent by the Android app or web emulator to the Core server.
 
 ### `client:connect`
-Sent immediately after establishing a WebSocket connection to authenticate.
+
+Opens a session. Must be the first message sent.
 
 ```json
 {
   "type": "client:connect",
-  "sessionId": "session-123",
-  "token": "auth-token-xyz",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
+  "token": "xyz789",
   "deviceInfo": {
-    "model": "Pixel 6",
-    "osVersion": "13",
-    "ipAddress": "192.168.1.100"
+    "id": "device-abc",
+    "model": "Pixel 7",
+    "platform": "android",
+    "architecture": "arm64",
+    "androidVersion": "14",
+    "apiLevel": 34
   }
 }
 ```
 
+On success, the server responds with `core:connected` and triggers the initial build.
+
 ### `client:status`
-Updates the server with the client's current status (e.g., waiting, building, ready).
+
+Reports the client's current state.
 
 ```json
 {
   "type": "client:status",
-  "status": "ready",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
+  "status": "connected",
   "message": "Waiting for changes"
 }
 ```
 
 ### `client:log`
-Streams device logs to the server.
+
+Forwards a device log entry to the Core server, which relays it to the Logs server and broadcasts it as `core:log` to dashboard clients.
 
 ```json
 {
   "type": "client:log",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
   "log": {
+    "id": "log-001",
+    "timestamp": 1711900000000,
     "level": "info",
     "tag": "JetStart",
-    "message": "Activity started",
-    "timestamp": 1234567890
+    "message": "Activity resumed",
+    "source": "client"
   }
 }
 ```
 
+### `client:heartbeat`
+
+Keep-alive ping sent every 30 seconds.
+
+```json
+{
+  "type": "client:heartbeat",
+  "timestamp": 1711900000000
+}
+```
+
+No response is expected.
+
+### `client:disconnect`
+
+Sent before the client closes the connection gracefully.
+
+```json
+{
+  "type": "client:disconnect",
+  "timestamp": 1711900000000,
+  "reason": "User backgrounded app"
+}
+```
+
 ### `client:click`
-Sent when a user interacts with a UI element (if interactive mode is enabled).
+
+UI interaction event from the web emulator (Android clients do not send this).
 
 ```json
 {
   "type": "client:click",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
   "action": "onClick",
   "elementType": "Button",
   "elementText": "Submit"
 }
 ```
 
-### `client:heartbeat`
-Keep-alive message sent periodically.
+---
 
-```json
-{
-  "type": "client:heartbeat"
-}
-```
+## Core → Client Messages
 
-### `client:disconnect`
-Sent before closing the connection gracefully.
-
-```json
-{
-  "type": "client:disconnect",
-  "reason": "User quit app"
-}
-```
-
-## Core Messages (Core -> Client)
-
-Messages sent from the Core Server to connected clients.
+Sent by the Core server to all authenticated clients in a session.
 
 ### `core:connected`
-Confirmation of successful authentication.
+
+Authentication accepted. Sent immediately after a valid `client:connect`.
 
 ```json
 {
   "type": "core:connected",
-  "sessionId": "session-123",
-  "projectName": "My Awesome App"
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
+  "projectName": "my-awesome-app"
 }
 ```
 
+After receiving this, the client can expect a `core:build-start` as the initial build is triggered.
+
 ### `core:build-start`
-Notifies that a build process has started.
+
+A Gradle build has started.
 
 ```json
 {
-  "type": "core:build-start"
+  "type": "core:build-start",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3"
 }
 ```
 
 ### `core:build-status`
-Provides progress updates during a build.
+
+Mid-build progress update.
 
 ```json
 {
   "type": "core:build-status",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
   "status": "compiling_kotlin"
 }
 ```
 
 ### `core:build-complete`
-Sent when a full APK build is finished.
+
+Build succeeded. The APK is available for download.
 
 ```json
 {
   "type": "core:build-complete",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
   "apkInfo": {
-    "size": 15000000,
-    "version": "1.0.1"
+    "path": "/path/to/app-debug.apk",
+    "size": 5242880,
+    "hash": "abc123",
+    "versionCode": 1,
+    "versionName": "1.0.0",
+    "minSdkVersion": 24,
+    "targetSdkVersion": 34,
+    "applicationId": "com.example.app"
   },
-  "downloadUrl": "http://192.168.1.5:8765/download/app-debug.apk"
+  "downloadUrl": "http://192.168.1.100:8765/download/app-debug.apk"
 }
 ```
 
 ### `core:build-error`
-Sent if the build fails.
+
+Build failed.
 
 ```json
 {
   "type": "core:build-error",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
   "error": "Compilation failed",
-  "details": "Unresolved reference: MyClass at line 42"
+  "details": "Unresolved reference: MyClass at MainActivity.kt:42"
 }
 ```
 
-### `core:ui-update`
-**The Hot Reload Message.** Contains the serialized DSL to update the UI instantly.
+### `core:dex-reload`
+
+**The primary hot reload message for Android devices.** Carries base64-encoded DEX bytecode compiled from the changed Kotlin file. Android clients decode this and load the new classes via a custom ClassLoader — no reinstall required.
 
 ```json
 {
-  "type": "core:ui-update",
-  "dslContent": "{ \"type\": \"Column\", \"children\": [...] }",
-  "screens": ["MainActivity"],
-  "hash": "abc-123-hash"
+  "type": "core:dex-reload",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
+  "dexBase64": "ZGV4CjAzNQA...",
+  "classNames": [
+    "com.example.app.MainActivity",
+    "com.example.app.MainActivity$Override"
+  ]
+}
+```
+
+`classNames` lists every class patched in this reload. The `$Override` suffix denotes InstantRun-style companion classes that apply method-level patches.
+
+### `core:js-update`
+
+**Hot reload message for the web emulator.** Carries a base64-encoded ES module compiled by `kotlinc-js` from the same changed file. Browser clients import it dynamically and re-render the Compose UI preview. Android clients ignore this message.
+
+```json
+{
+  "type": "core:js-update",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
+  "jsBase64": "aW1wb3J0IHt...",
+  "sourceFile": "MainActivity.kt",
+  "byteSize": 4096
 }
 ```
 
 ### `core:reload`
-Instructs the client to perform a specific type of reload.
+
+Instructs clients to perform a reload of a specific type. Used for explicit reload triggers.
 
 ```json
 {
   "type": "core:reload",
-  "reloadType": "hot" // or "full"
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
+  "reloadType": "hot"
 }
 ```
 
-## Error Codes
+`reloadType` is either `"hot"` or `"full"`.
 
-If the connection fails or is rejected, the WebSocket close code/reason may contain:
+### `core:ui-update`
 
-| Code | Message | Description |
-|------|---------|-------------|
-| `connection_failed` | Connection Failed | Generic connection error |
-| `authentication_failed` | Authentication Failed | Invalid session ID or token |
-| `session_expired` | Session Expired | The session is no longer active |
-| `timeout` | Timeout | Connection timed out |
-| `invalid_message` | Invalid Message | Malformed JSON or unknown type |
+Sends a DSL (JSON) representation of the Compose UI tree. Used by the web emulator's `DSLRenderer` for static visual preview when a compiled JS module is not yet available.
+
+```json
+{
+  "type": "core:ui-update",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
+  "dslContent": "{\"type\":\"Column\",\"children\":[...]}",
+  "screens": ["MainActivity"],
+  "hash": "abc-123"
+}
+```
+
+### `core:log`
+
+Broadcasts a device log entry to all dashboard/CLI clients subscribed to the session. Not sent to the originating Android client.
+
+```json
+{
+  "type": "core:log",
+  "timestamp": 1711900000000,
+  "sessionId": "a1b2c3",
+  "log": {
+    "id": "log-001",
+    "timestamp": 1711900000000,
+    "level": "info",
+    "tag": "JetStart",
+    "message": "DEX loaded — 2 classes patched",
+    "source": "client"
+  }
+}
+```
+
+### `core:disconnect`
+
+Server is shutting down.
+
+```json
+{
+  "type": "core:disconnect",
+  "timestamp": 1711900000000,
+  "reason": "Server stopped"
+}
+```
+
+---
+
+## Message Flow Examples
+
+### Initial Connection and First Build
+
+```
+Client                          Core Server
+  │                                  │
+  │──── WebSocket open ─────────────►│
+  │                                  │
+  │──── client:connect ─────────────►│  (sessionId + token)
+  │                                  │  Validates credentials
+  │Γùä─── core:connected ──────────────│  (projectName)
+  │                                  │
+  │Γùä─── core:build-start ────────────│  Initial build begins
+  │Γùä─── core:build-status ───────────│  Progress updates
+  │Γùä─── core:build-complete ─────────│  APK download URL
+  │                                  │
+  │  Client downloads + installs APK │
+```
+
+### Hot Reload (File Save → Device Update)
+
+```
+Developer saves .kt file
+  │
+  │  Core Server
+  │  ├─ KotlinCompiler → .class files
+  │  ├─ OverrideGenerator → $Override classes
+  │  └─ DexGenerator → classes.dex
+
+Core Server                     Android Client   Web Emulator
+  │                                   │               │
+  │──── core:dex-reload ─────────────►│               │
+  │     (base64 DEX, classNames)       │               │
+  │                                   │ ClassLoader    │
+  │                                   │ loads DEX      │
+  │                                   │ Recompose      │
+  │                                   │               │
+  │──── core:js-update ───────────────────────────────►│
+  │     (base64 ES module)            │               │
+  │                                   │         dynamic import()
+  │                                   │         Re-renders UI
+```
+
+---
+
+## Error Handling
+
+If the server rejects a connection, it closes the WebSocket with a code and reason:
+
+| Close Code | Reason | Action |
+|---|---|---|
+| `4001` | Session mismatch | Rescan QR code — device was built against a different session |
+| `4002` | Token mismatch | Rescan QR code — session token does not match |
+| `1001` | Server shutdown | Reconnect when server restarts |
+
+Clients should implement automatic reconnect with exponential backoff (max 5 attempts, starting at 5 seconds).
+
+---
+
+## Logs Server (Port 8767)
+
+A separate WebSocket server on port **8767** handles log aggregation independently of the main protocol. See the [`@jetstart/logs`](../packages/logs.md) package documentation for its own message protocol (`subscribe`, `log`, `clear`, `stats`).
 

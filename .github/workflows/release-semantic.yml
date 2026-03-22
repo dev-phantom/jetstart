@@ -36,11 +36,6 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build packages
-        run: |
-          npm run build:packages
-          npm run build:cli
-
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
@@ -49,6 +44,11 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+
+      - name: Build packages
+        run: |
+          npm run build:packages
+          npm run build:cli
 
       - name: Build Android client
         run: |

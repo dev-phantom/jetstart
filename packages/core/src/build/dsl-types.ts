@@ -25,6 +25,11 @@ export interface DSLElement {
   tint?: string;
   contentDescription?: string;
   children?: DSLElement[];
+  floatingActionButton?: DSLElement;
+  // Form input properties
+  placeholder?: string;
+  label?: string;
+  value?: string;
 }
 
 export interface DSLModifier {
@@ -34,6 +39,10 @@ export interface DSLModifier {
   padding?: number;
   paddingHorizontal?: number;
   paddingVertical?: number;
+  paddingStart?: number;
+  paddingEnd?: number;
+  paddingTop?: number;
+  paddingBottom?: number;
   size?: number;
   height?: number;
   width?: number;

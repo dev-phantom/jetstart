@@ -52,26 +52,50 @@ This command will check for:
 - **Gradle** (8.0.0+)
 - **Android SDK**
 - **Android SDK Components**
+- **Kotlin compiler** (`kotlinc`) — required for the hot reload DEX pipeline
 
 ### Sample Output
 
 ```bash
 $ jetstart install-audit
 
-🔍 Auditing development environment...
+JetStart Installation Audit
 
-Development Tools
-┌──────────┬────────────┬──────────────┬────────┐
-│ Tool     │ Required   │ Installed    │ Status │
-├──────────┼────────────┼──────────────┼────────┤
-│ Node.js  │ 18.0.0+    │ 20.11.0      │ ✓ OK   │
-│ npm      │ 9.0.0+     │ 10.4.0       │ ✓ OK   │
-│ Java     │ 17.0.0+    │ Not found    │ ✗ ERR  │
-│ Gradle   │ 8.0.0+     │ 8.5.0        │ ✓ OK   │
-└──────────┴────────────┴──────────────┴────────┘
+Development Tools:
+------------------------------------------
+✓ Node.js        24.11.1    OK
+✓ npm            11.6.2     OK
+✓ Java/JDK       17.0.17    OK
+⚠ Gradle         8.2.1      Version 8.2.1 is outdated (8.5.0 recommended)
 
-⚠️  Missing dependencies detected
+Android SDK:
+------------------------------------------
+✓ Android SDK    Unknown    OK
+✓ cmdline-tools  19.0       OK
+✓ build-tools    34.0.0     OK
+✓ platform-tools 1.0.41     OK
+✓ emulator       36.3.10    OK
+
+Android Platforms:
+------------------------------------------
+✓ API 34 (Target) Unknown    OK
+✗ API 24 (Minimum) Not installed   Install with: sdkmanager "platforms;android-24"
+
+Environment Variables:
+------------------------------------------
+⚠ JAVA_HOME      Not installed   JAVA_HOME environment variable not set
+✓ ANDROID_HOME   Unknown         OK
+
+Summary:
+------------------------------------------
+✓ 10 components OK
+⚠ 2 warnings
+✗ 1 error
+
+⚠ Recommendation:
+Run "jetstart create <project-name> --full-install" to install missing dependencies
 ```
+
 
 ## Install Missing Dependencies
 
@@ -143,6 +167,47 @@ export ANDROID_HOME=~/Android
 export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 ```
+
+
+### Installing Kotlin (Required for Hot Reload)
+
+JetStart's hot reload pipeline compiles your changed `.kt` files using `kotlinc`. You must have Kotlin installed and `KOTLIN_HOME` set for hot reload to work.
+
+**macOS (Homebrew):**
+```bash
+brew install kotlin
+# KOTLIN_HOME is set automatically
+```
+
+**Linux (SDKMAN):**
+```bash
+sdk install kotlin
+export KOTLIN_HOME=$HOME/.sdkman/candidates/kotlin/current
+```
+
+**Windows:**
+1. Download the [Kotlin compiler](https://github.com/JetBrains/kotlin/releases/latest) (the `kotlin-compiler-*.zip` asset)
+2. Extract to e.g. `C:\kotlinc`
+3. Set environment variable: `KOTLIN_HOME=C:\kotlinc`
+4. Add `%KOTLIN_HOME%\bin` to your `Path`
+
+**Via Android Studio (if already installed):**
+```bash
+# The Kotlin compiler is bundled inside Android Studio
+# Set KOTLIN_HOME to the bundled kotlinc:
+export KOTLIN_HOME="/Applications/Android Studio.app/Contents/plugins/Kotlin/kotlinc"  # macOS
+# Windows: %LOCALAPPDATA%\Android\Sdk\...\plugins\Kotlin\kotlinc
+```
+
+**Verify:**
+```bash
+kotlinc -version
+# Should print: kotlinc-jvm 1.x.x (JRE ...)
+```
+
+:::tip
+If `kotlinc` is in your system `PATH` (e.g. installed via Homebrew), JetStart will find it automatically. `KOTLIN_HOME` is only needed if `kotlinc` is not on your `PATH`.
+:::
 
 ## Install Mobile Client App
 
@@ -363,6 +428,17 @@ If you see **"The command jetstart was not found, but does exist in the current 
 1. Verify Java installation: `java -version`
 2. Check JAVA_HOME: `echo $JAVA_HOME`
 3. Set JAVA_HOME to JDK installation directory
+
+### Kotlin Compiler Not Found (hot reload fails)
+
+**Issue:** `kotlinc not found` in `jetstart dev` output
+
+**Solution:**
+1. Install Kotlin: `brew install kotlin` (macOS) or `sdk install kotlin` (SDKMAN)
+2. Set `KOTLIN_HOME` to your Kotlin installation directory
+3. Verify: `kotlinc -version`
+
+See the [Kotlin installation section](#installing-kotlin-required-for-hot-reload) above for platform-specific instructions.
 
 ## Recommended Tools
  

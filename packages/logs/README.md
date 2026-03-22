@@ -1,89 +1,130 @@
-# @jetstart/logs
+﻿# @jetstart/logs
 
-Logging infrastructure for JetStart.
+Log aggregation, streaming, filtering, and terminal display for JetStart.
 
 ## Overview
 
-The Logs package provides:
+`@jetstart/logs` runs a lightweight WebSocket server on port `8767` that acts as the central log bus for a JetStart dev session. The Android companion app forwards device logs via the main WebSocket connection; `@jetstart/core` relays them to this server. The `jetstart logs` CLI command connects here and renders the stream in the terminal.
 
-- 📊 **Log Server** - WebSocket-based log streaming
-- 💾 **Log Storage** - In-memory log storage with size limits
-- 🔍 **Filtering** - Filter by level, source, tag, or search query
-- 🖥️ **CLI Viewer** - Terminal-based log viewer
-- 📈 **Statistics** - Log metrics and analytics
+```
+src/
+├── server/
+│   ├── index.ts     # LogsServer — WebSocket server + broadcast + message handling
+│   └── storage.ts   # LogStorage — in-memory ring buffer with stats
+├── cli/
+│   ├── viewer.ts    # Terminal log viewer (connects to LogsServer, follows live)
+│   ├── formatter.ts # Colorized log line rendering
+│   └── index.ts
+├── filters/
+│   ├── index.ts     # applyFilters() — combines level, source, and search filters
+│   ├── level.ts     # Filter by LogLevel
+│   ├── source.ts    # Filter by LogSource
+│   └── search.ts    # Full-text search across message and tag fields
+└── utils/
+    ├── colors.ts    # LogLevel → chalk color mapping
+    └── index.ts
+```
+
+---
 
 ## Usage
 
-### Start Log Server
+### Start the log server (used internally by `@jetstart/core`)
+
 ```typescript
 import { LogsServer } from '@jetstart/logs';
+import { LogLevel, LogSource } from '@jetstart/shared';
 
-const server = new LogsServer({ port: 8767 });
+const server = new LogsServer({
+  port: 8767,
+  maxLogEntries: 10_000,
+});
 await server.start();
+
+// Add a log entry (called by core when it receives client:log messages)
+server.addLog({
+  id: crypto.randomUUID(),
+  timestamp: Date.now(),
+  level: LogLevel.INFO,
+  tag: 'HotReload',
+  message: 'DEX pushed in 72ms — 3 classes patched',
+  source: LogSource.BUILD,
+});
+
+// Query stored logs with a filter
+const errors = server.getLogs({ levels: [LogLevel.ERROR, LogLevel.FATAL] });
+
+// Get statistics
+const stats = server.getStats();
+// { total: 412, byLevel: { info: 300, warn: 80, error: 32 }, bySource: { ... } }
+
+await server.stop();
 ```
 
-### View Logs in CLI
+### Stream logs in the terminal (`jetstart logs`)
+
 ```typescript
 import { viewLogs } from '@jetstart/logs';
 import { LogLevel, LogSource } from '@jetstart/shared';
 
 await viewLogs({
+  port: 8767,
+  follow: true,
+  lines: 100,
   levels: [LogLevel.ERROR, LogLevel.WARN],
   sources: [LogSource.BUILD],
 });
 ```
 
-### Add Logs
-```typescript
-import { LogsServer } from '@jetstart/logs';
-import { LogLevel, LogSource } from '@jetstart/shared';
+### Filter stored logs
 
-const server = new LogsServer();
-await server.start();
-
-server.addLog({
-  id: '123',
-  timestamp: Date.now(),
-  level: LogLevel.INFO,
-  tag: 'Build',
-  message: 'Compilation complete',
-  source: LogSource.BUILD,
-});
-```
-
-### Filter Logs
 ```typescript
 import { applyFilters } from '@jetstart/logs';
-import { LogLevel } from '@jetstart/shared';
+import { LogLevel, LogSource } from '@jetstart/shared';
 
-const filtered = applyFilters(logs, {
-  levels: [LogLevel.ERROR],
+const filtered = applyFilters(allLogs, {
+  levels: [LogLevel.ERROR, LogLevel.FATAL],
+  sources: [LogSource.BUILD, LogSource.NETWORK],
   searchQuery: 'compilation',
-  startTime: Date.now() - 3600000, // Last hour
+  startTime: Date.now() - 3_600_000,
+  endTime: Date.now(),
 });
 ```
+
+---
 
 ## Log Levels
 
-- `VERBOSE` - Very detailed information
-- `DEBUG` - Debug information
-- `INFO` - General information
-- `WARN` - Warning messages
-- `ERROR` - Error messages
-- `FATAL` - Fatal errors
+| Level | Description |
+|---|---|
+| `VERBOSE` | Highly detailed trace output |
+| `DEBUG` | Developer debug information |
+| `INFO` | General operational messages |
+| `WARN` | Non-fatal warnings |
+| `ERROR` | Errors that affect functionality |
+| `FATAL` | Unrecoverable errors |
+
+---
 
 ## Log Sources
 
-- `CLI` - Command-line interface
-- `CORE` - Build server
-- `CLIENT` - Android client
-- `BUILD` - Build system
-- `NETWORK` - Network operations
-- `SYSTEM` - System operations
+| Source | Origin |
+|---|---|
+| `CLI` | `jetstart` CLI process |
+| `CORE` | Build server (`@jetstart/core`) |
+| `CLIENT` | Android companion app |
+| `BUILD` | Gradle / Kotlin compiler / DEX pipeline |
+| `NETWORK` | WebSocket and HTTP layer |
+| `SYSTEM` | OS-level operations |
+
+---
 
 ## WebSocket Protocol
 
-**Subscribe to logs:**
+The logs server speaks a simple JSON protocol on port `8767`.
+
+### Subscribe — receive existing logs then follow live updates
+
 ```json
 {
   "type": "subscribe",
@@ -95,28 +136,67 @@ const filtered = applyFilters(logs, {
 }
 ```
 
-**Send log:**
+On subscribe, the server immediately replays up to `maxLines` matching historical entries, then streams new entries as they arrive.
+
+### Push a log entry
+
 ```json
 {
   "type": "log",
   "log": {
-    "id": "123",
-    "timestamp": 1234567890,
+    "id": "abc-123",
+    "timestamp": 1711900000000,
     "level": "info",
-    "tag": "Build",
-    "message": "Build complete",
+    "tag": "HotReload",
+    "message": "DEX pushed in 72ms",
     "source": "build"
   }
 }
 ```
 
-**Get statistics:**
+### Clear all stored logs
+
+```json
+{ "type": "clear" }
+```
+
+### Request statistics
+
+```json
+{ "type": "stats" }
+```
+
+Response:
+
 ```json
 {
-  "type": "stats"
+  "type": "stats",
+  "stats": {
+    "total": 412,
+    "byLevel": { "info": 300, "warn": 80, "error": 32 },
+    "bySource": { "build": 200, "client": 212 }
+  }
 }
 ```
 
+---
+
+## Storage
+
+`LogStorage` is an in-memory ring buffer capped at `maxLogEntries` (default `10,000`). When the cap is reached, the oldest entries are discarded automatically. Logs are never written to disk and exist only for the lifetime of the `jetstart dev` session.
+
+---
+
+## Configuration
+
+| Option | Default | Description |
+|---|---|---|
+| `port` | `8767` | WebSocket server port |
+| `maxLogEntries` | `10,000` | Ring buffer capacity before oldest entries are dropped |
+
+---
+
 ## License
 
-Apache-2.0
+MIT
+

@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'JetStart',
-  tagline: 'Launch Android apps at warp speed',
+  tagline: 'Build Android apps faster than ever with instant hot reload.',
   favicon: 'img/logos/logo.png',
 
   // Set the production url of your site here
@@ -26,6 +26,12 @@ const config: Config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
+
+  markdown: {
+    mermaid: true,
+  },
+
+  themes: ['@docusaurus/theme-mermaid'],
 
   presets: [
     [
