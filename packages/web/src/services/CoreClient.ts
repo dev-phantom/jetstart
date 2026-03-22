@@ -202,7 +202,7 @@ export class CoreClient {
           );
           break;
 
-        // @ts-ignore — core:js-update is in shared protocol, TS union may be stale
+        // @ts-expect-error — core:js-update is in shared protocol, TS union may be stale
         case 'core:js-update':
           this.config.onJsUpdate?.(
             (message as any).jsBase64 || '',
