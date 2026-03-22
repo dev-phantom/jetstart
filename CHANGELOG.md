@@ -1,3 +1,11 @@
+## [2.0.1](https://github.com/dev-phantom/jetstart/compare/v2.0.0...v2.0.1) (2026-03-22)
+
+
+### Bug Fixes
+
+* add @jetstart/template package for npm publishing ([1fcb275](https://github.com/dev-phantom/jetstart/commit/1fcb27562ce1b57375c386c243951875cc288aeb))
+* fixed the template path for cli ([a89e00c](https://github.com/dev-phantom/jetstart/commit/a89e00cfce12d6235b67f01c4ba97e3c4afe220c))
+
 # [2.0.0](https://github.com/dev-phantom/jetstart/compare/v1.7.0...v2.0.0) (2026-03-22)
 
 
