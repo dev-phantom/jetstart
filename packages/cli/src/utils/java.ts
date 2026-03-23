@@ -130,7 +130,7 @@ function getJDKDownloadURL(): string | null {
 /**
  * Get default JDK installation path
  */
-function getDefaultJDKPath(): string {
+export function getDefaultJDKPath(): string {
   const homeDir = os.homedir();
   const platform = os.platform();
 
@@ -149,7 +149,7 @@ function getDefaultJDKPath(): string {
 /**
  * Set JAVA_HOME environment variable (Windows only, via registry)
  */
-async function setJavaHomeWindows(javaPath: string): Promise<void> {
+export async function setJavaHomeWindows(javaPath: string): Promise<void> {
   try {
     const command = `setx JAVA_HOME "${javaPath}" /M`;
     await execAsync(command);

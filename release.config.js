@@ -4,16 +4,16 @@ module.exports = {
     '@semantic-release/commit-analyzer',
     '@semantic-release/release-notes-generator',
     '@semantic-release/npm',
-    [
-      '@semantic-release/github',
-      {
-        assets: [
-          {
-            path: 'packages/client/app/build/outputs/apk/debug/*.apk',
-            label: 'Android Client (Debug)',
-          },
-        ],
-      },
-    ],
+      [
+        '@semantic-release/github',
+        {
+          assets: [
+            {
+              path: 'packages/client/app/build/outputs/apk/release/app-release.apk',
+              label: 'Android Client (Release)',
+            },
+          ],
+        },
+      ],
   ],
 };

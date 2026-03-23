@@ -1,4 +1,3 @@
-// Top-level build file
 buildscript {
     ext {
         compose_version = '1.5.4'

@@ -51,7 +51,6 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    // Trigger full build for client update 7 (Fix Duplicate Renderers)
     fun getSuggestedTags(content: String): List<String> {
         return taggingEngine.autoTag(content)
     }

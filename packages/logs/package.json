@@ -27,7 +27,7 @@
     "logcat"
   ],
   "author": "Phantom",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "dependencies": {
     "@jetstart/shared": "file:../shared",
     "ws": "^8.14.2",

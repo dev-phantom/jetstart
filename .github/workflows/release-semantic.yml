@@ -50,11 +50,19 @@ jobs:
           npm run build:packages
           npm run build:cli
 
-      - name: Build Android client
+      - name: Decode signing key
+        run: |
+          echo "${{ secrets.RELEASE_SIGNING_KEY }}" | base64 -d > packages/client/jetstart.jks
+
+      - name: Build Android client (Release)
+        env:
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           cd packages/client
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon
 
 
 

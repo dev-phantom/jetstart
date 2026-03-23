@@ -2,7 +2,6 @@ package com.jetstart.client.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// JetStart Brand Colors - matching docs theme
 val JetStartPrimary = Color(0xFF25FF79)      // Bright green
 val JetStartSecondary = Color(0xFFB86709)    // Orange/brown
 val JetStartOrange = Color(0xFFCC4C0C)       // Bright orange

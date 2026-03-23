@@ -1,4 +1,4 @@
-﻿---
+---
 title: Overview
 description: High-level architecture of the JetStart system
 ---
@@ -155,9 +155,9 @@ See [WebSocket Protocol](./websocket-protocol.md) for the complete specification
 @jetstart/web  ─────────────────────► @jetstart/shared
 @jetstart/logs ─────────────────────► @jetstart/shared
 
-packages/client          (Kotlin — no npm deps, implements WS protocol independently)
-packages/gradle-plugin   (Kotlin — no npm deps)
-packages/hot-reload-runtime (Kotlin — the ClassLoader used by the client app)
+[`packages/client`](../packages/client.md)          (Kotlin — no npm deps, implements WS protocol independently)
+[`packages/gradle-plugin`](../packages/gradle-plugin.md)   (Kotlin — no npm deps)
+[`packages/hot-reload-runtime`](../packages/hot-reload-runtime.md) (Kotlin — the ClassLoader used by the client app)
 ```
 
 ## Security Model

@@ -32,7 +32,6 @@ private val JetStartColorScheme = darkColorScheme(
 fun JetStartTheme(
     content: @Composable () -> Unit
 ) {
-    // Always use JetStart dark theme to match docs
     val colorScheme = JetStartColorScheme
 
     val view = LocalView.current

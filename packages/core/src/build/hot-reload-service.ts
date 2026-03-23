@@ -42,7 +42,7 @@ export class HotReloadService {
 
     log(`🔥 Hot reload starting for: ${path.basename(filePath)}`);
 
-    // Step 1: Compile Kotlin to .class
+    // Compile Kotlin to .class
     const compileStart = Date.now();
     const compileResult = await this.kotlinCompiler.compileFile(filePath);
     const compileTime = Date.now() - compileStart;
@@ -61,7 +61,7 @@ export class HotReloadService {
 
     log(`Compilation completed in ${compileTime}ms (${compileResult.classFiles.length} classes)`);
 
-    // Step 2: Generate $Override classes (Phase 2)
+    // Generate $Override classes (Phase 2)
     const overrideDir = path.join(os.tmpdir(), 'jetstart-overrides', Date.now().toString());
     fs.mkdirSync(overrideDir, { recursive: true });
 
@@ -95,7 +95,7 @@ export class HotReloadService {
       }
     }
 
-    // Step 3: Convert .class to .dex
+    // Convert .class to .dex
     const dexStart = Date.now();
     const dexResult = await this.dexGenerator.generateDex(compileResult.classFiles);
     const dexTime = Date.now() - dexStart;

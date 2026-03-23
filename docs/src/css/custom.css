@@ -54,3 +54,33 @@
 .footer--dark {
   --ifm-footer-background-color: #222222;
 }
+
+/* Custom Navbar Responsiveness */
+.custom-nav-desktop {
+  display: none;
+}
+@media (min-width: 768px) {
+  .custom-nav-desktop {
+    display: flex;
+  }
+}
+
+html.landing-page-active .navbar {
+  display: none !important;
+}
+
+.mobile-menu-drawer {
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: rgba(10, 10, 10, 0.3) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  padding-top: 100px;
+  padding-left: 24px;
+  padding-right: 24px;
+  display: flex;
+  height: fit-content;
+  flex-direction: column;
+  gap: 24px;
+  z-index: 9998 !important;
+}

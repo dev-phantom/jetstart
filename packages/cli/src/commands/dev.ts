@@ -23,7 +23,6 @@ function stopGradleDaemons(projectPath: string): void {
     const isWin = process.platform === 'win32';
     const gradle = isWin ? 'gradle.bat' : 'gradle';
     execSync(`"${gradle}" --stop`, { cwd: projectPath, stdio: 'ignore', timeout: 10000 });
-    log('Gradle daemons stopped');
   } catch {
     // Daemon may already be gone — not an error
   }

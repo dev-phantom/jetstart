@@ -58,14 +58,6 @@ export class ConnectionManager {
     }
   }
 
-  /**
-   * Broadcast to all clients (UNSAFE - use broadcastToSession instead)
-   * @deprecated Use broadcastToSession for session isolation
-   */
-  broadcast(message: CoreMessage): void {
-    console.warn('[ConnectionManager] WARNING: Using unsafe broadcast() - use broadcastToSession() instead');
-    this.broadcastToAll(message);
-  }
 
   /**
    * Broadcast to all clients in a specific session (SECURE)

@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 
-// ── Material You design tokens ────────────────────────────────────────────────
+// Material You design tokens 
 const M3 = {
   // Colors
   primary:           '#6750A4',
@@ -64,7 +64,7 @@ const M3 = {
   },
 };
 
-// ── Material Icons (subset via Material Symbols codepoints) ──────────────────
+// Material Icons (subset via Material Symbols codepoints)
 const ICON_MAP: Record<string, string> = {
   add: 'add', search: 'search', close: 'close', check: 'check',
   delete: 'delete', edit: 'edit', home: 'home', menu: 'menu',
@@ -77,7 +77,7 @@ const ICON_MAP: Record<string, string> = {
   default: 'circle',
 };
 
-// ── Modifier → inline CSS ─────────────────────────────────────────────────────
+// Modifier → inline CSS─
 function modToStyle(mod: any, extra?: React.CSSProperties): React.CSSProperties {
   if (!mod) return extra || {};
   const s: React.CSSProperties = {};
@@ -125,7 +125,7 @@ function colorVal(c: string): string {
   return map[c] || M3.onSurface;
 }
 
-// ── Node Renderer ─────────────────────────────────────────────────────────────
+// Node Renderer 
 let nodeKey = 0;
 function key() { return String(nodeKey++); }
 
@@ -133,11 +133,11 @@ function renderNode(node: any): React.ReactElement | null {
   if (!node) return null;
 
   switch (node.type) {
-    // ── Root ────────────────────────────────────────────────────────────────
+    // Root
     case 'root':
       return renderChildren(node.children, { display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: M3.background, overflowY: 'auto' });
 
-    // ── Scaffold ─────────────────────────────────────────────────────────────
+    // Scaffold 
     case 'Scaffold': {
       const topBars    = (node.topBar    || []).map(renderNode).filter(Boolean);
       const bottomBars = (node.bottomBar || []).map(renderNode).filter(Boolean);
@@ -158,7 +158,7 @@ function renderNode(node: any): React.ReactElement | null {
       );
     }
 
-    // ── TopAppBar ─────────────────────────────────────────────────────────────
+    // TopAppBar 
     case 'TopAppBar': {
       const titles  = (node.title   || []).map(renderNode).filter(Boolean);
       const actions = (node.actions || []).map(renderNode).filter(Boolean);
@@ -170,7 +170,7 @@ function renderNode(node: any): React.ReactElement | null {
       );
     }
 
-    // ── NavigationBar ─────────────────────────────────────────────────────────
+    // NavigationBar
     case 'NavigationBar':
       return (
         <div key={key()} style={{ display:'flex', height:80, backgroundColor:M3.surfaceVariant, boxShadow:M3.elevation2, justifyContent:'space-around', alignItems:'center' }}>
@@ -189,7 +189,7 @@ function renderNode(node: any): React.ReactElement | null {
       );
     }
 
-    // ── Column ────────────────────────────────────────────────────────────────
+    // Column
     case 'LazyColumn':
     case 'Column': {
       const va = node.verticalArrangement || '';
@@ -207,7 +207,7 @@ function renderNode(node: any): React.ReactElement | null {
       );
     }
 
-    // ── Row ───────────────────────────────────────────────────────────────────
+    // Row
     case 'LazyRow':
     case 'Row': {
       const ha = node.horizontalArrangement || '';
@@ -225,7 +225,7 @@ function renderNode(node: any): React.ReactElement | null {
       );
     }
 
-    // ── Box ───────────────────────────────────────────────────────────────────
+    // Box
     case 'Box': {
       const alignMap: Record<string,string> = {
         'topStart':'flex-start','topCenter':'center','topEnd':'flex-end',
@@ -239,7 +239,7 @@ function renderNode(node: any): React.ReactElement | null {
       );
     }
 
-    // ── LazyVerticalStaggeredGrid — CSS columns masonry (2-col like real app) ────
+    // LazyVerticalStaggeredGrid — CSS columns masonry (2-col like real app)
     case 'LazyVerticalStaggeredGrid':
       return (
         <div key={key()} style={{ columnCount:2, columnGap:12, padding:12, ...modToStyle(node.modifier) }}>
@@ -248,7 +248,7 @@ function renderNode(node: any): React.ReactElement | null {
           ))}
         </div>
       );
-    // ── LazyVerticalGrid — equal-col grid ────────────────────────────────────────
+    // LazyVerticalGrid — equal-col grid
     case 'LazyVerticalGrid':
       return (
         <div key={key()} style={{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:8, padding:12, ...modToStyle(node.modifier) }}>
@@ -256,7 +256,7 @@ function renderNode(node: any): React.ReactElement | null {
         </div>
       );
 
-    // ── Text ──────────────────────────────────────────────────────────────────
+    // Text
     case 'Text': {
       const styleKey = (node.style || 'bodyMedium').toString();
       const ts = typographyStyle(styleKey);
@@ -271,7 +271,7 @@ function renderNode(node: any): React.ReactElement | null {
       );
     }
 
-    // ── Button ────────────────────────────────────────────────────────────────
+    // Button
     case 'Button':
       return (
         <button key={key()} style={{ background: M3.primary, color: M3.onPrimary, border:'none', borderRadius: M3.radiusFull, padding:'10px 24px', cursor:'pointer', display:'inline-flex', alignItems:'center', gap:8, ...typographyStyle('labelLarge'), boxShadow: M3.elevation1, ...modToStyle(node.modifier) }}>
@@ -322,7 +322,7 @@ function renderNode(node: any): React.ReactElement | null {
         </button>
       );
 
-    // ── Cards ─────────────────────────────────────────────────────────────────
+    // Cards
     case 'Card':
       return (
         <div key={key()} style={{ backgroundColor: M3.surfaceVariant, borderRadius: M3.radiusM, overflow:'hidden', cursor: node.clickable ? 'pointer' : 'default', display:'block', width:'100%', ...modToStyle(node.modifier) }}>
@@ -344,7 +344,7 @@ function renderNode(node: any): React.ReactElement | null {
         </div>
       );
 
-    // ── Inputs ────────────────────────────────────────────────────────────────
+    // Inputs
     case 'OutlinedTextField': {
       const label = (node.label || []).map(renderNode).filter(Boolean);
       const placeholder = (node.placeholder || []).map(renderNode).filter(Boolean);
@@ -386,7 +386,7 @@ function renderNode(node: any): React.ReactElement | null {
         </div>
       );
 
-    // ── Icon ──────────────────────────────────────────────────────────────────
+    // Icon
     case 'Icon': {
       const iconName = ICON_MAP[node.icon] || node.icon || 'circle';
       const tint = colorVal(node.tint || '');
@@ -397,7 +397,7 @@ function renderNode(node: any): React.ReactElement | null {
       );
     }
 
-    // ── Image / AsyncImage ────────────────────────────────────────────────────
+    // Image / AsyncImage
     case 'Image':
     case 'AsyncImage': {
       const mod = node.modifier || {};
@@ -414,18 +414,18 @@ function renderNode(node: any): React.ReactElement | null {
       );
     }
 
-    // ── Spacer ────────────────────────────────────────────────────────────────
+    // Spacer
     case 'Spacer': {
       const mod = node.modifier || {};
       return <div key={key()} style={{ flex: mod.weight ? mod.weight : undefined, width: mod.width, height: mod.height, minWidth: mod.width, minHeight: mod.height }} />;
     }
 
-    // ── Divider ───────────────────────────────────────────────────────────────
+    // Divider
     case 'Divider':
     case 'HorizontalDivider':
       return <hr key={key()} style={{ border:'none', borderTop:`${node.thickness||1}px solid ${M3.outlineVariant}`, margin:'4px 0', ...modToStyle(node.modifier) }} />;
 
-    // ── Switch ────────────────────────────────────────────────────────────────
+    // Switch
     case 'Switch':
       return (
         <div key={key()} style={{ display:'inline-flex', alignItems:'center', cursor:'pointer', ...modToStyle(node.modifier) }}>
@@ -435,7 +435,7 @@ function renderNode(node: any): React.ReactElement | null {
         </div>
       );
 
-    // ── Checkbox ──────────────────────────────────────────────────────────────
+    // Checkbox
     case 'Checkbox':
       return (
         <div key={key()} style={{ width:20, height:20, borderRadius: M3.radiusXS, border:`2px solid ${node.checked ? M3.primary : M3.outline}`, background: node.checked ? M3.primary : 'transparent', display:'inline-flex', alignItems:'center', justifyContent:'center', cursor:'pointer', ...modToStyle(node.modifier) }}>
@@ -443,7 +443,7 @@ function renderNode(node: any): React.ReactElement | null {
         </div>
       );
 
-    // ── RadioButton ───────────────────────────────────────────────────────────
+    // RadioButton
     case 'RadioButton':
       return (
         <div key={key()} style={{ width:20, height:20, borderRadius:'50%', border:`2px solid ${node.selected ? M3.primary : M3.outline}`, display:'inline-flex', alignItems:'center', justifyContent:'center', cursor:'pointer', ...modToStyle(node.modifier) }}>
@@ -451,7 +451,7 @@ function renderNode(node: any): React.ReactElement | null {
         </div>
       );
 
-    // ── Progress ──────────────────────────────────────────────────────────────
+    // Progress
     case 'CircularProgressIndicator':
       return (
         <div key={key()} style={{ width:40, height:40, borderRadius:'50%', border:`4px solid ${M3.surfaceVariant}`, borderTopColor: M3.primary, animation:'spin 1s linear infinite', ...modToStyle(node.modifier) }}>
@@ -468,7 +468,7 @@ function renderNode(node: any): React.ReactElement | null {
       );
     }
 
-    // ── Chips ─────────────────────────────────────────────────────────────────
+    // Chips
     case 'Chip': {
       const labelNodes = (node.label || []).map(renderNode).filter(Boolean);
       const bg = node.chipType === 'filter' && node.selected ? M3.secondaryContainer : M3.surface;
@@ -479,7 +479,7 @@ function renderNode(node: any): React.ReactElement | null {
       );
     }
 
-    // ── AlertDialog ───────────────────────────────────────────────────────────
+    // AlertDialog
     case 'AlertDialog':
       return (
         <div key={key()} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.4)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100 }}>
@@ -494,7 +494,7 @@ function renderNode(node: any): React.ReactElement | null {
         </div>
       );
 
-    // ── DropdownMenu ──────────────────────────────────────────────────────────
+    // DropdownMenu
     case 'DropdownMenu':
       return (
         <div key={key()} style={{ background: M3.surface, borderRadius: M3.radiusS, boxShadow: M3.elevation3, minWidth:180, overflow:'hidden', ...modToStyle(node.modifier) }}>
@@ -509,7 +509,7 @@ function renderNode(node: any): React.ReactElement | null {
         </div>
       );
 
-    // ── BottomSheet ───────────────────────────────────────────────────────────
+    // BottomSheet
     case 'BottomSheet':
       return (
         <div key={key()} style={{ position:'fixed', bottom:0, left:0, right:0, background: M3.surface, borderRadius:`${M3.radiusXL} ${M3.radiusXL} 0 0`, padding:24, boxShadow: M3.elevation3, zIndex:99 }}>
@@ -518,7 +518,7 @@ function renderNode(node: any): React.ReactElement | null {
         </div>
       );
 
-    // ── Slots (internal, render their children directly) ─────────────────────
+    // Slots (internal, render their children directly)
     case 'slot':
     case 'TopBarSlot': case 'BottomBarSlot': case 'FABSlot':
     case 'TitleSlot': case 'ActionsSlot': case 'IconSlot':
@@ -540,7 +540,7 @@ function renderChildren(children: any[], style?: React.CSSProperties): React.Rea
   return <div style={style}>{(children || []).map(renderNode)}</div>;
 }
 
-// ── Main hook ─────────────────────────────────────────────────────────────────
+// Main hook
 
 export interface UseComposeRendererResult {
   element: React.ReactElement | null;
@@ -575,18 +575,18 @@ export function useComposeRenderer(
 
     (async () => {
       try {
-        // 1. Decode base64 → text
+        // Decode base64 → text
         const jsText = atob(jsUpdate.jsBase64);
 
-        // 2. Create a Blob URL so the browser can import() it as an ES module
+        // Create a Blob URL so the browser can import() it as an ES module
         const blob = new Blob([jsText], { type: 'application/javascript' });
         const blobUrl = URL.createObjectURL(blob);
         blobUrlRef.current = blobUrl;
 
-        // 3. Dynamically import the module — this executes it
+        // Dynamically import the module — this executes it
         const mod = await import(/* @vite-ignore */ blobUrl);
 
-        // 4. Call renderScreen() with an empty lambda — the stubs build the tree
+        // Call renderScreen() with an empty lambda — the stubs build the tree
         if (typeof mod.renderScreen !== 'function') {
           throw new Error('Module does not export renderScreen()');
         }
@@ -605,7 +605,7 @@ export function useComposeRenderer(
           });
         }
 
-        // 5. Reset key counter and render the tree to React elements
+        // Reset key counter and render the tree to React elements
         nodeKey = 0;
         const rendered = renderNode(tree);
         setElement(rendered);

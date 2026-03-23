@@ -3,7 +3,6 @@
  * Manages development sessions
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import { ServerSession } from '../types';
 import { SESSION_TOKEN_EXPIRY } from '@jetstart/shared';
 

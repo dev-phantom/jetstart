@@ -1,6 +1,6 @@
 ﻿# @jetstart/sanity-studio
 
-Sanity Studio instance powering the content backend for [jetstart.dev](https://jetstart.dev).
+Sanity Studio instance powering the content backend for [jetstart.site](https://jetstart.site) blog.
 
 ## Overview
 

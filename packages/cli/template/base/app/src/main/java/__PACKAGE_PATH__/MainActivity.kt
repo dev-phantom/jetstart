@@ -18,6 +18,7 @@ class MainActivity : AppCompatActivity() {
 
         // Hot reload is ONLY active in debug builds.
         // In release builds this block is completely eliminated by R8 (BuildConfig.DEBUG = false).
+        // 🚨 IMPORTANT: Do not remove this block if you want hot-reloading to work.
         if (BuildConfig.DEBUG) {
             try {
                 val serverUrl = BuildConfig.JETSTART_SERVER_URL
@@ -36,10 +37,13 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Observe reload version - forces recomposition when DEX hot reload happens
+                    // Observe reload version - forces recomposition when DEX hot reload happens.
+                    // 🚨 IMPORTANT: Do not modify this or the 'key' block below. 
+                    // This is what forces the UI to update when you save a file.
                     val reloadVersion by HotReload.reloadVersion.collectAsState()
 
-                    // Use reloadVersion as key to force recomposition of entire tree
+                    // Use reloadVersion as key to force recomposition of entire tree.
+                    // You can safely modify anything inside AppContent().
                     key(reloadVersion) {
                         // Normal mode: render actual Compose code
                         AppContent()

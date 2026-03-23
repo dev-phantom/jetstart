@@ -74,7 +74,6 @@ fun ScannerScreen(
                         )
                     }
 
-                    // Instructions at top
                     Card(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
@@ -91,7 +90,6 @@ fun ScannerScreen(
                         )
                     }
 
-                    // Manual input button at bottom
                     Button(
                         onClick = { showManualInput = true },
                         modifier = Modifier
@@ -106,7 +104,6 @@ fun ScannerScreen(
                     }
                 }
             } else {
-                // Manual input form
                 Column(
                     modifier = Modifier
                         .fillMaxSize()

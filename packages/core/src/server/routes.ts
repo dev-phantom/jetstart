@@ -2,9 +2,7 @@
  * HTTP Routes
  * REST API endpoints
  */
-
 import { Express, Request, Response } from 'express';
-import path from 'path';
 import fs from 'fs';
 import { SessionManager } from '../utils/session';
 import { generateQRCode } from '../utils/qr';
@@ -20,6 +18,7 @@ export function setupRoutes(
 ): void {
   // Root Redirect -> Web Emulator
   app.get('/', (req: Request, res: Response) => {
+    const isProduction = process.env.IS_PROD
     try {
       const session = getCurrentSession?.();
       
@@ -32,7 +31,7 @@ export function setupRoutes(
       }
 
       // Construct redirect URL
-      const webUrl = 'https://web.jetstart.site';
+      const webUrl = isProduction ? 'https://web.jetstart.site': 'http://localhost:8000';
       const host = req.hostname;
       const port = req.socket.localPort || 8765;
       const wsPort = DEFAULT_WS_PORT;

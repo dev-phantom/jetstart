@@ -3,8 +3,6 @@
  * Terminal-based log viewer
  */
 
-
-
 import { LogViewer } from './viewer';
 import { LogFilter } from '@jetstart/shared';
 

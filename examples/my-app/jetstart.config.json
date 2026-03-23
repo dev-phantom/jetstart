@@ -1,0 +1,11 @@
+{
+  "projectName": "my-app",
+  "packageName": "com.jetstart.myapp",
+  "version": "1.0.0",
+  "jetstart": {
+    "version": "0.1.0",
+    "enableHotReload": true,
+    "enableLogs": true,
+    "port": 8765
+  }
+}

@@ -67,6 +67,9 @@ const sidebars: SidebarsConfig = {
         'packages/shared',
         'packages/web',
         'packages/client',
+        'packages/gradle-plugin',
+        'packages/hot-reload-runtime',
+        'packages/logs',
       ],
     },
     {

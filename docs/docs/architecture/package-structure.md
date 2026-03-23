@@ -1,4 +1,4 @@
-﻿---
+---
 title: Package Structure
 description: How the JetStart monorepo is organized
 ---
@@ -138,7 +138,7 @@ Receives `core:dex-reload` (ignored), `core:js-update` (renders JS module), `cor
 
 ---
 
-### `@jetstart/logs`
+### [`@jetstart/logs`](../packages/logs.md)
 
 **Language:** TypeScript  
 **Role:** Log aggregation server (port `8767`) and terminal log viewer.
@@ -177,7 +177,7 @@ Dependencies: Kotlin, Jetpack Compose, Material 3, Coroutines, OkHttp, Gson, ML 
 
 ---
 
-### `packages/gradle-plugin`
+### [`packages/gradle-plugin`](../packages/gradle-plugin.md)
 
 **Language:** Kotlin  
 **Build system:** Gradle  
@@ -185,7 +185,7 @@ Dependencies: Kotlin, Jetpack Compose, Material 3, Coroutines, OkHttp, Gson, ML 
 
 ---
 
-### `packages/hot-reload-runtime`
+### [`packages/hot-reload-runtime`](../packages/hot-reload-runtime.md)
 
 **Language:** Kotlin  
 **Build system:** Gradle  
@@ -212,9 +212,9 @@ Dependencies: Kotlin, Jetpack Compose, Material 3, Coroutines, OkHttp, Gson, ML 
 @jetstart/web  ──────────────────────────────► @jetstart/shared
 @jetstart/logs ──────────────────────────────► @jetstart/shared
 
-packages/client          (Android, no npm dependencies)
-packages/gradle-plugin   (Kotlin, no npm dependencies)
-packages/hot-reload-runtime (Kotlin, no npm dependencies)
+[`packages/client`](../packages/client.md)          (Android, no npm dependencies)
+[`packages/gradle-plugin`](../packages/gradle-plugin.md)   (Kotlin, no npm dependencies)
+[`packages/hot-reload-runtime`](../packages/hot-reload-runtime.md) (Kotlin, no npm dependencies)
 ```
 
 The Android packages implement the WebSocket protocol defined in `@jetstart/shared` independently (no code sharing across runtimes).
