@@ -52,10 +52,11 @@ jobs:
 
       - name: Decode signing key
         run: |
-          echo "${{ secrets.RELEASE_SIGNING_KEY }}" | base64 -d > packages/client/jetstart.jks
+          echo "${{ secrets.RELEASE_SIGNING_KEY }}" | base64 -d > packages/client/app/jetstart.jks
 
       - name: Build Android client (Release)
         env:
+          RELEASE_STORE_FILE: jetstart.jks
           RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
