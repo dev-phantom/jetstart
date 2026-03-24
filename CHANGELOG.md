@@ -1,3 +1,15 @@
+# [2.1.0](https://github.com/dev-phantom/jetstart/compare/v2.0.2...v2.1.0) (2026-03-24)
+
+
+### Bug Fixes
+
+* **android:** resolve missing storeFile in release signing ([9cc51f5](https://github.com/dev-phantom/jetstart/commit/9cc51f59c4169d0e9a09362aec5e08ad38625ce3))
+
+
+### Features
+
+* Add new documentation pages, web components, client build configuration, and update ESLint rules. ([0fc08ff](https://github.com/dev-phantom/jetstart/commit/0fc08ff9390c51c5d017872062e618b82d67778f))
+
 ## [2.0.2](https://github.com/dev-phantom/jetstart/compare/v2.0.1...v2.0.2) (2026-03-22)
 
 
