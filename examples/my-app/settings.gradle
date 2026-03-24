@@ -1,0 +1,19 @@
+pluginManagement {
+    repositories {
+        mavenLocal()  // JetStart hot reload plugin
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "my-app"
+include ':app'

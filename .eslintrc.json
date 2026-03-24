@@ -30,6 +30,14 @@
     "node": true,
     "es2022": true
   },
+  "overrides": [
+    {
+      "files": ["**/*.js"],
+      "rules": {
+        "@typescript-eslint/no-var-requires": "off"
+      }
+    }
+  ],
   "ignorePatterns": [
     "dist",
     "build",

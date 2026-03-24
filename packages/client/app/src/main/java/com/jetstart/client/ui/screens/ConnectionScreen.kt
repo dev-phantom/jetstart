@@ -21,7 +21,6 @@ import com.jetstart.client.utils.ApkInstaller
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.compose.runtime.rememberCoroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +32,7 @@ fun ConnectionScreen(
     val isConnected by ConnectionManager.isConnected.collectAsState()
     val buildStatus by ConnectionManager.buildStatus.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var isDownloading by remember { mutableStateOf(false) }
     var downloadProgress by remember { mutableStateOf(0) }
@@ -58,9 +58,14 @@ fun ConnectionScreen(
     val showInstallButton = buildStatus is BuildStatus.Complete
     val apkDownloadUrl = (buildStatus as? BuildStatus.Complete)?.apkUrl
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -271,13 +276,13 @@ fun ConnectionScreen(
                                                             isDownloading = false
                                                         } else {
                                                             isDownloading = false
-                                                            // TODO: Show error
+                                                            snackbarHostState.showSnackbar("Failed to save APK following download")
                                                         }
                                                     }
                                                 } else {
                                                     coroutineScope.launch(Dispatchers.Main) {
                                                         isDownloading = false
-                                                        // TODO: Show error
+                                                        snackbarHostState.showSnackbar("Failed to download APK from server")
                                                     }
                                                 }
                                             }
@@ -285,7 +290,7 @@ fun ConnectionScreen(
                                     } catch (e: Exception) {
                                         coroutineScope.launch(Dispatchers.Main) {
                                             isDownloading = false
-                                            // TODO: Show error
+                                            snackbarHostState.showSnackbar("Error starting download: ${e.message}")
                                         }
                                     }
                                 }
@@ -324,6 +329,7 @@ fun ConnectionScreen(
                 Icon(Icons.Default.Close, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Disconnect")
+            }
             }
         }
     }

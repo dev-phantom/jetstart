@@ -12,7 +12,9 @@
     "deploy-graphql": "sanity graphql deploy"
   },
   "keywords": [
-    "sanity"
+    "sanity",
+    "blog",
+    "landing-page"
   ],
   "dependencies": {
     "@sanity/vision": "^3.0.0",

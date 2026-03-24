@@ -10,8 +10,36 @@ import { error as logError } from '../utils/logger';
 
 export function setupMiddleware(app: Express): void {
   // CORS
+  const isAllowedOrigin = (origin: string): boolean => {
+    // Standard allowed origins
+    const allowedOrigins = [
+      'http://localhost:8000',
+      'http://localhost:3000',
+      'http://localhost:8765',
+      'http://localhost:8766',
+      'http://localhost:8767',
+      ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
+    ];
+
+    if (allowedOrigins.indexOf(origin) !== -1) return true;
+
+    // Allow jetstart.site and any subdomains
+    if (origin === 'https://jetstart.site' || origin.endsWith('.jetstart.site')) return true;
+
+    return false;
+  };
+
   app.use(cors({
-    origin: '*',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (isAllowedOrigin(origin) || !process.env.IS_PROD) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }));

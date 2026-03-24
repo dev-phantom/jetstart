@@ -1,4 +1,4 @@
-﻿---
+---
 sidebar_position: 2
 title: jetstart create
 description: Scaffold a new Android/Compose project with JetStart
@@ -79,11 +79,8 @@ my-awesome-app/
 │       └── main/
 │           ├── AndroidManifest.xml
 │           ├── java/
-│           │   ├── com/jetstart/hotreload/
-│           │   │   └── IncrementalChange.java   # ⚠️ Core Interface (Do not edit)
 │           │   └── com/example/myapp/           # Your app package
 │           │       ├── MainActivity.kt          # App entry point
-│           │       ├── JetStart.kt              # ⚠️ Hot Reload Engine (Do not edit)
 │           │       ├── data/                    # Data models
 │           │       ├── logic/                   # Business logic
 │           │       └── ui/                      # UI screens & components
@@ -99,9 +96,7 @@ my-awesome-app/
 └── README.md
 ```
 
-:::warning Hands Off Core Files
-The files **`IncrementalChange.java`** and **`JetStart.kt`** are the heart of the JetStart hot-reload engine. Unless you are an advanced user extending the engine itself, **do not edit, move, or rename these files**. Modifying them will break the hot-reloading functionality.
-:::
+
 
 The generated app includes:
 - Jetpack Compose with Material 3

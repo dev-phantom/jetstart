@@ -7,10 +7,10 @@ import { promisify } from 'util';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
-import { compareVersions, isVersionCompatible } from '@jetstart/shared';
+import { compareVersions } from '@jetstart/shared';
+import which from 'which';
 
 const execAsync = promisify(exec);
-const which = require('which');
 
 export interface ToolInfo {
   name: string;

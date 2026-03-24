@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Template Generator
  * Creates project structure from file-based templates
  *
@@ -9,13 +9,10 @@
 
 import path from 'path';
 import fs from 'fs-extra';
+import os from 'os';
 import { spawn } from 'child_process';
 import { TemplateOptions } from '../types';
 import { MIN_ANDROID_API_LEVEL, TARGET_ANDROID_API_LEVEL } from '@jetstart/shared';
-
-// ============================================================================
-// Placeholder Variables
-// ============================================================================
 
 /**
  * Build the variable map from TemplateOptions
@@ -32,10 +29,6 @@ function buildVariableMap(options: TemplateOptions): Record<string, string> {
   };
 }
 
-// ============================================================================
-// Template Processing
-// ============================================================================
-
 /**
  * Resolve the template directory.
  * When compiled, template.ts lives at packages/cli/dist/utils/template.js,
@@ -45,9 +38,9 @@ function buildVariableMap(options: TemplateOptions): Record<string, string> {
  */
 function getTemplateDir(): string {
   // Published:  __dirname = .../node_modules/@jetstart/cli/dist/utils
-  //             2 levels up = @jetstart/cli root → template/base ✅
+  //             2 levels up = @jetstart/cli root → template/base 
   // Local dev:  __dirname = packages/cli/dist/utils or src/utils
-  //             2 levels up = packages/cli → template/base ✅
+  //             2 levels up = packages/cli → template/base 
   return path.resolve(__dirname, '..', '..', 'template', 'base');
 }
 
@@ -109,10 +102,6 @@ async function walkDir(dir: string, base?: string): Promise<string[]> {
   return files;
 }
 
-// ============================================================================
-// Core Template Functions
-// ============================================================================
-
 /**
  * Copy the template folder to the project path, replacing placeholders.
  */
@@ -149,10 +138,6 @@ async function copyTemplateWithVariables(
   }
 }
 
-// ============================================================================
-// Dynamic File Generators (keep as code — not template files)
-// ============================================================================
-
 /**
  * Generate jetstart.config.json (dynamic JSON structure)
  */
@@ -165,7 +150,7 @@ async function generateJetStartConfig(
     packageName: options.packageName,
     version: '1.0.0',
     jetstart: {
-      version: '0.1.0',
+      version: '2.0.0',
       enableHotReload: true,
       enableLogs: true,
       port: 8765,
@@ -184,22 +169,27 @@ async function generateGradleWrapper(projectPath: string): Promise<void> {
 
     const gradleProcess = spawn(gradleCmd, ['wrapper', '--gradle-version', '8.2'], {
       cwd: projectPath,
-      shell: true,
+      // On Windows, .bat files need a shell. On other platforms, we can run 'gradle' directly.
+      // We use shell: true only on Windows to avoid the security warning on other platforms
+      // and ensure .bat files execute.
+      shell: process.platform === 'win32',
     });
 
+    // Timeout after 30 seconds
+    const timeout = setTimeout(() => {
+      gradleProcess.kill();
+      resolve();
+    }, 30000);
+
     gradleProcess.on('close', () => {
+      clearTimeout(timeout);
       resolve();
     });
 
     gradleProcess.on('error', () => {
+      clearTimeout(timeout);
       resolve();
     });
-
-    // Timeout after 30 seconds
-    setTimeout(() => {
-      gradleProcess.kill();
-      resolve();
-    }, 30000);
   });
 }
 
@@ -216,7 +206,7 @@ async function generateLocalProperties(projectPath: string): Promise<void> {
   if (!androidSdkPath && process.platform === 'win32') {
     const commonPaths = [
       'C:\\Android',
-      path.join(require('os').homedir(), 'AppData', 'Local', 'Android', 'Sdk'),
+      path.join(os.homedir(), 'AppData', 'Local', 'Android', 'Sdk'),
       'C:\\Android\\Sdk',
       'C:\\Program Files (x86)\\Android\\android-sdk',
     ];
@@ -232,8 +222,8 @@ async function generateLocalProperties(projectPath: string): Promise<void> {
   // If not found on macOS/Linux, check common paths
   if (!androidSdkPath && process.platform !== 'win32') {
     const commonPaths = [
-      path.join(require('os').homedir(), 'Android', 'Sdk'),
-      path.join(require('os').homedir(), 'Library', 'Android', 'sdk'),
+      path.join(os.homedir(), 'Android', 'Sdk'),
+      path.join(os.homedir(), 'Library', 'Android', 'sdk'),
       '/opt/android-sdk',
     ];
 
@@ -260,10 +250,6 @@ sdk.dir=${androidSdkPath.replace(/\\/g, '\\\\')}
   console.log(`[JetStart] Created local.properties with SDK: ${androidSdkPath}`);
 }
 
-// ============================================================================
-// Main Entry Point
-// ============================================================================
-
 /**
  * Generate a new JetStart project from the file-based template.
  *
@@ -288,10 +274,10 @@ export async function generateProjectTemplate(
   // Build variable map
   const variables = buildVariableMap(options);
 
-  // 1. Copy template files with variable substitution + package path rename
+  // Copy template files with variable substitution + package path rename
   await copyTemplateWithVariables(templateDir, projectPath, variables, options.packageName);
 
-  // 2. Generate dynamic files
+  // Generate dynamic files
   await generateGradleWrapper(projectPath);
   await generateLocalProperties(projectPath);
   await generateJetStartConfig(projectPath, options);

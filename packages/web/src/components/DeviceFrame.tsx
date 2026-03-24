@@ -4,6 +4,7 @@ import { useComposeRenderer } from '../services/ComposeRenderer';
  */
 
 import { BuildStatusInfo } from '../hooks/useWebSocket';
+import { formatFileSize } from '../utils/file';
 import './DeviceFrame.css';
 
 export interface DeviceFrameProps {
@@ -17,11 +18,11 @@ export interface DeviceFrameProps {
 }
 
 export function DeviceFrame({ buildStatus, projectName, currentDSL: _currentDSL, dslHash: _dslHash, dexReloadInfo, jsUpdate }: DeviceFrameProps) {
-  // DSL parsing removed — server now sends DEX hot reload + JS preview
+  // server sends DEX hot reload + JS preview
   const { element: composeElement, isLoading: composeLoading, error: composeError, sourceFile: composeSource, compileMs } = useComposeRenderer(jsUpdate);
 
   const renderContent = () => {
-    // ── Live Compose rendering (kotlinc-js pipeline) ─────────────────────────
+    // Live Compose rendering (kotlinc-js pipeline)
     if (composeLoading) {
       return (
         <div className="device-content-message building">
@@ -170,12 +171,4 @@ function getCurrentTime(): string {
   });
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
 
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
-}

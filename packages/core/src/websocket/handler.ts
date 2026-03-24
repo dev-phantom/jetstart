@@ -99,7 +99,7 @@ export class WebSocketHandler {
     const incomingSession = message.sessionId;
     const incomingToken   = (message as any).token as string | undefined;
 
-    // ── Session + token validation ──────────────────────────────────────────
+    // Session + token validation
     // Only validate when the server has an expected session configured.
     if (this.expectedSessionId) {
       if (incomingSession !== this.expectedSessionId) {
@@ -107,7 +107,7 @@ export class WebSocketHandler {
           `Rejected client ${clientId}: wrong session "${incomingSession}" (expected "${this.expectedSessionId}")`
         );
         logError('This device was built against a different jetstart dev session. Rescan the QR code.');
-        // Close the WebSocket immediately — do not accept this client.
+        // Close the WebSocket immediately — does not accept this client.
         const ws = this.connectionManager.getConnection(clientId);
         if (ws) {
           ws.close(4001, 'Session mismatch — rescan QR code');
@@ -129,7 +129,7 @@ export class WebSocketHandler {
       }
     }
 
-    // ── Accepted ─────────────────────────────────────────────────────────────
+    // Accepted 
     log(`Client accepted (session: ${incomingSession})`);
     this.connectionManager.setClientSession(clientId, incomingSession);
 
@@ -196,7 +196,7 @@ export class WebSocketHandler {
    * Send compiled Kotlin→JS ES module to web emulator clients.
    * The browser imports it dynamically and renders the Compose UI as HTML.
    */
-  sendJsUpdate(sessionId: string, jsBase64: string, sourceFile: string, byteSize: number, screenFunctionName: string): void {
+  sendJsUpdate(sessionId: string, jsBase64: string, sourceFile: string, byteSize: number, _screenFunctionName: string): void {
     const message: CoreJsUpdateMessage = {
       type: 'core:js-update',
       timestamp: Date.now(),

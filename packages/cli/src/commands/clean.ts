@@ -4,10 +4,10 @@
  *
  * What locks an Android project folder on Windows
  * ─────────────────────────────────────────────────
- * 1. Gradle daemons      — background JVMs watching build outputs
+ * 1. Gradle daemons — background JVMs watching build outputs
  * 2. VS Code language servers — Kotlin LS, Gradle for Java, Java LS
  *    (all run as java.exe and open file handles inside .gradle / .kotlin)
- * 3. Node.js / npx watchers  — jetstart dev file watcher (chokidar)
+ * 3. Node.js / npx watchers — jetstart dev file watcher (chokidar)
  *
  * Fixes 1+2 by killing every java.exe (they restart automatically when
  * VS Code needs them).  Fix 3 by killing Node processes whose command line
@@ -55,10 +55,9 @@ function killAllJavaProcesses(): number {
   if (process.platform !== 'win32') return 0;
   try {
     execSync('taskkill /F /IM java.exe', { stdio: 'ignore', timeout: 8000 });
-    // Count how many were running before
-    return 1; // at least 1 killed (we don't need exact count)
+    return 1; // at least 1 killed 
   } catch {
-    return 0; // none running — that's fine
+    return 0; // none running
   }
 }
 
@@ -87,7 +86,6 @@ function killProjectNodeProcesses(projectPath: string): number {
     });
     killed = out.trim().split('\n').filter(Boolean).length;
   } catch {
-    // fallback — just kill all node.exe if PowerShell query fails
     // (conservative: skip this fallback to avoid killing unrelated Node processes)
   }
 
@@ -110,7 +108,7 @@ export async function cleanCommand(options: CleanOptions = {}) {
   log('JetStart Clean — releasing file locks');
   console.log();
 
-  // ── 1. Graceful Gradle daemon stop ──────────────────────────────────────
+  // Graceful Gradle daemon stop 
   const daemonSpinner = startSpinner('Stopping Gradle daemons gracefully...');
   const gradle = findGradle(projectPath);
   if (gradle) {
@@ -123,7 +121,7 @@ export async function cleanCommand(options: CleanOptions = {}) {
   }
   stopSpinner(daemonSpinner, true, 'Gradle daemons stopped');
 
-  // ── 2. Kill ALL java.exe (Gradle + VS Code language servers) ────────────
+  // Kill ALL java.exe (Gradle + VS Code language servers)
   const javaSpinner = startSpinner(
     'Killing Java processes (Gradle daemons + VS Code language servers)...'
   );
@@ -144,7 +142,7 @@ export async function cleanCommand(options: CleanOptions = {}) {
     return;
   }
 
-  // ── 3. Kill Node.js watchers for this project ────────────────────────────
+  // Kill Node.js watchers for this project 
   const nodeSpinner = startSpinner('Stopping Node.js file watchers for this project...');
   const killedNode = killProjectNodeProcesses(projectPath);
   stopSpinner(
@@ -155,7 +153,7 @@ export async function cleanCommand(options: CleanOptions = {}) {
       : 'No Node.js watchers found for this project'
   );
 
-  // ── 4. Remove build output ───────────────────────────────────────────────
+  // Remove build output 
   if (options.build) {
     const buildSpinner = startSpinner('Removing build output...');
     let removed = 0;
@@ -171,7 +169,7 @@ export async function cleanCommand(options: CleanOptions = {}) {
         : 'Build directories already clean');
   }
 
-  // ── 5. Remove .gradle and .kotlin cache dirs (VS Code lock sources) ──────
+  // Remove .gradle and .kotlin cache dirs (VS Code lock sources
   const gradleCacheSpinner = startSpinner('Removing .gradle and .kotlin cache directories...');
   let cacheRemoved = 0;
   for (const dir of [
@@ -187,11 +185,11 @@ export async function cleanCommand(options: CleanOptions = {}) {
       ? `Removed ${cacheRemoved} cache director${cacheRemoved === 1 ? 'y' : 'ies'}`
       : 'Cache directories already clean');
 
-  // ── 6. Remove JetStart cache ─────────────────────────────────────────────
+  // Remove JetStart cache 
   const cacheDir = path.join(projectPath, '.jetstart');
   if (await fs.pathExists(cacheDir)) await fs.remove(cacheDir);
 
-  // ── 7. Summary ───────────────────────────────────────────────────────────
+  // Summary 
   console.log();
   success('Clean complete. Try deleting the folder now.');
   console.log();

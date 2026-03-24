@@ -26,6 +26,7 @@ export interface UseWebSocketReturn {
   dexReloadInfo: { classNames: string[]; count: number; timestamp: number } | null;
   /** Latest compiled JS module for web live preview — null until first hot reload. */
   jsUpdate: { jsBase64: string; sourceFile: string; byteSize: number; timestamp: number } | null;
+  reloadTrigger: number;
   connect: () => void;
   disconnect: () => void;
   sendStatus: (status: SessionStatus, message?: string) => void;
@@ -54,8 +55,9 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
   });
   const [currentDSL, setCurrentDSL] = useState<string | null>(null);
   const [dslHash, setDslHash] = useState<string | null>(null);
-  const [dexReloadInfo, setDexReloadInfo] = useState<{ classNames: string[]; count: number; timestamp: number } | null>(null);
-  const [jsUpdate, setJsUpdate] = useState<{ jsBase64: string; sourceFile: string; byteSize: number; timestamp: number } | null>(null);
+  const [dexReloadInfo, setDexReloadInfo] = useState<UseWebSocketReturn['dexReloadInfo']>(null);
+  const [jsUpdate, setJsUpdate] = useState<UseWebSocketReturn['jsUpdate']>(null);
+  const [reloadTrigger, setReloadTrigger] = useState<number>(0);
 
   const clientRef = useRef<CoreClient | null>(null);
 
@@ -135,7 +137,11 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
       onReload: (reloadType) => {
         console.log('Reload requested:', reloadType);
-        // In a real implementation, this would trigger a reload of the app preview
+        if (reloadType === 'full') {
+          setReloadTrigger((prev) => prev + 1);
+        }
+        // For both 'full' and 'hot', we want to force re-evaluation of the current JS module
+        setJsUpdate((prev) => (prev ? { ...prev, timestamp: Date.now() } : null));
       },
 
       onDisconnect: (reason) => {
@@ -200,6 +206,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     dslHash,
     dexReloadInfo,
     jsUpdate,
+    reloadTrigger,
     connect,
     disconnect,
     sendStatus,

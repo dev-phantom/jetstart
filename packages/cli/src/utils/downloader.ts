@@ -5,6 +5,8 @@
 import axios from 'axios';
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import * as os from 'os';
+import extract from 'extract-zip';
 import { startSpinner, stopSpinner } from './spinner';
 import { error as logError } from './logger';
 
@@ -135,8 +137,7 @@ export async function downloadAndExtract(
   extractPath: string,
   progressLabel?: string
 ): Promise<void> {
-  const extract = require('extract-zip');
-  const tempZip = path.join(require('os').tmpdir(), `jetstart-download-${Date.now()}.zip`);
+  const tempZip = path.join(os.tmpdir(), `jetstart-download-${Date.now()}.zip`);
 
   try {
     // Download

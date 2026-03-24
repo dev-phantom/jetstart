@@ -2,7 +2,7 @@
  * Main Server Entry Point
  * Starts HTTP and WebSocket servers
  */
-
+import 'dotenv/config';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -141,8 +141,8 @@ export class JetStartServer extends EventEmitter {
         port: this.config.wsPort,
         logsServer: this.logsServer,
         adbHelper: this.adbHelper,  // Enable wireless ADB auto-connect
-        expectedSessionId: this.currentSession?.id,   // Reject old-session devices
-        expectedToken:     this.currentSession?.token, // Validate token too
+        expectedSessionId: this.currentSession?.id,  
+        expectedToken:     this.currentSession?.token,
         projectName:       this.config.projectName,
         onClientConnected: async (sessionId: string) => {
           log(`Client connected (session: ${sessionId}). Triggering initial build...`);
@@ -250,7 +250,7 @@ export class JetStartServer extends EventEmitter {
         // Store the APK path
         this.latestApkPath = result.apkPath || null;
 
-        // Send full download URL to client (not just relative path)
+        // Send full download URL to client
         const downloadUrl = `http://${this.config.displayHost}:${this.config.httpPort}/download/app.apk`;
         this.wsHandler.sendBuildComplete(this.currentSession.id, downloadUrl);
         log(`APK download URL: ${downloadUrl}`);
@@ -273,7 +273,7 @@ export class JetStartServer extends EventEmitter {
                   const cfg = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
                   appPackageName = cfg.packageName || appPackageName;
                 }
-              } catch (_) { /* empty */ }
+              } catch (error) { console.log("couldnt find package name") }
               await this.adbHelper.launchApp(appPackageName, '.MainActivity');
             } else {
               error(`Auto-install failed: ${installResult.error}`);
@@ -331,7 +331,7 @@ export class JetStartServer extends EventEmitter {
       const result = await this.buildService.build({
         projectPath: this.config.projectPath,
         outputPath: path.join(this.config.projectPath, 'build/outputs/apk'),
-        buildType: 'debug' as any, // BuildType.DEBUG
+        buildType: 'debug' as any, 
         minifyEnabled: false,
         debuggable: true,
         versionCode: 1,

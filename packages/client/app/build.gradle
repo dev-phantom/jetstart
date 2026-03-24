@@ -20,9 +20,33 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            def props = new Properties()
+            def propFile = file("../local.properties")
+            if (propFile.exists()) {
+                props.load(new FileInputStream(propFile))
+            }
+
+            // Prioritize environment variables (for CI), fallback to local.properties
+            def sFile = System.getenv("RELEASE_STORE_FILE") ?: props['signing.storeFile']
+            def sPassword = System.getenv("RELEASE_STORE_PASSWORD") ?: props['signing.storePassword']
+            def kAlias = System.getenv("RELEASE_KEY_ALIAS") ?: props['signing.keyAlias']
+            def kPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: props['signing.keyPassword']
+
+            if (sFile && sPassword && kAlias && kPassword) {
+                storeFile file(sFile)
+                storePassword sPassword
+                keyAlias kAlias
+                keyPassword kPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            signingConfig signingConfigs.release
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

@@ -8,7 +8,7 @@ const config: Config = {
   favicon: 'img/logos/logo.png',
 
   // Set the production url of your site here
-  url: 'https://jetstart.dev',
+  url: 'https://jetstart.site',
   // Set the /<baseUrl>/ pathname under which your site is served
   baseUrl: '/',
 
@@ -87,7 +87,6 @@ const config: Config = {
   ],
 
   themeConfig: {
-    // Replace with your project's social card
     image: 'img/jetstart-social-card.png',
     navbar: {
       title: 'JetStart',

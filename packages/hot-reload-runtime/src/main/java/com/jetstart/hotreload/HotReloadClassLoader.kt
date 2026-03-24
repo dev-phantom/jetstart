@@ -17,25 +17,25 @@ class HotReloadClassLoader(
 ) : DexClassLoader(dexPath, optimizedDirectory, librarySearchPath, parent) {
 
     override fun loadClass(name: String, resolve: Boolean): Class<*> {
-        // 1. Check if class is already loaded to prevent duplicate class definition
+        // Check if class is already loaded to prevent duplicate class definition
         var c = findLoadedClass(name)
         if (c != null) {
             if (resolve) resolveClass(c)
             return c
         }
 
-        // 2. Delegate system classes to parent immediately to avoid conflicts
+        // Delegate system classes to parent immediately to avoid conflicts
         if (name.startsWith("java.") || name.startsWith("android.") || name.startsWith("androidx.") || name.startsWith("kotlin.")) {
             return super.loadClass(name, resolve)
         }
 
-        // 3. Try to find the class in THIS dex file (child-first)
+        // Try to find the class in THIS dex file (child-first)
         try {
             c = findClass(name)
             if (resolve) resolveClass(c)
             return c
         } catch (e: ClassNotFoundException) {
-            // 4. If not found in DEX, delegate to parent (dependencies, etc.)
+            // If not found in DEX, delegate to parent (dependencies, etc.)
             return super.loadClass(name, resolve)
         }
     }

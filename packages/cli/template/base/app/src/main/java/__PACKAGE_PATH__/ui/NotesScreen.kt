@@ -116,8 +116,6 @@ fun NoteItem(note: Note, onDelete: () -> Unit) {
                     }
                 }
             }
-            
-            // Timestamp (optional, maybe too much clutter)
         }
     }
 }
@@ -176,10 +174,3 @@ fun AddNoteDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit, viewModel: Not
         }
     )
 }
-
-
-
-
-
-
-// Trigger hot reload 10

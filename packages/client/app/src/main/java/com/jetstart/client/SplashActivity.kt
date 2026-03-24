@@ -34,7 +34,6 @@ class SplashActivity : ComponentActivity() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Logo with Rounded Corners
                     Image(
                         painter = painterResource(id = R.drawable.logo),
                         contentDescription = "Logo",

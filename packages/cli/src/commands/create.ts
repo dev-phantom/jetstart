@@ -25,7 +25,7 @@ async function runFullInstallation(): Promise<void> {
   info('Starting full automated installation...');
   console.log();
 
-  // 1. Check and install Java
+  // Check and install Java
   const java = await detectJava();
   if (!java || !(await isJavaCompatible(java.version))) {
     await installJava();
@@ -33,7 +33,7 @@ async function runFullInstallation(): Promise<void> {
     success(`Java ${java.version} already installed`);
   }
 
-  // 2. Check and install Android SDK
+  // Check and install Android SDK
   const sdkManager = createSDKManager();
   const sdkRoot = await findAndroidSDK();
 
@@ -44,7 +44,7 @@ async function runFullInstallation(): Promise<void> {
     success(`Android SDK found at ${sdkRoot}`);
   }
 
-  // 3. Install required SDK components
+  // Install required SDK components
   for (const component of REQUIRED_SDK_COMPONENTS) {
     await sdkManager.installComponent(component);
   }
@@ -159,6 +159,9 @@ export async function createCommand(name: string, options: CreateOptions) {
 
       if (shouldCheckDeps) {
         await runInteractiveInstallation();
+      } else {
+        // If user skips system dependencies, also skip project dependencies to be consistent
+        options.skipInstall = true;
       }
     }
 
@@ -229,6 +232,8 @@ export async function createCommand(name: string, options: CreateOptions) {
       console.log(`  ${chalk.cyan('jetstart dev')}`);
       console.log();
 
+      // Ensure process exits promptly
+      process.exit(0);
     } catch (err: any) {
       stopSpinner(spinner, false, 'Failed to create project');
       throw err;

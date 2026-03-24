@@ -14,7 +14,7 @@
 import path from 'path';
 import fs from 'fs-extra';
 import chalk from 'chalk';
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import * as os from 'os';
 import { log, success, error, info, warning } from '../utils/logger';
 import { startSpinner, stopSpinner } from '../utils/spinner';
@@ -42,7 +42,7 @@ interface JetStartConfig {
   version?: string;
 }
 
-// Helpers ---------------------------------------------------------------
+// Helpers
 
 async function readJetStartConfig(projectPath: string): Promise<JetStartConfig | null> {
   const p = path.join(projectPath, 'jetstart.config.json');
@@ -148,7 +148,7 @@ function findOutput(projectPath: string, release: boolean, bundle: boolean, flav
   return candidates.find(c => fs.existsSync(c)) ?? null;
 }
 
-// Main ------------------------------------------------------------------
+// Main 
 
 export async function buildCommand(options: BuildOptions) {
   const isRelease = !!options.release;
@@ -161,7 +161,7 @@ export async function buildCommand(options: BuildOptions) {
   log(chalk.bold('JetStart Build ' + buildLabel));
   console.log();
 
-  // 1. Validate
+  // Validate
   const valSpinner = startSpinner('Validating project...');
   const buildGradlePath = path.join(projectPath, 'app', 'build.gradle');
 
@@ -181,7 +181,7 @@ export async function buildCommand(options: BuildOptions) {
   const config = await readJetStartConfig(projectPath);
   stopSpinner(valSpinner, true, 'Validated' + (config ? ' · ' + config.packageName : ''));
 
-  // 2. Keystore
+  // Keystore
   let ks: KeystoreConfig | null = null;
   if (isRelease && options.sign) {
     const ksSpinner = startSpinner('Loading keystore...');
@@ -208,14 +208,13 @@ export async function buildCommand(options: BuildOptions) {
     console.log();
   }
 
-  // 2b. Self-sign: auto-generate test keystore if --self-sign passed without --sign
+  // Self-sign: auto-generate test keystore if --self-sign passed without --sign
   if (isRelease && options.selfSign && !ks) {
     const ssSpinner = startSpinner('Generating self-signed test keystore...');
     try {
       const ksPath = path.join(projectPath, 'jetstart-test.jks');
-      const { execSync } = require('child_process');
       const tp = ['jetstart', 'test'].join('');
-      if (!require('fs-extra').existsSync(ksPath)) {
+      if (!fs.existsSync(ksPath)) {
         execSync(
           'keytool -genkey -v -keystore "' + ksPath + '" -keyalg RSA -keysize 2048 -validity 3650' +
           ' -alias jetstart-test -storepass ' + tp + ' -keypass ' + tp +
@@ -232,7 +231,7 @@ export async function buildCommand(options: BuildOptions) {
     }
   }
 
-  // 3. Security hardening (release only)
+  // Security hardening (release only)
   let originalGradle: string | null = null;
   if (isRelease) {
     const secSpinner = startSpinner('Applying release security hardening...');
@@ -247,7 +246,7 @@ export async function buildCommand(options: BuildOptions) {
     }
   }
 
-  // 4. Build
+  // Build
   await fs.ensureDir(outputDir);
   const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   const variant = options.flavor
@@ -275,7 +274,7 @@ export async function buildCommand(options: BuildOptions) {
     process.exit(1);
   }
 
-  // 5. Copy output
+  // Copy output
   const outputPath = findOutput(projectPath, isRelease, isBundle, options.flavor);
   if (!outputPath) {
     error('Build succeeded but output file not found. Check app/build/outputs/');
@@ -288,7 +287,7 @@ export async function buildCommand(options: BuildOptions) {
   const destPath = path.join(outputDir, destName);
   await fs.copy(outputPath, destPath, { overwrite: true });
 
-  // 6. Summary
+  // Summary
   console.log();
   success(chalk.bold('Build complete in ' + elapsed + 's'));
   console.log();

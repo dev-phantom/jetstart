@@ -24,7 +24,7 @@ export class EmulatorDeployer {
   /**
    * Install APK on emulator
    */
-  async installAPK(apkPath: string, packageName?: string): Promise<void> {
+  async installAPK(apkPath: string, _packageName?: string): Promise<void> {
     const spinner = startSpinner('Installing APK on emulator...');
 
     try {
@@ -34,7 +34,7 @@ export class EmulatorDeployer {
       }
 
       // Use -r flag to reinstall if already exists
-      const { stdout, stderr } = await execAsync(
+      const { stderr } = await execAsync(
         `"${this.adbPath}" -s ${this.serial} install -r "${apkPath}"`
       );
 

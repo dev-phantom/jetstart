@@ -20,7 +20,7 @@ function App() {
   const [sessionId, setSessionId] = useState<string>('');
   const [token, setToken] = useState<string>('');
   const [wsUrl, setWsUrl] = useState<string | undefined>(undefined);
-  const [isConfigured, setIsConfigured] = useState(false);
+  const [isConfigured, setIsConfigured] = useState<boolean>(false);
 
   const {
     state,
@@ -32,6 +32,7 @@ function App() {
     dslHash,
     dexReloadInfo,
     jsUpdate,
+    reloadTrigger,
     connect,
   } = useWebSocket({
     sessionId,
@@ -83,13 +84,6 @@ function App() {
       connect();
     }
   }, [isConfigured, isConnected, connect]);
-
-  // Removed mock logs
-  useEffect(() => {
-    if (isConnected && projectName) {
-        // Optional: Manual log if needed
-    }
-  }, [isConnected, projectName]);
 
   // Add build status logs
   useEffect(() => {
@@ -168,6 +162,7 @@ function App() {
       <div className="app-content">
         <div className="main-panel">
           <DeviceFrame
+            key={reloadTrigger}
             buildStatus={buildStatus}
             projectName={projectName}
             currentDSL={currentDSL}

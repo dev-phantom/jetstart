@@ -129,3 +129,4 @@ packages/gradle-plugin/build/
 packages/cli/maven-repo/
 *.d.ts.map
 *.js.map
+*.jks
