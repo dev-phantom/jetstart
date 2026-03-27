@@ -1,3 +1,11 @@
+# [2.2.0](https://github.com/dev-phantom/jetstart/compare/v2.1.0...v2.2.0) (2026-03-27)
+
+
+### Features
+
+* added the jetstart vscode extension package and fix the [DEP0190] ([5358268](https://github.com/dev-phantom/jetstart/commit/5358268f4c52b915fe5f4c5735f110dc89103196))
+* added vscode extention and updated the docs ([baef666](https://github.com/dev-phantom/jetstart/commit/baef666d25e3f29b6b2c5a1054a7561008a70c69))
+
 # [2.1.0](https://github.com/dev-phantom/jetstart/compare/v2.0.2...v2.1.0) (2026-03-24)
 
 
