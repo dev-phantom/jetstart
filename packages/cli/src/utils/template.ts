@@ -167,12 +167,15 @@ async function generateGradleWrapper(projectPath: string): Promise<void> {
   return new Promise<void>((resolve) => {
     const gradleCmd = process.platform === 'win32' ? 'gradle.bat' : 'gradle';
 
-    const gradleProcess = spawn(gradleCmd, ['wrapper', '--gradle-version', '8.2'], {
+    const spawnArgs = process.platform === 'win32' 
+      ? ['/c', gradleCmd, 'wrapper', '--gradle-version', '8.2'] 
+      : ['wrapper', '--gradle-version', '8.2'];
+    const spawnCmd = process.platform === 'win32' ? 'cmd.exe' : gradleCmd;
+
+    const gradleProcess = spawn(spawnCmd, spawnArgs, {
       cwd: projectPath,
-      // On Windows, .bat files need a shell. On other platforms, we can run 'gradle' directly.
-      // We use shell: true only on Windows to avoid the security warning on other platforms
-      // and ensure .bat files execute.
-      shell: process.platform === 'win32',
+      // Avoid shell: true to prevent [DEP0190] warning on newer Node versions
+      shell: false,
     });
 
     // Timeout after 30 seconds

@@ -1,0 +1,63 @@
+{
+  "name": "jetstart-kotlin-snippets",
+  "displayName": "JetStart Kotlin & Compose Snippets",
+  "description": "Robust snippets for Kotlin and Jetpack Compose — package-aware, import-aware, built for Android developers.",
+  "version": "2.0.1",
+  "publisher": "jetstart",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Snippets",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "kotlin",
+    "jetpack compose",
+    "android",
+    "snippets",
+    "material3",
+    "jetstart"
+  ],
+  "activationEvents": [
+    "onLanguage:kotlin"
+  ],
+  "main": "./dist/extension.js",
+  "icon": "images/logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dev-phantom/jetstart.git",
+    "directory": "packages/extension"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "jetstartSnippets.insertPackage",
+        "title": "JetStart: Insert Package Declaration",
+        "category": "JetStart"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "jetstartSnippets.insertPackage",
+        "key": "ctrl+shift+p ctrl+shift+k",
+        "when": "editorLangId == kotlin"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package --no-dependencies",
+    "build": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.0"
+  },
+  "license": "MIT"
+}
