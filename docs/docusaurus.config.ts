@@ -3,8 +3,8 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'JetStart',
-  tagline: 'Build Android apps faster than ever with instant hot reload.',
+  title: 'JetStart | Instant Hot Reload for Android & Jetpack Compose',
+  tagline: 'The fastest way to develop Android apps with sub-100ms hot reload in any emulator.',
   favicon: 'img/logos/logo.png',
 
   // Set the production url of your site here
@@ -87,7 +87,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/jetstart-social-card.png',
+    image: 'img/socials/jetstart-social-card.png',
     navbar: {
       title: 'JetStart',
       logo: {

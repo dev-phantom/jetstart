@@ -50,6 +50,9 @@
   --ifm-menu-color: #FFFFFF;
 }
 
+a{
+  text-decoration: none !important;
+}
 /* Specific override for Docusaurus dark footer style */
 .footer--dark {
   --ifm-footer-background-color: #222222;

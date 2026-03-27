@@ -2,6 +2,8 @@
 
 Robust, package-aware, and import-aware snippets for Kotlin and Jetpack Compose. Built specifically for Android developers looking for a fast, React-like scaffold experience.
 
+![JetStart Social Card](images/social-card.png)
+
 
 ## Features
 

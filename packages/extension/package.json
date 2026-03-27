@@ -2,7 +2,7 @@
   "name": "jetstart-kotlin-snippets",
   "displayName": "JetStart Kotlin & Compose Snippets",
   "description": "Robust snippets for Kotlin and Jetpack Compose — package-aware, import-aware, built for Android developers.",
-  "version": "2.0.1",
+  "version": "2.0.5",
   "publisher": "jetstart",
   "engines": {
     "vscode": "^1.85.0"

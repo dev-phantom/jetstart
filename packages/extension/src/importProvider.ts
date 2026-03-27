@@ -82,14 +82,31 @@ export const IMPORT_MAP: Record<string, string[]> = {
   PaddingValues:        ['androidx.compose.foundation.layout.PaddingValues'],
   Arrangement:          ['androidx.compose.foundation.layout.Arrangement'],
   WindowInsets:         ['androidx.compose.foundation.layout.WindowInsets'],
+  size:                 ['androidx.compose.foundation.layout.size'],
+  width:                ['androidx.compose.foundation.layout.width'],
+  height:               ['androidx.compose.foundation.layout.height'],
+  wrapContentSize:      ['androidx.compose.foundation.layout.wrapContentSize'],
+  offset:               ['androidx.compose.foundation.layout.offset'],
+
+  // Compose Foundation Scrolling
+  verticalScroll:       ['androidx.compose.foundation.verticalScroll'],
+  horizontalScroll:     ['androidx.compose.foundation.horizontalScroll'],
+  rememberScrollState:  ['androidx.compose.foundation.rememberScrollState'],
 
   // Compose Foundation Lazy
   LazyColumn:           ['androidx.compose.foundation.lazy.LazyColumn'],
   LazyRow:              ['androidx.compose.foundation.lazy.LazyRow'],
   LazyVerticalGrid:     ['androidx.compose.foundation.lazy.grid.LazyVerticalGrid'],
+  LazyHorizontalGrid:   ['androidx.compose.foundation.lazy.grid.LazyHorizontalGrid'],
   GridCells:            ['androidx.compose.foundation.lazy.grid.GridCells'],
+  items:                ['androidx.compose.foundation.lazy.items', 'androidx.compose.foundation.lazy.grid.items'],
   LazyVerticalStaggeredGrid: ['androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid'],
   StaggeredGridCells:   ['androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells'],
+
+  // Compose Pager
+  HorizontalPager:      ['androidx.compose.foundation.pager.HorizontalPager'],
+  VerticalPager:        ['androidx.compose.foundation.pager.VerticalPager'],
+  rememberPagerState:   ['androidx.compose.foundation.pager.rememberPagerState'],
 
   // Compose UI
   Modifier:             ['androidx.compose.ui.Modifier'],
@@ -108,12 +125,15 @@ export const IMPORT_MAP: Record<string, string[]> = {
   PasswordVisualTransformation: ['androidx.compose.ui.text.input.PasswordVisualTransformation'],
   LocalContext:         ['androidx.compose.ui.platform.LocalContext'],
   LocalFocusManager:    ['androidx.compose.ui.platform.LocalFocusManager'],
+  LocalSoftwareKeyboardController: ['androidx.compose.ui.platform.LocalSoftwareKeyboardController'],
+  ContentScale:         ['androidx.compose.ui.layout.ContentScale'],
 
   // Icons
   Icons:                ['androidx.compose.material.icons.Icons'],
   'Icons.Default':      ['androidx.compose.material.icons.Icons'],
   'Icons.Outlined':     ['androidx.compose.material.icons.Icons', 'androidx.compose.material.icons.outlined.*'],
   'Icons.Rounded':      ['androidx.compose.material.icons.Icons', 'androidx.compose.material.icons.rounded.*'],
+  'Icons.Filled':       ['androidx.compose.material.icons.Icons', 'androidx.compose.material.icons.filled.*'],
 
   // Animation
   AnimatedVisibility:   ['androidx.compose.animation.AnimatedVisibility'],
@@ -123,10 +143,13 @@ export const IMPORT_MAP: Record<string, string[]> = {
   animateFloatAsState:  ['androidx.compose.animation.core.animateFloatAsState'],
   animateDpAsState:     ['androidx.compose.animation.core.animateDpAsState'],
   animateColorAsState:  ['androidx.compose.animation.core.animateColorAsState'],
+  tween:                ['androidx.compose.animation.core.tween'],
+  spring:               ['androidx.compose.animation.core.spring'],
 
   // Navigation
   NavController:        ['androidx.navigation.NavController'],
   NavHost:              ['androidx.navigation.compose.NavHost'],
+  composable:           ['androidx.navigation.compose.composable'],
   rememberNavController: ['androidx.navigation.compose.rememberNavController'],
   NavBackStackEntry:    ['androidx.navigation.NavBackStackEntry'],
 
@@ -138,6 +161,10 @@ export const IMPORT_MAP: Record<string, string[]> = {
   LiveData:             ['androidx.lifecycle.LiveData'],
   MutableLiveData:      ['androidx.lifecycle.MutableLiveData'],
   observeAsState:       ['androidx.compose.runtime.livedata.observeAsState'],
+  Lifecycle:            ['androidx.lifecycle.Lifecycle'],
+  LifecycleEventObserver: ['androidx.lifecycle.LifecycleEventObserver'],
+  repeatOnLifecycle:    ['androidx.lifecycle.repeatOnLifecycle'],
+  collectAsStateWithLifecycle: ['androidx.lifecycle.compose.collectAsStateWithLifecycle'],
 
   // Coroutines / Flow
   StateFlow:            ['kotlinx.coroutines.flow.StateFlow'],
@@ -190,6 +217,10 @@ export const IMPORT_MAP: Record<string, string[]> = {
   // Accompanist
   rememberPermissionState: ['com.google.accompanist.permissions.rememberPermissionState'],
   rememberMultiplePermissionsState: ['com.google.accompanist.permissions.rememberMultiplePermissionsState'],
+
+  // ConstraintLayout
+  ConstraintLayout:     ['androidx.constraintlayout.compose.ConstraintLayout'],
+  Dimension:            ['androidx.constraintlayout.compose.Dimension'],
 };
 
 /**
@@ -202,42 +233,53 @@ export class ImportCompletionProvider implements vscode.CompletionItemProvider {
     position: vscode.Position,
   ): vscode.CompletionItem[] {
     const wordRange = document.getWordRangeAtPosition(position, /[\w.]+/);
-    if (!wordRange) { return []; }
-    const word = document.getText(wordRange);
-
-    const imports = IMPORT_MAP[word];
-    if (!imports) { return []; }
+    const word = wordRange ? document.getText(wordRange) : '';
 
     const existingText = document.getText();
     const items: vscode.CompletionItem[] = [];
 
-    for (const imp of imports) {
-      // Skip if already imported
-      if (existingText.includes(`import ${imp}`)) { continue; }
+    // Search the IMPORT_MAP for anything starting with what the user is typing
+    // If word is empty, we return nothing to avoid spamming the whole map
+    if (word.length === 0) {
+      return [];
+    }
 
-      const item = new vscode.CompletionItem(
-        `import ${imp}`,
-        vscode.CompletionItemKind.Module,
-      );
-      item.detail = 'JetStart: add import';
-      item.documentation = new vscode.MarkdownString(
-        `Adds \`import ${imp}\` to the top of the file.`,
-      );
+    const searchWord = word.toLowerCase();
 
-      // Insert the import after the last existing import, or after package line
-      const insertLine = findImportInsertLine(document);
-      item.additionalTextEdits = [
-        vscode.TextEdit.insert(
-          new vscode.Position(insertLine, 0),
-          `import ${imp}\n`,
-        ),
-      ];
+    for (const [identifier, imports] of Object.entries(IMPORT_MAP)) {
+      if (identifier.toLowerCase().startsWith(searchWord)) {
+        for (const imp of imports) {
+          // Skip if already imported
+          if (existingText.includes(`import ${imp}`)) {
+            continue;
+          }
 
-      // Keep original word — don't replace it
-      item.insertText = '';
-      item.filterText = word;
-      item.sortText = '0' + word; // sort to top
-    items.push(item);
+          const item = new vscode.CompletionItem(
+            `import ${imp}`,
+            vscode.CompletionItemKind.Module,
+          );
+          item.detail = 'JetStart: add import';
+          item.documentation = new vscode.MarkdownString(`Adds \`import ${imp}\` to the top of the file.`);
+          
+          // Complete the identifier being typed
+          item.insertText = identifier;
+          item.range = wordRange;
+          
+          item.filterText = identifier; // Filter against the identifier
+          item.sortText = '0' + identifier;
+
+          // Add the import edit
+          const insertLine = findImportInsertLine(document);
+          item.additionalTextEdits = [
+            vscode.TextEdit.insert(
+              new vscode.Position(insertLine, 0),
+              `import ${imp}\n`
+            ),
+          ];
+
+          items.push(item);
+        }
+      }
     }
 
     return items;

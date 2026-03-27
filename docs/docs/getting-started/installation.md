@@ -442,6 +442,12 @@ See the [Kotlin installation section](#installing-kotlin-required-for-hot-reload
 
 ## Recommended Tools
  
+### JetStart Kotlin & Compose Snippets (Recommended)
+ 
+Speed up your development with our custom VS Code extension. It provides package-aware snippets and automatic imports for Kotlin and Compose.
+ 
+[**Install JetStart Extension**](./vscode-extension.md)
+ 
 ### Kotlin Language Server for VS Code
  
 If you are developing your Android client using VS Code, we highly recommend installing the **Kotlin Language Server** extension for syntax highlighting, code completion, and diagnostics.
