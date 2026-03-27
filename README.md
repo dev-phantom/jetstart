@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets\client\readme.png" alt="JetStart Logo" width="400"/>
+  <img src="docs/static/img/socials/jetstart-social-card.png" alt="JetStart Social Card" width="800"/>
 
   <h3>Launch Android apps at warp speed</h3>
 

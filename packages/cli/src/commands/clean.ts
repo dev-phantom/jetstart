@@ -111,14 +111,20 @@ export async function cleanCommand(options: CleanOptions = {}) {
   // Graceful Gradle daemon stop 
   const daemonSpinner = startSpinner('Stopping Gradle daemons gracefully...');
   const gradle = findGradle(projectPath);
-  if (gradle) {
-    try {
-      spawnSync(gradle, ['--stop'], {
-        cwd: projectPath, shell: true,
-        encoding: 'utf8', timeout: 12000,
-      });
-    } catch { /* ignore */ }
-  }
+    if (gradle) {
+      try {
+        const isWin = process.platform === 'win32';
+        const spawnCmd = isWin ? 'cmd.exe' : gradle;
+        const spawnArgs = isWin ? ['/c', gradle, '--stop'] : ['--stop'];
+
+        spawnSync(spawnCmd, spawnArgs, {
+          cwd: projectPath, 
+          shell: false,
+          encoding: 'utf8', 
+          timeout: 12000,
+        });
+      } catch { /* ignore */ }
+    }
   stopSpinner(daemonSpinner, true, 'Gradle daemons stopped');
 
   // Kill ALL java.exe (Gradle + VS Code language servers)

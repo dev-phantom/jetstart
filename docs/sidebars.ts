@@ -11,6 +11,7 @@ const sidebars: SidebarsConfig = {
         'getting-started/installation',
         'getting-started/quick-start',
         'getting-started/system-requirements',
+        'getting-started/vscode-extension',
         'getting-started/troubleshooting-setup',
       ],
     },

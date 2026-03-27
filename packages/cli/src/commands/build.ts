@@ -126,7 +126,16 @@ function runGradle(gradle: string, args: string[], cwd: string): Promise<{ code:
   return new Promise((resolve) => {
     console.log();
     log('[Gradle] ' + path.basename(gradle) + ' ' + args.join(' '));
-    const proc = spawn(gradle, args, { cwd, shell: true, env: process.env });
+    
+    const isWin = process.platform === 'win32';
+    const spawnCmd = isWin ? 'cmd.exe' : gradle;
+    const spawnArgs = isWin ? ['/c', gradle, ...args] : args;
+
+    const proc = spawn(spawnCmd, spawnArgs, { 
+      cwd, 
+      shell: false, 
+      env: process.env 
+    });
     proc.stdout.on('data', (d: Buffer) => process.stdout.write(d));
     proc.stderr.on('data', (d: Buffer) => process.stderr.write(d));
     proc.on('close', (code) => resolve({ code: code ?? 1 }));
