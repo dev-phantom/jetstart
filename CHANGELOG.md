@@ -1,3 +1,11 @@
+## [2.2.1](https://github.com/dev-phantom/jetstart/compare/v2.2.0...v2.2.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* remove extension package-lock.json so root workspace lockfile owns vsce deps ([4ee848e](https://github.com/dev-phantom/jetstart/commit/4ee848e8124ff84cf37f8a66bb082137687122d3))
+* upload APK and VSIX as release assets ([0ad3a13](https://github.com/dev-phantom/jetstart/commit/0ad3a130d19af04240eba9f5170b90e22faf800d))
+
 # [2.2.0](https://github.com/dev-phantom/jetstart/compare/v2.1.0...v2.2.0) (2026-03-27)
 
 
