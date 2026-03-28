@@ -44,6 +44,20 @@
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
-    "@semantic-release/github"
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "release-assets/*.apk",
+            "label": "Android Client (.apk)"
+          },
+          {
+            "path": "release-assets/*.vsix",
+            "label": "VS Code Extension (.vsix)"
+          }
+        ]
+      }
+    ]
   ]
 }

@@ -10,15 +10,17 @@
     "packages/web",
     "packages/sanity-studio",
     "packages/logs",
+    "packages/extension",
     "docs"
   ],
   "scripts": {
-    "build": "tsc --build && npm run build:web",
+    "build": "tsc --build && npm run build:extension && npm run build:web",
     "build:packages": "tsc --build",
     "build:shared": "npm run build --workspace=packages/shared",
     "build:cli": "npm run build --workspace=packages/cli",
     "build:core": "npm run build --workspace=packages/core",
     "build:logs": "npm run build --workspace=packages/logs",
+    "build:extension": "npm run build --workspace=packages/extension",
     "build:web": "npm run build --workspace=packages/web",
     "dev": "npm run dev --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
@@ -52,7 +54,9 @@
     "hot-reload",
     "wireless-development",
     "build-tool",
-    "mobile-development"
+    "mobile-development",
+    "vscode-extension",
+    "snippets"
   ],
   "author": "Phantom",
   "license": "MIT",
