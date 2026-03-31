@@ -12,7 +12,7 @@ export function CTA() {
             Start shipping faster today.
           </h2>
           <p style={{ fontSize: 17, color: '#6B7280', marginBottom: 40, lineHeight: 1.65 }}>
-            One command. Sub-100ms feedback. Your app on your device, instantly.
+            One command. Live feedback. Your app on your device, instantly.
           </p>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#0F0F0F', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '12px 20px', marginBottom: 24, width: '100%', maxWidth: 380 }}>
             <span style={{ color: G, fontFamily: 'monospace', fontSize: 14 }}>$</span>

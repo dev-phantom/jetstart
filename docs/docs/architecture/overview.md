@@ -116,7 +116,7 @@ sequenceDiagram
     Core->>Client: core:dex-reload {dexBase64, classNames}
     Client->>Client: ClassLoader loads DEX
     Client->>Client: Compose recomposition
-    Note over Client: UI updated in under 100ms
+    Note over Client: UI updated in instantly
 ```
 
 ## Communication Protocols

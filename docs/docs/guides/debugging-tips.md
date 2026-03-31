@@ -30,7 +30,7 @@ Issue Detected
          │
          ▼
 ┌─────────────────┐
-│ Verify Hot      │ ← <100ms update
+│ Verify Hot      │ ← instant update
 │ Reload Works    │
 └─────────────────┘
 ```
@@ -101,7 +101,7 @@ jetstart logs --source build --lines 50
 
 **Symptoms:**
 - Save file, no update appears
-- Or full Gradle build triggers (20s) instead of hot reload (\<100ms)
+- Or full Gradle build triggers (20s) instead of hot reload (\instant)
 
 **Diagnosis:**
 ```bash
@@ -587,7 +587,7 @@ Hot reload not working - always triggers full build
 12:34:56 INFO [CORE] 📦 Non-UI changes detected, triggering full Gradle build
 ```
 
-**Expected:** Hot reload (<100ms)
+**Expected:** Hot reload (instant)
 **Actual:** Full Gradle build (20s)
 ```
 

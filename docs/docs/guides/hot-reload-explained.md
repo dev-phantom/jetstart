@@ -6,13 +6,13 @@ description: Deep dive into JetStart's Kotlin-to-DEX hot reload pipeline
 
 # Hot Reload Explained
 
-Understanding exactly how JetStart achieves sub-100ms live updates on real Android devices — and why it is fundamentally different from Gradle-based workflows.
+Understanding exactly how JetStart achieves Live live updates on real Android devices — and why it is fundamentally different from Gradle-based workflows.
 
 ## The Core Idea
 
 Traditional Android development compiles your entire project, packages it into an APK, installs that APK through the package manager, and restarts the app. That process takes 30 – 60 seconds even for a one-line change.
 
-JetStart's hot reload compiles **only the changed file**, converts the result to DEX bytecode, and loads it directly into the already-running Android process. The app never stops. The Activity never restarts. You see the result in under 100ms.
+JetStart's hot reload compiles **only the changed file**, converts the result to DEX bytecode, and loads it directly into the already-running Android process. The app never stops. The Activity never restarts. You see the result in instantly.
 
 ## The Real Pipeline
 

@@ -549,7 +549,7 @@ adb pull /sdcard/demo.mp4
 | **Setup time** | 5 min (one-time) | Instant (if you have one) |
 | **Deployment** | Automatic | QR code scan |
 | **Boot time** | 2-10 seconds | N/A (always on) |
-| **Hot reload speed** | Same (\<100ms) | Same (\<100ms) |
+| **Hot reload speed** | Same (\instant) | Same (\instant) |
 | **Hardware sensors** | Simulated | Real |
 | **Performance** | 70-90% native | 100% native |
 | **Screen sizes** | Any | Fixed |

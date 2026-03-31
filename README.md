@@ -11,7 +11,7 @@
 
 ## What is JetStart?
 
-JetStart is a blazing-fast developer toolchain that brings **instant hot reload** to Android Jetpack Compose. Edit your Kotlin UI code and see the change reflected on your device in **under 100ms** no full rebuild, no reinstall required.
+JetStart is a blazing-fast developer toolchain that brings **instant hot reload** to Android Jetpack Compose. Edit your Kotlin UI code and see the change reflected on your device **without losing state**—no full rebuild, no reinstall required.
 
 It works by compiling only the changed Kotlin file, converting the resulting `.class` files to DEX bytecode using Android's `d8` tool, and pushing the patch to a running app over WebSocket. The Android runtime loads the new classes immediately, applying changes live.
 
@@ -21,7 +21,7 @@ It works by compiling only the changed Kotlin file, converting the resulting `.c
 
 | Feature | Description |
 |---|---|
-| **Sub-100ms Hot Reload** | Compiles Kotlin to DEX and pushes to device via WebSocket |
+| **Live Hot Reload** | Compiles Kotlin to DEX and pushes to device via WebSocket |
 | **Real Kotlin Compose** | Write actual `@Composable` functions  no DSL wrappers |
 | **QR Code Pairing** | Scan once to link your device; token-secured sessions prevent hijacking |
 | **Gradle Integration** | Full debug/release APK builds via Gradle with smart caching |
@@ -79,7 +79,7 @@ Scan the QR code with the JetStart Android app.
 
 ### 4. Edit and watch
 
-Edit `MainActivity.kt` (or any `.kt` file) and the change appears on your device in under 100ms.
+Edit `MainActivity.kt` (or any `.kt` file) and the change appears on your device without a restart.
 
 ---
 

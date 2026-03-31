@@ -14,7 +14,7 @@ The JetStart Client is a Jetpack Compose Android app that serves as the bridge b
 - 📷 **QR Code Scanning** - Instantly pair with your dev server by scanning a QR code
 - 🔌 **WebSocket Connection** - Real-time communication for hot reload updates
 - 📦 **Automatic APK Installation** - Downloads and installs your app builds automatically
-- 🔥 **Hot Reload Support** - Receives `core:dex-reload` DEX patches and loads them via a custom ClassLoader in under 100ms
+- 🔥 **Hot Reload Support** - Receives `core:dex-reload` DEX patches and loads them via a custom ClassLoader in instantly
 - 📊 **Real-time Logs** - View application logs and build status
 - 📱 **Connection Management** - Monitor connection status and project information
 

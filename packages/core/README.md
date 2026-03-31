@@ -4,7 +4,7 @@ Central build server and real-time orchestration layer for JetStart.
 
 ## Overview
 
-`@jetstart/core` is the engine that powers `jetstart`. It runs three networked services and orchestrates the complete hot reload pipeline — from detecting a file change to having new code running on a physical Android device in under 100ms.
+`@jetstart/core` is the engine that powers `jetstart`. It runs three networked services and orchestrates the complete hot reload pipeline — from detecting a file change to having new code running on a physical Android device in instantly.
 
 ```
 src/

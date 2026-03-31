@@ -259,7 +259,7 @@ Text(
 
 3. Save the file
 
-4. **Watch your device update in under 100ms!** ⚡
+4. **Watch your device update in instantly!** ⚡
 
 
 The text on your connected device or web emulator will change instantly - no rebuild, no reinstall!
@@ -268,7 +268,7 @@ The text on your connected device or web emulator will change instantly - no reb
 
 JetStart uses a two-tier hot reload system:
 
-### Tier 1: DEX Hot Reload (Fast - under 100ms)
+### Tier 1: DEX Hot Reload (Fast - instantly)
 
 Any `.kt` file change that compiles in isolation triggers DEX hot reload:
 - ✅ `@Composable` function body changes

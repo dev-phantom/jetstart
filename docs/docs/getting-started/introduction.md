@@ -6,7 +6,7 @@ description: Welcome to JetStart - Lightning-fast Android development
 
 # Introduction to JetStart
 
-**JetStart** is a blazing-fast development tool that brings **instant hot reload** to Android Jetpack Compose applications. Edit your Kotlin UI code and see the change on your physical device or web emulator in **under 100ms** — no rebuild, no reinstall, no Activity restart.
+**JetStart** is a blazing-fast development tool that brings **instant hot reload** to Android Jetpack Compose applications. Edit your Kotlin UI code and see the change on your physical device or web emulator in **instantly** — no rebuild, no reinstall, no Activity restart.
 
 ## What is JetStart?
 
@@ -17,11 +17,11 @@ JetStart short-circuits the traditional Gradle build process for code changes. I
 3. Transmits the DEX patch to your device over WebSocket
 4. Loads the new classes into the running app via a custom ClassLoader
 
-The result is live code updates in under 100ms. When a change is too large for the hot reload pipeline (new dependencies, resource changes, Gradle config), it falls back to a full Gradle build automatically.
+The result is live code updates in instantly. When a change is too large for the hot reload pipeline (new dependencies, resource changes, Gradle config), it falls back to a full Gradle build automatically.
 
 ## Key Features
 
-- **⚡ Sub-100ms Hot Reload** — Kotlin → DEX compilation pushed live to your device
+- **⚡ Live Hot Reload** — Kotlin → DEX compilation pushed live to your device
 - **🎨 Real Kotlin Compose** — Write actual `@Composable` functions, not configuration files
 - **📱 QR Code Setup** — Connect your device by scanning a single QR code
 - **📡 Completely Wireless** — No USB cables required. Works over Wi-Fi and hotspot
@@ -44,7 +44,7 @@ graph LR
     D --> E[classes.dex]
     E --> F[WebSocket core:dex-reload]
     F --> G[Android ClassLoader]
-    G --> H[UI updates in under 100ms]
+    G --> H[UI updates in instantly]
 ```
 
 For changes that require a full rebuild:
@@ -72,7 +72,7 @@ Traditional Android development is tethered to heavy IDEs and slow build systems
 JetStart was built as a lightweight, "minimalist" alternative for rapid Jetpack Compose development:
 - **Low-End Hardware Support**: JetStart runs effectively on as little as **4GB of RAM**. You don't need expensive hardware to build modern Android apps.
 - **Run Anywhere**: Use VSCode, Sublime, Vim, or even Notepad. Freedom from "IDE tax" means your tools stay fast and responsive.
-- **Sub-100ms Hot Reload**: See your changes instantly. We bypass Gradle entirely for code-only updates, pushing DEX patches directly to your device.
+- **Live Hot Reload**: See your changes instantly. We bypass Gradle entirely for code-only updates, pushing DEX patches directly to your device.
 - **Zero Cables**: Scan a QR code and you're connected via WebSockets. No drivers, no finicky cables, no "device not found" errors.
 - **Android Emulator**: Don't want to run a heavy Android Virtual Device (AVD)? Use our **Android Emulator** to preview your UI in a lightweight emulator.
 - **Automated Setup**: One command (`jetstart create --full-install`) handles the entire SDK and toolchain setup for you.

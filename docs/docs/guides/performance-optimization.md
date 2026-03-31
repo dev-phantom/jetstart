@@ -14,7 +14,7 @@ Comprehensive guide to optimizing every aspect of JetStart development - from \<
 ┌────────────────────────────────────────┐
 │         Performance Targets            │
 ├────────────────────────────────────────┤
-│ Hot Reload:        <100ms             │
+│ Hot Reload:        instant             │
 │ Build Time:        <20s               │
 │ Connection:        <2s                │
 │ App Launch:        <1s                │
@@ -26,7 +26,7 @@ Comprehensive guide to optimizing every aspect of JetStart development - from \<
 
 ### Maximize Hot Reload Usage
 
-**Goal:** \<100ms updates instead of 20s Gradle builds
+**Goal:** \instant updates instead of 20s Gradle builds
 
 **Strategy:** Keep UI and logic separate
 
@@ -97,7 +97,7 @@ jetstart logs --source core
 
 # Hot reload (fast):
 🔥 Hot reload starting for: MainActivity.kt
-UI hot reload sent in <100ms ⚡
+UI hot reload sent in instant ⚡
 
 # Gradle build (slow):
 📦 Non-UI changes detected, triggering full Gradle build
@@ -106,7 +106,7 @@ Build completed in 18,432ms
 
 **Metrics to track:**
 - Hot reload percentage (target: >80%)
-- Average hot reload time (target: \<100ms)
+- Average hot reload time (target: \instant)
 - Gradle build frequency (minimize)
 
 ## Build Performance
@@ -546,7 +546,7 @@ jetstart logs --source core --level debug
 [CORE] [HotReload] kotlinc compiled in 48ms
 [CORE] [HotReload] d8 DEX generated in 15ms
 [CORE] [WebSocket] core:dex-reload sent in 3ms
-Total: 78ms (well under 100ms target)
+Total: 78ms (well instantly target)
 ```
 
 ## Optimization Checklist
@@ -584,8 +584,8 @@ Total: 78ms (well under 100ms target)
 
 | Scenario | Time | Target | Status |
 |----------|------|--------|--------|
-| Hot reload (simple change) | 65ms | \<100ms | ✓ |
-| Hot reload (complex change) | 95ms | \<100ms | ✓ |
+| Hot reload (simple change) | 65ms | \instant | ✓ |
+| Hot reload (complex change) | 95ms | \instant | ✓ |
 | Gradle build (small change) | 12s | \<20s | ✓ |
 | Gradle build (full rebuild) | 25s | \<30s | ✓ |
 

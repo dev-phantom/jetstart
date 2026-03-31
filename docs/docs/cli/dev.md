@@ -79,7 +79,7 @@ When you run `jetstart dev`, the following happens:
 5. Start file watcher
    ├─ Watch *.kt files
    ├─ Watch resource files
-   └─ Debounce changes (100ms)
+   └─ Debounce changes (instant)
 
 6. Display connection info
    ├─ Local URL (localhost)
@@ -116,7 +116,7 @@ When you run `jetstart dev`, the following happens:
          ▼                                    ▼
 ┌──────────────────┐              ┌──────────────────┐
 │ DEX Hot Reload   │              │  Gradle Build    │
-│ (<100ms)      │              │  (10-30s)        │
+│ (instant)      │              │  (10-30s)        │
 └────────┬─────────┘              └────────┬─────────┘
          │                                 │
          └────────────┬────────────────────┘
@@ -252,7 +252,7 @@ File Changed
 ┌─────────┐  ┌─────────┐
 │ DSL Hot │  │  Full   │
 │ Reload  │  │ Gradle  │
-│ <100ms  │  │  Build  │
+│ instant  │  │  Build  │
 └─────────┘  └─────────┘
 ```
 
@@ -263,7 +263,7 @@ Files that trigger **DEX hot reload** (Kotlin → .class → DEX):
 - `**/screens/*.kt`
 - `**/components/*.kt`
 
-**Performance:** `<100ms` from file save to device update
+**Performance:** `instant` from file save to device update
 
 **Example:**
 ```kotlin
@@ -344,12 +344,12 @@ BUILD SUCCESSFUL in 2m 44s
 
 ### Debouncing
 
-File changes are debounced by **100ms** to batch multiple rapid edits:
+File changes are debounced by **instant** to batch multiple rapid edits:
 
 ```
 File Save #1 ────┐
 File Save #2 ────┤
-File Save #3 ────┤── 100ms ──> Trigger Build
+File Save #3 ────┤── instant ──> Trigger Build
                  │
             (Waiting period)
 ```
@@ -496,7 +496,7 @@ Scan QR or connect manually:
 | `[Core] Found kotlinc at: ...` | Kotlin compiler located (required for hot reload) |
 | `[Core] Found d8 at: ...` | Android DEX tool located (converts `.class` → `.dex`) |
 | `[Core] Using Android SDK: android-34` | Target platform detected from your SDK |
-| `[Core] 🔥 True hot reload enabled (DEX-based)` | All tools present — sub-100ms hot reload is active |
+| `[Core] 🔥 True hot reload enabled (DEX-based)` | All tools present — Live hot reload is active |
 | `[Core] HTTP server listening on 0.0.0.0:8765` | REST API bound to all interfaces |
 | `[Core] WebSocket server listening on port 8766` | Real-time communication channel open |
 | `✔ [Core] JetStart Core is running!` | Core engine fully initialized |

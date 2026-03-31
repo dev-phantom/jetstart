@@ -431,7 +431,7 @@ Text(
 )
 ```
 
-**Save the file** → Changes appear in \<100ms! 🚀
+**Save the file** → Changes appear in \instant! 🚀
 
 ### Watch the Logs
 
