@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/dev-phantom/jetstart/compare/v2.2.1...v2.3.0) (2026-03-31)
+
+
+### Features
+
+* added social accounts for jetstart ([908445e](https://github.com/dev-phantom/jetstart/commit/908445e632c1f5e64078d1e6b59605ec0462c707))
+
 ## [2.2.1](https://github.com/dev-phantom/jetstart/compare/v2.2.0...v2.2.1) (2026-03-28)
 
 
