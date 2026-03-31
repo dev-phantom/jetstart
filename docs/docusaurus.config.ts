@@ -143,6 +143,27 @@ const config: Config = {
           ],
         },
         {
+          title: 'Socials',
+          items: [
+            {
+              label: 'X (Twitter)',
+              href: 'https://x.com/jetstart_kt',
+            },
+            {
+              label: 'Discord',
+              href: 'https://discord.gg/hTsUE9WJ',
+            },
+            {
+              label: 'TikTok',
+              href: 'https://www.tiktok.com/@jetstart_kt',
+            },
+            {
+              label: 'YouTube',
+              href: 'https://youtube.com/@jetstart-kt',
+            },
+          ],
+        },
+        {
           title: 'More',
           items: [
             {

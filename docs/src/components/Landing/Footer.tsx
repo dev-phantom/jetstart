@@ -17,7 +17,14 @@ export function Footer() {
         </div>
         {[
           { heading: 'Product', links: [['Docs','/docs/getting-started/introduction'],['CLI','/docs/cli/overview'],['Architecture','/docs/architecture/overview']] },
-          { heading: 'Community', links: [['GitHub','https://github.com/dev-phantom/jetstart'],['Discussions','https://github.com/dev-phantom/jetstart/discussions'],['Blog','/blogs']] },
+          { heading: 'Community', links: [
+            ['GitHub','https://github.com/dev-phantom/jetstart'], 
+            ['Discord','https://discord.gg/hTsUE9WJ'],
+            ['X (Twitter)','https://x.com/jetstart_kt'],
+            ['YouTube','https://youtube.com/@jetstart-kt'],
+            ['TikTok','https://www.tiktok.com/@jetstart_kt'],
+            ['Blog','/blogs']
+          ] },
           { heading: 'Legal', links: [['npm','https://www.npmjs.com/package/@jetstart/cli'],['Contributing','/docs/contributing/getting-started'],['License','https://github.com/dev-phantom/jetstart']] },
         ].map(col => (
           <div key={col.heading}>
