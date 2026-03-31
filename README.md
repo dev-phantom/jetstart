@@ -159,7 +159,16 @@ npm run typecheck    # tsc --noEmit
 
 ---
 
+## Community & Socials
 
+Stay up to date with JetStart development and connect with the community:
+
+- **Discord**: [Join our server](https://discord.gg/hTsUE9WJ)
+- **X (Twitter)**: [@jetstart_kt](https://x.com/jetstart_kt)
+- **YouTube**: [JetStart Channel](https://youtube.com/@jetstart-kt)
+- **TikTok**: [@jetstart_kt](https://www.tiktok.com/@jetstart_kt)
+
+---
 
 ## Monorepo Structure
 
