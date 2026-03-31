@@ -1,6 +1,6 @@
 ---
 title: Hot Reload System
-description: How JetStart achieves sub-100ms live updates on real Android devices
+description: How JetStart achieves Live live updates on real Android devices
 ---
 
 # Hot Reload System
@@ -22,7 +22,7 @@ graph TD
     I -->|Custom ClassLoader| J[New classes loaded live]
 ```
 
-The entire pipeline — from file save to classes running on the device — completes in under 100ms on a local network.
+The entire pipeline — from file save to classes running on the device — completes in instantly on a local network.
 
 ## Pipeline Stages
 

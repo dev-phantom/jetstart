@@ -9,7 +9,7 @@ description: Frequently asked questions about JetStart
 
 ### What is JetStart?
 
-JetStart is a development tool that brings instant hot reload to Android Jetpack Compose. It compiles changed Kotlin files to DEX bytecode and pushes the patch to a running Android app over WebSocket — no rebuild, no reinstall. Changes appear on your device in under 100ms.
+JetStart is a development tool that brings instant hot reload to Android Jetpack Compose. It compiles changed Kotlin files to DEX bytecode and pushes the patch to a running Android app over WebSocket — no rebuild, no reinstall. Changes appear on your device in instantly.
 
 ### Does JetStart replace Android Studio?
 

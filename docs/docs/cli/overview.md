@@ -55,7 +55,7 @@ jetstart dev
 jetstart logs --follow
 
 # Make changes to your code...
-# See them update in <100ms on your device!
+# See them update in instant on your device!
 ```
 
 ### Building for Production

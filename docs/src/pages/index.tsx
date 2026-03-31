@@ -28,7 +28,7 @@ export default function JetStartLanding() {
   }, []);
 
   return (
-    <Layout noFooter={true} wrapperClassName="landing-page" title="JetStart — Build Android Apps at the Speed of Thought" description="Hot reload for Jetpack Compose, wirelessly to your device. Sub-100ms updates, no more waiting for Gradle.">
+    <Layout noFooter={true} wrapperClassName="landing-page" title="JetStart — Build Android Apps at the Speed of Thought" description="Hot reload for Jetpack Compose, wirelessly to your device. Live updates, no more waiting for Gradle.">
       <div style={{ background: '#0A0A0A', color: '#fff', fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif", overflowX: 'hidden', position: 'relative' }}>
 
         <style>{`

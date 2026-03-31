@@ -5,7 +5,7 @@ export function Stats() {
     <section style={{ padding: '80px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', position: 'relative' }}>
       <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden">
         {[
-          { stat: '<100ms',  label: 'Hot reload — wirelessly, every time' },
+          { stat: 'instant',  label: 'Hot reload — wirelessly, every time' },
           { stat: '3',       label: 'Preview targets: phone, emulator, browser' },
           { stat: '1 cmd',   label: "npx jetstart dev — that's all it takes" },
         ].map(({ stat, label }) => (

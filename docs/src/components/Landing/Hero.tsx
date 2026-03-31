@@ -39,7 +39,7 @@ export function Hero({ bgY, heroRef }: HeroProps) {
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.12 }}
           style={{ textAlign: 'center', fontWeight: 400, color: '#6B7280', lineHeight: 1.65, maxWidth: 480, margin: '0 auto 40px' }}
           className="text-base md:text-lg">
-          Real Kotlin. Real Jetpack Compose. Sub-100ms hot reload—wirelessly—to your phone, emulator, or browser.
+          Real Kotlin. Real Jetpack Compose. Live hot reload—wirelessly—to your phone, emulator, or browser.
         </motion.p>
 
         {/* CTAs */}
