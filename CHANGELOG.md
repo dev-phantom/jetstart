@@ -1,3 +1,10 @@
+## [2.3.1](https://github.com/dev-phantom/jetstart/compare/v2.3.0...v2.3.1) (2026-03-31)
+
+
+### Bug Fixes
+
+* changed <100ms hot reload  to something more generic pending on the  time we achieve that ([3fc94fd](https://github.com/dev-phantom/jetstart/commit/3fc94fd80520e24a1b7dbc8c22865980cd9ae480))
+
 # [2.3.0](https://github.com/dev-phantom/jetstart/compare/v2.2.1...v2.3.0) (2026-03-31)
 
 
