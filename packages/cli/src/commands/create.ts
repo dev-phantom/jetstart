@@ -147,22 +147,7 @@ export async function createCommand(name: string, options: CreateOptions) {
     if (options.fullInstall) {
       await runFullInstallation();
     } else {
-      // Interactive mode: ask user
-      const { shouldCheckDeps } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'shouldCheckDeps',
-          message: 'Check and install dependencies?',
-          default: true,
-        },
-      ]);
-
-      if (shouldCheckDeps) {
-        await runInteractiveInstallation();
-      } else {
-        // If user skips system dependencies, also skip project dependencies to be consistent
-        options.skipInstall = true;
-      }
+      await runInteractiveInstallation();
     }
 
     // Get package name
@@ -212,17 +197,6 @@ export async function createCommand(name: string, options: CreateOptions) {
       }
 
       stopSpinner(spinner, true, 'Project structure created');
-
-      // Install dependencies
-      if (!options.skipInstall) {
-        const installSpinner = startSpinner('Installing dependencies...');
-        
-        // In a real implementation, we'd run npm/gradle here
-        // For now, we'll simulate it
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        stopSpinner(installSpinner, true, 'Dependencies installed');
-      }
 
       console.log();
       success(`Successfully created project: ${chalk.cyan(name)}`);

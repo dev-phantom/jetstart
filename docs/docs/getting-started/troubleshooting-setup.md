@@ -246,7 +246,7 @@ All items should show ✓ OK.
 ### 3. Create Test Project
 
 ```bash
-jetstart create test-project --package com.test.app --skip-install
+jetstart create test-project --package com.test.app
 cd test-project
 ```
 

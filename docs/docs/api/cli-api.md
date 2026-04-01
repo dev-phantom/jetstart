@@ -22,7 +22,6 @@ jetstart create <n> [options]
 | `<n>` | string | — | Project directory name |
 | `-p, --package <n>` | string | prompted | Android package name (`com.example.app`) |
 | `-t, --template <n>` | string | `default` | Project template |
-| `--skip-install` | boolean | `false` | Skip dependency checks |
 | `--full-install` | boolean | `false` | Non-interactive: auto-install all missing deps |
 
 ---

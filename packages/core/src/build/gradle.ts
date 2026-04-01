@@ -7,7 +7,7 @@ import { spawn, ChildProcess, execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { BuildConfig, BuildResult } from '@jetstart/shared';
+import { BuildConfig, BuildResult, ErrorSeverity } from '@jetstart/shared';
 import { BuildOutputParser } from './parser';
 
 /**
@@ -289,18 +289,18 @@ export class GradleExecutor {
     const startTime = Date.now();
     const gradlePath = this.findGradle(config.projectPath);
 
-    // If Gradle not found, return mock build for testing
+    // If Gradle not found, fail build with clear error
     if (!gradlePath) {
-      console.log('[Gradle] No Gradle found, returning mock successful build for testing');
-
-      // Simulate build delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
       return {
-        success: true,
+        success: false,
         buildTime: Date.now() - startTime,
-        apkPath: path.join(config.projectPath, 'build/outputs/apk/debug/app-debug.apk'),
-        apkSize: 5242880, // Mock size: 5MB
+        errors: [{
+          file: 'gradle',
+          line: 0,
+          column: 0,
+          message: 'Gradle not found. Please install Gradle 8.0+ or ensure the Gradle wrapper (gradlew) exists in your project project.',
+          severity: ErrorSeverity.ERROR
+        }]
       };
     }
 

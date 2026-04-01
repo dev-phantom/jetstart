@@ -29,7 +29,6 @@ program
   .description('Create a new JetStart project')
   .option('-p, --package <name>', 'Package name (e.g., com.example.app)')
   .option('-t, --template <name>', 'Template to use', 'default')
-  .option('--skip-install', 'Skip npm install')
   .option('--full-install', 'Automatically install all required Android dependencies')
   .action(createCommand);
 
