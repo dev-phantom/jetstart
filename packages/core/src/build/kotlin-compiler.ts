@@ -82,28 +82,99 @@ export class KotlinCompiler {
 
   /**
    * Find kotlinc executable
+   *
+   * Search order:
+   *   1. KOTLIN_HOME env var (set in .env or shell)
+   *   2. ANDROID_STUDIO_HOME env var
+   *   3. Platform-specific static paths (Scoop, Chocolatey, SDKMAN, snap, …)
+   *   4. Versioned IDE directories (IntelliJ IDEA, JetBrains Toolbox, Android Studio)
+   *   5. `where` / `which` fallback
    */
   async findKotlinc(): Promise<string | null> {
     if (this.kotlincPath) return this.kotlincPath;
 
-    // Check common locations
-    const locations = [
-      // From environment variable
-      process.env.KOTLIN_HOME ? path.join(process.env.KOTLIN_HOME, 'bin', 'kotlinc') : null,
-      // From Android Studio
-      process.env.ANDROID_STUDIO_HOME ? path.join(process.env.ANDROID_STUDIO_HOME, 'plugins', 'Kotlin', 'kotlinc', 'bin', 'kotlinc') : null,
-      // System-wide installation (Windows)
-      'C:\\Program Files\\kotlinc\\bin\\kotlinc.bat',
-      'C:\\kotlinc\\bin\\kotlinc.bat',
-      // System-wide installation (Unix)
-      '/usr/local/bin/kotlinc',
-      '/usr/bin/kotlinc',
-      // Homebrew (macOS)
-      '/opt/homebrew/bin/kotlinc',
-    ].filter(Boolean) as string[];
+    const win = os.platform() === 'win32';
+    const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
+    const progFiles  = process.env.PROGRAMFILES  || 'C:\\Program Files';
+
+    /**
+     * Scan `parentDir` for subdirectories whose names start with `entryPrefix`
+     * (pass '' to accept any entry), then return the first candidate that exists:
+     *   path.join(parentDir, entry, ...rest)
+     * Entries are sorted descending so the latest version is tried first.
+     * Returns null (never throws) if the directory is missing or unreadable.
+     */
+    const findInVersionedDir = (
+      parentDir: string,
+      entryPrefix: string,
+      ...rest: string[]
+    ): string | null => {
+      try {
+        if (!fs.existsSync(parentDir)) return null;
+        const entries = fs.readdirSync(parentDir)
+          .filter(e => !entryPrefix || e.toLowerCase().startsWith(entryPrefix.toLowerCase()))
+          .sort()
+          .reverse(); // latest version first
+        for (const entry of entries) {
+          const candidate = path.join(parentDir, entry, ...rest);
+          if (fs.existsSync(candidate)) return candidate;
+        }
+      } catch { /* permission / access errors — silently skip */ }
+      return null;
+    };
+
+    const locations: Array<string | null> = [
+      // env overrides
+      process.env.KOTLIN_HOME
+        ? path.join(process.env.KOTLIN_HOME, 'bin', 'kotlinc')
+        : null,
+      process.env.ANDROID_STUDIO_HOME
+        ? path.join(process.env.ANDROID_STUDIO_HOME, 'plugins', 'Kotlin', 'kotlinc', 'bin', 'kotlinc')
+        : null,
+
+      // Windows static paths
+      win ? path.join(progFiles, 'kotlinc', 'bin', 'kotlinc.bat')          : null,
+      win ? 'C:\\kotlinc\\bin\\kotlinc.bat'                                 : null,
+      // Scoop  (~\scoop\apps\kotlin\current)
+      win ? path.join(os.homedir(), 'scoop', 'apps', 'kotlin', 'current', 'bin', 'kotlinc.bat') : null,
+      // Chocolatey
+      win ? 'C:\\ProgramData\\chocolatey\\bin\\kotlinc.bat'                 : null,
+      // Android Studio — standard Google installer
+      win ? path.join(progFiles,   'Android', 'Android Studio', 'plugins', 'Kotlin', 'kotlinc', 'bin', 'kotlinc.bat') : null,
+      win ? path.join(localAppData,'Programs', 'Android Studio', 'plugins', 'Kotlin', 'kotlinc', 'bin', 'kotlinc.bat') : null,
+
+      // Windows versioned IDE paths (wildcard scan)
+      // IntelliJ IDEA — any version under C:\Program Files\JetBrains
+      win ? findInVersionedDir(path.join(progFiles, 'JetBrains'), 'IntelliJ IDEA',
+              'plugins', 'Kotlin', 'kotlinc', 'bin', 'kotlinc.bat')         : null,
+      // JetBrains Toolbox — IDEA Ultimate
+      win ? findInVersionedDir(path.join(localAppData, 'JetBrains', 'Toolbox', 'apps', 'IDEA-U', 'ch-0'), '',
+              'plugins', 'Kotlin', 'kotlinc', 'bin', 'kotlinc.bat')          : null,
+      // JetBrains Toolbox — IDEA Community
+      win ? findInVersionedDir(path.join(localAppData, 'JetBrains', 'Toolbox', 'apps', 'IDEA-C', 'ch-0'), '',
+              'plugins', 'Kotlin', 'kotlinc', 'bin', 'kotlinc.bat')          : null,
+      // JetBrains Toolbox — Android Studio (Jellyfish+)
+      win ? findInVersionedDir(path.join(localAppData, 'JetBrains', 'Toolbox', 'apps', 'AndroidStudio', 'ch-0'), '',
+              'plugins', 'Kotlin', 'kotlinc', 'bin', 'kotlinc.bat')          : null,
+
+      // Unix / macOS static paths
+      !win ? '/usr/local/bin/kotlinc'                                        : null,
+      !win ? '/usr/bin/kotlinc'                                              : null,
+      // Homebrew (Apple Silicon + Intel)
+      !win ? '/opt/homebrew/bin/kotlinc'                                     : null,
+      !win ? '/usr/local/opt/kotlin/bin/kotlinc'                             : null,
+      // SDKMAN  (~/.sdkman/candidates/kotlin/current)
+      !win ? path.join(os.homedir(), '.sdkman', 'candidates', 'kotlin', 'current', 'bin', 'kotlinc') : null,
+      // Snap
+      !win ? '/snap/bin/kotlinc'                                             : null,
+      // IntelliJ IDEA — Linux Toolbox
+      !win ? findInVersionedDir(path.join(os.homedir(), '.local', 'share', 'JetBrains', 'Toolbox', 'apps', 'IDEA-U', 'ch-0'), '',
+              'plugins', 'Kotlin', 'kotlinc', 'bin', 'kotlinc')              : null,
+    ];
 
     for (const loc of locations) {
-      const execPath = os.platform() === 'win32' && !loc.endsWith('.bat') ? `${loc}.bat` : loc;
+      if (!loc) continue;
+      const execPath = win && !loc.endsWith('.bat') ? `${loc}.bat` : loc;
       if (fs.existsSync(execPath)) {
         this.kotlincPath = execPath;
         log(`Found kotlinc at: ${execPath}`);
@@ -113,7 +184,7 @@ export class KotlinCompiler {
 
     // Try to find via 'where' (Windows) or 'which' (Unix)
     try {
-      const cmd = os.platform() === 'win32' ? 'where' : 'which';
+      const cmd = win ? 'where' : 'which';
       const result = await this.runCommand(cmd, ['kotlinc']);
       if (result.success && result.stdout.trim()) {
         this.kotlincPath = result.stdout.trim().split('\n')[0];

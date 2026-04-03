@@ -342,24 +342,36 @@ export async function detectAndroidCmdlineTools(): Promise<ToolInfo> {
     };
   }
 
-  const cmdlineToolsPath = path.join(sdkPath, 'cmdline-tools', 'latest');
-  const exists = await fs.pathExists(cmdlineToolsPath);
+  const sdkmanagerName = os.platform() === 'win32' ? 'sdkmanager.bat' : 'sdkmanager';
+  const candidates = [
+    path.join(sdkPath, 'cmdline-tools', 'latest', 'bin', sdkmanagerName),
+    path.join(sdkPath, 'cmdline-tools', 'bin', sdkmanagerName),
+    path.join(sdkPath, 'tools', 'bin', sdkmanagerName),
+  ];
 
-  if (!exists) {
+  let foundPath: string | undefined;
+  for (const candidate of candidates) {
+    if (await fs.pathExists(candidate)) {
+      foundPath = path.dirname(path.dirname(candidate));
+      break;
+    }
+  }
+
+  if (!foundPath) {
     return {
       name: 'cmdline-tools',
       installed: false,
       status: 'error',
-      message: 'Android cmdline-tools not installed',
+      message: 'Android cmdline-tools not installed. Run "jetstart create --full-install" to install',
     };
   }
 
   // Try to get version
   try {
     const sdkmanagerPath = path.join(
-      cmdlineToolsPath,
+      foundPath,
       'bin',
-      os.platform() === 'win32' ? 'sdkmanager.bat' : 'sdkmanager'
+      sdkmanagerName
     );
     const { stdout } = await execAsync(`"${sdkmanagerPath}" --version`);
     const version = stdout.trim();
@@ -368,14 +380,14 @@ export async function detectAndroidCmdlineTools(): Promise<ToolInfo> {
       name: 'cmdline-tools',
       installed: true,
       version,
-      path: cmdlineToolsPath,
+      path: foundPath,
       status: 'ok',
     };
   } catch {
     return {
       name: 'cmdline-tools',
       installed: true,
-      path: cmdlineToolsPath,
+      path: foundPath,
       status: 'ok',
     };
   }
