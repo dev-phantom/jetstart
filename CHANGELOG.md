@@ -1,3 +1,10 @@
+## [2.3.4](https://github.com/dev-phantom/jetstart/compare/v2.3.3...v2.3.4) (2026-04-05)
+
+
+### Bug Fixes
+
+* updated docs to include the clean command ([c5f7cd3](https://github.com/dev-phantom/jetstart/commit/c5f7cd38bdbe4f0f904f37fb2d061952b105bbcf))
+
 ## [2.3.3](https://github.com/dev-phantom/jetstart/compare/v2.3.2...v2.3.3) (2026-04-05)
 
 
