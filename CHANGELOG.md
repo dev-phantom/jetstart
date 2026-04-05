@@ -1,3 +1,12 @@
+## [2.3.2](https://github.com/dev-phantom/jetstart/compare/v2.3.1...v2.3.2) (2026-04-05)
+
+
+### Bug Fixes
+
+* fixed java and andriod detection issue ([d5cddcf](https://github.com/dev-phantom/jetstart/commit/d5cddcfdeefd5cb4fafaef7edb437d7196bc830d))
+* fixed the full-install flag ([d0b94c1](https://github.com/dev-phantom/jetstart/commit/d0b94c14424259374d6597cd13f2bf559941cd3c))
+* removd --skip-insall flag ([57085a0](https://github.com/dev-phantom/jetstart/commit/57085a0ce17df4ed543b6ab6fb3b07be895e228c))
+
 ## [2.3.1](https://github.com/dev-phantom/jetstart/compare/v2.3.0...v2.3.1) (2026-03-31)
 
 

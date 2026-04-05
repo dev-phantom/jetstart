@@ -1,7 +1,7 @@
 {
   "name": "@jetstart/sanity-studio",
   "private": true,
-  "version": "2.3.1",
+  "version": "2.3.2",
   "main": "package.json",
   "license": "MIT",
   "scripts": {
