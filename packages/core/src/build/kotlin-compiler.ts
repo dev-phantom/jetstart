@@ -123,11 +123,25 @@ export class KotlinCompiler {
       return null;
     };
 
+    const homeDir = os.homedir();
+    // JetStart installs kotlinc here when the user runs --full-install
+    const jetstartKotlinc = win
+      ? path.join(homeDir, '.jetstart', 'kotlinc', 'bin', 'kotlinc.bat')
+      : path.join(homeDir, '.jetstart', 'kotlinc', 'bin', 'kotlinc');
+
+    // Validate KOTLIN_HOME if set — only use it when it actually points to kotlinc
+    const kotlinHomeCandidate = process.env.KOTLIN_HOME
+      ? (win
+          ? path.join(process.env.KOTLIN_HOME, 'bin', 'kotlinc.bat')
+          : path.join(process.env.KOTLIN_HOME, 'bin', 'kotlinc'))
+      : null;
+
     const locations: Array<string | null> = [
-      // env overrides
-      process.env.KOTLIN_HOME
-        ? path.join(process.env.KOTLIN_HOME, 'bin', 'kotlinc')
-        : null,
+      // JetStart managed install (~/.jetstart/kotlinc) — checked first
+      jetstartKotlinc,
+
+      // env overrides (validated)
+      kotlinHomeCandidate,
       process.env.ANDROID_STUDIO_HOME
         ? path.join(process.env.ANDROID_STUDIO_HOME, 'plugins', 'Kotlin', 'kotlinc', 'bin', 'kotlinc')
         : null,
@@ -136,7 +150,7 @@ export class KotlinCompiler {
       win ? path.join(progFiles, 'kotlinc', 'bin', 'kotlinc.bat')          : null,
       win ? 'C:\\kotlinc\\bin\\kotlinc.bat'                                 : null,
       // Scoop  (~\scoop\apps\kotlin\current)
-      win ? path.join(os.homedir(), 'scoop', 'apps', 'kotlin', 'current', 'bin', 'kotlinc.bat') : null,
+      win ? path.join(homeDir, 'scoop', 'apps', 'kotlin', 'current', 'bin', 'kotlinc.bat') : null,
       // Chocolatey
       win ? 'C:\\ProgramData\\chocolatey\\bin\\kotlinc.bat'                 : null,
       // Android Studio — standard Google installer
@@ -164,11 +178,11 @@ export class KotlinCompiler {
       !win ? '/opt/homebrew/bin/kotlinc'                                     : null,
       !win ? '/usr/local/opt/kotlin/bin/kotlinc'                             : null,
       // SDKMAN  (~/.sdkman/candidates/kotlin/current)
-      !win ? path.join(os.homedir(), '.sdkman', 'candidates', 'kotlin', 'current', 'bin', 'kotlinc') : null,
+      !win ? path.join(homeDir, '.sdkman', 'candidates', 'kotlin', 'current', 'bin', 'kotlinc') : null,
       // Snap
       !win ? '/snap/bin/kotlinc'                                             : null,
       // IntelliJ IDEA — Linux Toolbox
-      !win ? findInVersionedDir(path.join(os.homedir(), '.local', 'share', 'JetBrains', 'Toolbox', 'apps', 'IDEA-U', 'ch-0'), '',
+      !win ? findInVersionedDir(path.join(homeDir, '.local', 'share', 'JetBrains', 'Toolbox', 'apps', 'IDEA-U', 'ch-0'), '',
               'plugins', 'Kotlin', 'kotlinc', 'bin', 'kotlinc')              : null,
     ];
 

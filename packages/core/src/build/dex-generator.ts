@@ -26,15 +26,22 @@ export class DexGenerator {
   async findD8(): Promise<string | null> {
     if (this.d8Path) return this.d8Path;
 
-    // Check multiple locations for Android SDK
-    let androidHome = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+    // Check environment variables first, but validate the path actually exists
+    const envAndroidHome = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+    let androidHome: string | undefined;
+    if (envAndroidHome && fs.existsSync(path.join(envAndroidHome, 'build-tools'))) {
+      androidHome = envAndroidHome;
+    }
 
-    // Fallback to common Windows locations
+    // Fallback: probe common install locations
     if (!androidHome) {
       const commonLocations = [
-        'C:\\Android',
         path.join(os.homedir(), 'AppData', 'Local', 'Android', 'Sdk'),
+        'C:\\Android',
         'C:\\Users\\Public\\Android\\Sdk',
+        path.join(os.homedir(), 'Android', 'Sdk'),
+        path.join(os.homedir(), 'Library', 'Android', 'sdk'),
+        '/opt/android-sdk',
       ];
       for (const loc of commonLocations) {
         if (fs.existsSync(path.join(loc, 'build-tools'))) {
@@ -46,7 +53,7 @@ export class DexGenerator {
     }
 
     if (!androidHome) {
-      logError('ANDROID_HOME or ANDROID_SDK_ROOT not set');
+      logError('Android build-tools not found');
       return null;
     }
 

@@ -118,7 +118,13 @@ async function copyTemplateWithVariables(
 
     // Replace __PACKAGE_PATH__ in the directory structure
     const packageDir = packageName.replace(/\./g, '/');
-    const destRelPath = relPath.replace('__PACKAGE_PATH__', packageDir);
+    let destRelPath = relPath.replace('__PACKAGE_PATH__', packageDir);
+    // npm strips .gitignore from published packages — the template stores it as
+    // plain "gitignore" and we rename it here so the scaffolded project gets the
+    // correct dotfile name.
+    if (path.basename(destRelPath) === 'gitignore') {
+      destRelPath = destRelPath.replace(/gitignore$/, '.gitignore');
+    }
     const destPath = path.join(projectPath, destRelPath);
 
     // Ensure the destination directory exists

@@ -1,0 +1,94 @@
+name: Deploy Sites
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'docs/**'
+      - 'packages/web/**'
+      - 'packages/sanity-studio/**'
+      - 'packages/shared/**'
+
+jobs:
+  deploy-docs:
+    name: Deploy jetstart.site (docs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build docs
+        run: npm run build:docs
+
+      - name: Deploy to jetstart.site
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./docs/build/
+          server-dir: ${{ secrets.FTP_DIR_DOCS }}
+          dangerous-clean-slate: true
+
+  deploy-web:
+    name: Deploy web.jetstart.site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web
+        run: npm run build:web
+        env:
+          NODE_ENV: production
+
+      - name: Deploy to web.jetstart.site
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./packages/web/dist/
+          server-dir: ${{ secrets.FTP_DIR_WEB }}
+          dangerous-clean-slate: true
+
+  deploy-sanity:
+    name: Deploy sanity.jetstart.site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build sanity studio
+        run: npm run build:sanity
+
+      - name: Deploy to sanity.jetstart.site
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./packages/sanity-studio/dist/
+          server-dir: ${{ secrets.FTP_DIR_SANITY }}
+          dangerous-clean-slate: true

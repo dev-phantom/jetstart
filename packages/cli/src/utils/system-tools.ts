@@ -156,7 +156,7 @@ export async function detectJava(): Promise<ToolInfo> {
     }
   }
 
-  // 1. Try java from PATH
+  // Try java from PATH
   try {
     const { stdout } = await execAsync('java -version 2>&1');
     const version = parseJavaVersion(stdout);
@@ -167,7 +167,7 @@ export async function detectJava(): Promise<ToolInfo> {
     }
   } catch { /* not in PATH */ }
 
-  // 2. Try via JAVA_HOME
+  // Try via JAVA_HOME
   const javaHome = process.env.JAVA_HOME;
   if (javaHome) {
     const candidate = path.join(javaHome, 'bin', javaBin);
@@ -180,7 +180,7 @@ export async function detectJava(): Promise<ToolInfo> {
     }
   }
 
-  // 3. Probe common install locations (Windows only)
+  // Probe common install locations (Windows only)
   if (isWin) {
     const homeDir = os.homedir();
     const roots = [

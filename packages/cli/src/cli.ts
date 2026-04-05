@@ -86,6 +86,7 @@ program
   .description('Stop Gradle daemons and remove build artifacts — fixes "Folder In Use" errors')
   .option('--build', 'Also delete app/build/ to free disk space (next build will be slower)')
   .option('--daemons-only', 'Only stop Gradle daemons, do not touch build output')
+  .option('--delete', 'Delete the project folder itself after releasing locks')
   .action((projectArg, options) => cleanCommand(options, projectArg));
 
 // Error handling
