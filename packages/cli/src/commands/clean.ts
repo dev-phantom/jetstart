@@ -24,6 +24,7 @@ import { startSpinner, stopSpinner } from '../utils/spinner';
 interface CleanOptions {
   build?: boolean;
   daemonsOnly?: boolean;
+  delete?: boolean;
 }
 
 function findGradle(projectPath: string): string | null {
@@ -99,8 +100,25 @@ export async function cleanCommand(options: CleanOptions = {}, projectArg?: stri
 
   const buildGradleExists = await fs.pathExists(path.join(projectPath, 'app', 'build.gradle'));
   const settingsExists    = await fs.pathExists(path.join(projectPath, 'settings.gradle'));
+  const folderExists      = await fs.pathExists(projectPath);
 
+  // When --delete is passed and the folder exists but is already cleaned (empty),
+  // skip the Android project check and go straight to deletion.
   if (!buildGradleExists && !settingsExists) {
+    if (options.delete && folderExists) {
+      // Folder exists but project files are already gone — just delete the empty shell
+      const deleteSpinner = startSpinner(`Deleting ${projectPath}...`);
+      let deleted = false;
+      if (process.platform === 'win32') {
+        const result = spawnSync('cmd.exe', ['/c', 'rd', '/s', '/q', projectPath], { shell: false, timeout: 15000 });
+        deleted = result.status === 0;
+      } else {
+        try { await fs.remove(projectPath); deleted = true; } catch { /* ignore */ }
+      }
+      stopSpinner(deleteSpinner, deleted, deleted ? 'Project folder deleted' : 'Could not delete — close your editor and try again');
+      console.log();
+      return;
+    }
     error('No Android project found in the current directory.');
     error('Run jetstart clean from inside a JetStart project folder.');
     process.exit(1);
@@ -197,13 +215,41 @@ export async function cleanCommand(options: CleanOptions = {}, projectArg?: stri
   const cacheDir = path.join(projectPath, '.jetstart');
   if (await fs.pathExists(cacheDir)) await fs.remove(cacheDir);
 
-  // Summary 
+  // Attempt forced deletion if --delete was passed
+  if (options.delete) {
+    const deleteSpinner = startSpinner(`Deleting ${projectPath}...`);
+    let deleted = false;
+
+    if (process.platform === 'win32') {
+      // Use cmd's rd /s /q which bypasses shell-level locks that rm -rf cannot
+      const result = spawnSync('cmd.exe', ['/c', 'rd', '/s', '/q', projectPath], {
+        shell: false,
+        timeout: 15000,
+      });
+      deleted = result.status === 0;
+    } else {
+      try { await fs.remove(projectPath); deleted = true; } catch { /* ignore */ }
+    }
+
+    if (deleted) {
+      stopSpinner(deleteSpinner, true, 'Project folder deleted');
+      console.log();
+      success('Done.');
+      console.log();
+      return;
+    } else {
+      stopSpinner(deleteSpinner, false, 'Could not delete folder — your editor still has it open');
+    }
+  }
+
+  // Summary
   console.log();
   success('Clean complete. Try deleting the folder now.');
   console.log();
-  warning('If the folder is still locked, VS Code has it open in the Explorer panel.');
-  info('Fix: in VS Code press  Ctrl+Shift+P  →  type  "Close Folder"  →  Enter');
-  info('     Then try deleting again. VS Code language servers will restart automatically.');
+  warning('If the folder is still locked, your editor has it open in the Explorer panel.');
+  info('Fix: close the project folder in your editor, then delete it.');
+  info('     (VS Code / Antigravity: Ctrl+Shift+P  →  "Close Folder"  →  Enter)');
+  info('     Or run:  jetstart clean --delete  to force-delete after closing the editor.');
   console.log();
   if (!options.build) {
     info('Tip: run  jetstart clean --build  to also delete app/build/ and save disk space.');

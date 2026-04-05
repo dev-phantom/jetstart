@@ -15,6 +15,7 @@ import { generateProjectTemplate } from '../utils/template';
 import { isValidProjectName, isValidPackageName } from '@jetstart/shared';
 import { CreateOptions } from '../types';
 import { detectJava, installJava, isJavaCompatible, getDefaultJDKPath } from '../utils/java';
+import { detectKotlinc, installKotlin } from '../utils/kotlin';
 import { createSDKManager, REQUIRED_SDK_COMPONENTS } from '../utils/android-sdk';
 import { findAndroidSDK } from '../utils/system-tools';
 
@@ -89,12 +90,27 @@ async function runFullInstallation(): Promise<void> {
 
   console.log();
   if (failedComponents.length === 0) {
-    success('All dependencies installed successfully!');
+    success('All Android SDK components installed successfully!');
   } else {
     warning(`${failedComponents.length} component(s) failed to install (see above).`);
     info('You can install them manually later with:');
     failedComponents.forEach(c => info(`  sdkmanager "${c}"`));
     info('Project creation will continue with the components that were installed.');
+  }
+  console.log();
+
+  // Install Kotlin compiler (required for hot reload)
+  const kotlinVersion = await detectKotlinc();
+  if (kotlinVersion) {
+    success(`Kotlin compiler ${kotlinVersion} already installed`);
+  } else {
+    try {
+      await installKotlin();
+    } catch (err) {
+      warning('Kotlin compiler installation failed.');
+      info('Install manually from: https://kotlinlang.org/docs/command-line.html');
+      info('Or set KOTLIN_HOME in your project .env file after creation.');
+    }
   }
   console.log();
 }
