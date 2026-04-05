@@ -58,15 +58,32 @@ Or install manually:
 - **macOS:** `brew install openjdk@17`
 - **Linux:** `sudo apt install openjdk-17-jdk`
 
-After installation, set JAVA_HOME:
-```bash
-# Linux/macOS
-export JAVA_HOME=/path/to/jdk-17
-export PATH=$JAVA_HOME/bin:$PATH
+After installation, tell JetStart where to find it using a `.env` file (see below).
 
-# Windows
-set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17
+#### Overriding build tool paths with a .env file
+
+When `jetstart dev` starts, it automatically loads a `.env` file from your **project root**. You can use this to tell JetStart where Java, Android SDK, and Kotlin are installed — no need to change system environment variables.
+
+**Step 1** — Copy `.env.example` to `.env` in your project folder:
+```bash
+cp .env.example .env
 ```
+
+**Step 2** — Open `.env` and uncomment the lines you need:
+```bash
+# Path to JDK 17+ root directory (required for Gradle builds)
+JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.17.10-hotspot
+
+# Path to Android SDK root directory
+ANDROID_HOME=C:\Android
+
+# Path to Kotlin compiler root directory (required for hot reload)
+KOTLIN_HOME=C:\path\to\kotlinc
+```
+
+**Step 3** — Restart `jetstart dev`. The new values take effect immediately.
+
+> **Note:** `.env` is already in `.gitignore` — paths are machine-specific so they should not be committed.
 
 ### Android SDK Issues
 

@@ -27,6 +27,16 @@ const config: Config = {
     locales: ['en'],
   },
 
+  headTags: [
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'google-site-verification',
+        content: '-F_etk2QjApw0f1ehu6Ck3OpE_jQ-rmr5zGgTCyuSX0',
+      },
+    },
+  ],
+
   markdown: {
     mermaid: true,
   },

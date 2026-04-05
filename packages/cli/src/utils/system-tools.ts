@@ -143,38 +143,87 @@ function parseJavaVersion(output: string): string | null {
  * Detect Java/JDK installation
  */
 export async function detectJava(): Promise<ToolInfo> {
+  const isWin = os.platform() === 'win32';
+  const javaBin = isWin ? 'java.exe' : 'java';
+
+  // Helper: run java -version from a specific binary path
+  async function tryJavaAt(javaBinPath: string): Promise<string | null> {
+    try {
+      const { stdout } = await execAsync(`"${javaBinPath}" -version 2>&1`);
+      return parseJavaVersion(stdout) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  // 1. Try java from PATH
   try {
     const { stdout } = await execAsync('java -version 2>&1');
     const version = parseJavaVersion(stdout);
-
-    if (!version) {
-      return {
-        name: 'Java/JDK',
-        installed: true,
-        status: 'warning',
-        message: 'Java found but version could not be determined',
-      };
+    if (version) {
+      const toolPath = process.env.JAVA_HOME || (await which('java').catch(() => undefined));
+      const compat = checkVersionCompatibility('java', version);
+      return { name: 'Java/JDK', installed: true, version, path: toolPath, status: compat.status, message: compat.message };
     }
+  } catch { /* not in PATH */ }
 
-    const toolPath = process.env.JAVA_HOME || (await which('java').catch(() => undefined));
-    const compat = checkVersionCompatibility('java', version);
-
-    return {
-      name: 'Java/JDK',
-      installed: true,
-      version,
-      path: toolPath,
-      status: compat.status,
-      message: compat.message,
-    };
-  } catch (error) {
-    return {
-      name: 'Java/JDK',
-      installed: false,
-      status: 'error',
-      message: 'Java not found. Install JDK 17+ from https://adoptium.net',
-    };
+  // 2. Try via JAVA_HOME
+  const javaHome = process.env.JAVA_HOME;
+  if (javaHome) {
+    const candidate = path.join(javaHome, 'bin', javaBin);
+    if (await fs.pathExists(candidate)) {
+      const version = await tryJavaAt(candidate);
+      if (version) {
+        const compat = checkVersionCompatibility('java', version);
+        return { name: 'Java/JDK', installed: true, version, path: javaHome, status: compat.status, message: compat.message };
+      }
+    }
   }
+
+  // 3. Probe common install locations (Windows only)
+  if (isWin) {
+    const homeDir = os.homedir();
+    const roots = [
+      'C:\\Program Files\\Eclipse Adoptium',
+      'C:\\Program Files\\Java',
+      'C:\\Program Files\\Microsoft',
+      path.join(homeDir, 'AppData', 'Local', 'Programs', 'Eclipse Adoptium'),
+      path.join(homeDir, '.jdks'),
+    ];
+    for (const root of roots) {
+      if (!(await fs.pathExists(root))) continue;
+      // root itself might be the JDK
+      const direct = path.join(root, 'bin', javaBin);
+      if (await fs.pathExists(direct)) {
+        const version = await tryJavaAt(direct);
+        if (version) {
+          const compat = checkVersionCompatibility('java', version);
+          return { name: 'Java/JDK', installed: true, version, path: root, status: compat.status, message: compat.message };
+        }
+      }
+      // root contains versioned subdirectories
+      try {
+        const entries = await fs.readdir(root);
+        for (const entry of entries) {
+          const candidate = path.join(root, entry, 'bin', javaBin);
+          if (await fs.pathExists(candidate)) {
+            const version = await tryJavaAt(candidate);
+            if (version) {
+              const compat = checkVersionCompatibility('java', version);
+              return { name: 'Java/JDK', installed: true, version, path: path.join(root, entry), status: compat.status, message: compat.message };
+            }
+          }
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  return {
+    name: 'Java/JDK',
+    installed: false,
+    status: 'error',
+    message: 'Java not found. Install JDK 17+ from https://adoptium.net',
+  };
 }
 
 /**
@@ -631,6 +680,16 @@ export async function checkAndroidHome(): Promise<ToolInfo> {
   const androidHome = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
 
   if (!androidHome) {
+    // Env var not set — check if we can auto-detect the SDK anyway
+    const detected = await findAndroidSDK();
+    if (detected) {
+      return {
+        name: 'ANDROID_HOME',
+        installed: true,
+        path: detected,
+        status: 'ok',
+      };
+    }
     return {
       name: 'ANDROID_HOME',
       installed: false,
@@ -642,6 +701,16 @@ export async function checkAndroidHome(): Promise<ToolInfo> {
   const exists = await fs.pathExists(androidHome);
 
   if (!exists) {
+    // Env var set but path is stale — fall back to auto-detection
+    const detected = await findAndroidSDK();
+    if (detected) {
+      return {
+        name: 'ANDROID_HOME',
+        installed: true,
+        path: detected,
+        status: 'ok',
+      };
+    }
     return {
       name: 'ANDROID_HOME',
       installed: false,

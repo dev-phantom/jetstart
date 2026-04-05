@@ -202,8 +202,11 @@ async function generateGradleWrapper(projectPath: string): Promise<void> {
 async function generateLocalProperties(projectPath: string): Promise<void> {
   let androidSdkPath: string | undefined;
 
-  // Check environment variables first
-  androidSdkPath = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+  // Check environment variables first (validate the path actually exists)
+  const envAndroidHome = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+  if (envAndroidHome && fs.existsSync(envAndroidHome)) {
+    androidSdkPath = envAndroidHome;
+  }
 
   // If not found, check common Windows locations
   if (!androidSdkPath && process.platform === 'win32') {

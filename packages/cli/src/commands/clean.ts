@@ -92,8 +92,10 @@ function killProjectNodeProcesses(projectPath: string): number {
   return killed;
 }
 
-export async function cleanCommand(options: CleanOptions = {}) {
-  const projectPath = process.cwd();
+export async function cleanCommand(options: CleanOptions = {}, projectArg?: string) {
+  const projectPath = projectArg
+    ? path.resolve(process.cwd(), projectArg)
+    : process.cwd();
 
   const buildGradleExists = await fs.pathExists(path.join(projectPath, 'app', 'build.gradle'));
   const settingsExists    = await fs.pathExists(path.join(projectPath, 'settings.gradle'));

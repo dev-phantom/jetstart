@@ -82,11 +82,11 @@ program
 
 // Clean command
 program
-  .command('clean')
+  .command('clean [path]')
   .description('Stop Gradle daemons and remove build artifacts — fixes "Folder In Use" errors')
   .option('--build', 'Also delete app/build/ to free disk space (next build will be slower)')
   .option('--daemons-only', 'Only stop Gradle daemons, do not touch build output')
-  .action(cleanCommand);
+  .action((projectArg, options) => cleanCommand(options, projectArg));
 
 // Error handling
 program.on('command:*', (operands) => {
