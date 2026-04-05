@@ -1,3 +1,10 @@
+## [2.3.3](https://github.com/dev-phantom/jetstart/compare/v2.3.2...v2.3.3) (2026-04-05)
+
+
+### Bug Fixes
+
+* fixed kotlinc detection and added kotlinc to full-install ([7934ae4](https://github.com/dev-phantom/jetstart/commit/7934ae483a914cb009486790ea4be084c94e3077))
+
 ## [2.3.2](https://github.com/dev-phantom/jetstart/compare/v2.3.1...v2.3.2) (2026-04-05)
 
 
