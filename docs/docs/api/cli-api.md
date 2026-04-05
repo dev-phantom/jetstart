@@ -103,7 +103,7 @@ jetstart logs [options]
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `-f, --follow` | boolean | `true` | Stream live updates |
-| `-l, --level <level>` | string | all | Minimum log level: `verbose`, `debug`, `info`, `warn`, `error`, `fatal` |
+| `-l, --level <level>` | string | all | Exact log level filter: `verbose`, `debug`, `info`, `warn`, `error`, `fatal` (exact match only — `info` shows only INFO, not WARN/ERROR) |
 | `-s, --source <source>` | string | all | Filter by source: `cli`, `core`, `client`, `build`, `network`, `system` |
 | `-n, --lines <n>` | number | `100` | Historical lines to replay on connect |
 
@@ -153,13 +153,35 @@ Opens a menu to:
 
 ## `jetstart clean`
 
-Remove build artifacts and caches.
+Stop Gradle daemons, release all file locks, and optionally delete the project folder. Run from inside the project or pass the path from anywhere.
 
 ```bash
-jetstart clean
+jetstart clean [path] [options]
 ```
 
-No options.
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `[path]` | string | `cwd` | Path to the project folder (optional — defaults to current directory) |
+| `--build` | boolean | `false` | Also delete `app/build/` to free disk space (next build will be slower) |
+| `--daemons-only` | boolean | `false` | Only stop Gradle daemons, skip cache removal |
+| `--delete` | boolean | `false` | Delete the project folder itself after releasing all locks |
+
+**Examples:**
+
+```bash
+# From inside the project
+cd my-app
+jetstart clean
+
+# From the parent directory (no need to cd in)
+jetstart clean my-app
+
+# Clean and delete the folder in one step
+jetstart clean my-app --delete
+
+# Also remove build output (saves disk space)
+jetstart clean my-app --build --delete
+```
 
 ---
 

@@ -86,7 +86,10 @@ my-awesome-app/
 ├── build.gradle                  # Root build file
 ├── settings.gradle
 ├── gradle.properties
+├── local.properties              # Auto-generated Android SDK path (git-ignored)
 ├── jetstart.config.json         # JetStart configuration
+├── .env.example                  # Template for overriding build tool paths
+├── .gitignore
 ├── gradlew                       # Gradle wrapper (Linux/macOS)
 ├── gradlew.bat                   # Gradle wrapper (Windows)
 └── README.md

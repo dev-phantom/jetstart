@@ -540,9 +540,9 @@ When stuck, go through this checklist:
 
 ### 1. Check Documentation
 
-- [CLI Reference](../cli/) - Command options
-- [Architecture](../architecture/) - How things work
-- [Troubleshooting](../troubleshooting/) - Common issues
+- [CLI Reference](../cli/overview.md) - Command options
+- [Architecture](../architecture/overview.md) - How things work
+- [Troubleshooting](../troubleshooting/common-issues.md) - Common issues
 
 ### 2. Search GitHub Issues
 

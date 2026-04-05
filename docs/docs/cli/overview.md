@@ -6,7 +6,7 @@ description: Overview of JetStart command-line interface
 
 # CLI Overview
 
-The JetStart CLI provides a simple yet powerful interface for Android development. With just 6 commands, you can create projects, run development servers, build APKs, and manage your development environment.
+The JetStart CLI provides a simple yet powerful interface for Android development. With just 7 commands, you can create projects, run development servers, build APKs, and manage your development environment.
 
 ## Quick Command Reference
 
@@ -18,6 +18,7 @@ The JetStart CLI provides a simple yet powerful interface for Android developmen
 | **[logs](./logs.md)** | Stream application logs | `jetstart logs --follow --level info` |
 | **[install-audit](./install-audit.md)** | Check development dependencies | `jetstart install-audit --json` |
 | **[android-emulator](./android-emulator.md)** | Manage Android Virtual Devices | `jetstart android-emulator` |
+| **[clean](./clean.md)** | Release file locks and delete project folder | `jetstart clean my-app --delete` |
 
 ## Global Options
 
@@ -348,9 +349,10 @@ Explore individual commands:
 - **[logs](./logs.md)** - Work with application logs
 - **[install-audit](./install-audit.md)** - Manage dependencies
 - **[android-emulator](./android-emulator.md)** - Control Android emulators
+- **[clean](./clean.md)** - Release file locks and delete project folders
 
 ## Additional Resources
 
-- [Configuration Reference](./configuration.md) - Detailed configuration options
+- [Configuration Reference](../architecture/build-system.md) - Environment variables and build configuration
 - [Troubleshooting](../troubleshooting/common-issues.md) - Solutions to common problems
 - [GitHub Issues](https://github.com/dev-phantom/jetstart/issues) - Report bugs
