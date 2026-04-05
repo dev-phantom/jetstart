@@ -25,7 +25,6 @@ export interface CommandContext {
 export interface CreateOptions {
   package?: string;
   template?: string;
-  skipInstall?: boolean;
   fullInstall?: boolean;
 }
 

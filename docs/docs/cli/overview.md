@@ -40,9 +40,6 @@ jetstart create my-app --package com.example.app
 
 # With automatic dependency installation
 jetstart create my-app --package com.example.app --full-install
-
-# Skip dependency checks
-jetstart create my-app --package com.example.app --skip-install
 ```
 
 ### Development Workflow

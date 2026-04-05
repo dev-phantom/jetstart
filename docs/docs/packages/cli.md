@@ -38,14 +38,12 @@ Create a new JetStart project.
 ```bash
 jetstart create myApp
 jetstart create myApp --package com.example.myapp
-jetstart create myApp --skip-install
 ```
 
 **Options:**
 - `-p, --package <name>` - Android package name (e.g., `com.example.app`)
 - `-t, --template <name>` - Template to use (default: "default")
 - `--full-install` - Install all missing dependencies automatically
-- `--skip-install` - Skip dependency checks
 
 **Example:**
 ```bash
@@ -162,7 +160,6 @@ import { createCommand, devCommand, buildCommand } from '@jetstart/cli';
 // Create a project
 await createCommand('myApp', {
   package: 'com.example.myapp',
-  skipInstall: false,
 });
 
 // Start dev server
@@ -209,7 +206,6 @@ interface CreateOptions {
   package?: string;
   template?: string;
   fullInstall?: boolean;
-  skipInstall?: boolean;
 }
 ```
 

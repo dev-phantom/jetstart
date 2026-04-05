@@ -1,4 +1,4 @@
-﻿# @jetstart/cli
+# @jetstart/cli
 
 Command-line interface for JetStart — instant hot reload for Android Jetpack Compose.
 
@@ -25,7 +25,6 @@ Scaffolds a new Android/Compose project. Checks for Java 17+ and Android SDK and
 ```bash
 jetstart create my-app
 jetstart create my-app --package com.example.myapp
-jetstart create my-app --skip-install
 jetstart create my-app --full-install   # Non-interactive, installs all deps automatically
 ```
 
@@ -35,7 +34,6 @@ jetstart create my-app --full-install   # Non-interactive, installs all deps aut
 |---|---|
 | `-p, --package <n>` | Android package name (e.g. `com.example.app`) |
 | `-t, --template <n>` | Template to use (default: `default`) |
-| `--skip-install` | Skip dependency check |
 | `--full-install` | Non-interactive: auto-install Java + Android SDK |
 
 ---

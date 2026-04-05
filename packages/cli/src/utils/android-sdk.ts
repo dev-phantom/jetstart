@@ -10,6 +10,7 @@ import { downloadAndExtract } from './downloader';
 import { findAndroidSDK, getDefaultSDKPath } from './system-tools';
 import { startSpinner, stopSpinner } from './spinner';
 import { success, error as warning, info } from './logger';
+import { getDefaultJDKPath } from './java';
 
 export interface SDKComponent {
   name: string;
@@ -74,6 +75,14 @@ export class AndroidSDKManager {
   }
 
   /**
+   * Check if Android cmdline-tools are installed
+   */
+  async hasCmdlineTools(): Promise<boolean> {
+    const { binPath } = await this.resolveSDKToolsPath();
+    return binPath !== null && await fs.pathExists(binPath);
+  }
+
+  /**
    * Install Android cmdline-tools
    */
   async installCmdlineTools(): Promise<void> {
@@ -89,17 +98,26 @@ export class AndroidSDKManager {
     const latestPath = path.join(extractPath, 'latest');
 
     // Check if already installed
-    if (await fs.pathExists(latestPath)) {
+    if (await this.hasCmdlineTools()) {
       success('Android cmdline-tools already installed');
       return;
     }
+
+    // Ensure extract path exists
+    await fs.ensureDir(extractPath);
 
     // Download and extract
     await downloadAndExtract(url, extractPath, 'Downloading Android cmdline-tools');
 
     // The extracted folder is named 'cmdline-tools', need to move it to 'latest'
+    // BUT Google's zip has a 'cmdline-tools' folder inside, which contains 'bin', 'lib', etc.
+    // We want: sdk-root/cmdline-tools/latest/{bin, lib, ...}
     const extractedPath = path.join(extractPath, 'cmdline-tools');
     if (await fs.pathExists(extractedPath)) {
+      // If 'latest' already exists, remove it first
+      if (await fs.pathExists(latestPath)) {
+        await fs.remove(latestPath);
+      }
       await fs.move(extractedPath, latestPath);
     }
 
@@ -162,6 +180,21 @@ export class AndroidSDKManager {
   }
 
   /**
+   * Resolve the effective JAVA_HOME for child processes.
+   * detectJava() does not set process.env.JAVA_HOME — only installJava() does.
+   * When Java was already installed before this session, JAVA_HOME may be absent.
+   */
+  private async getEffectiveJavaHome(): Promise<string> {
+    if (process.env.JAVA_HOME && await fs.pathExists(process.env.JAVA_HOME)) {
+      return process.env.JAVA_HOME;
+    }
+    // Fall back to the default install location used by installJava()
+    const defaultPath = getDefaultJDKPath();
+    if (await fs.pathExists(defaultPath)) return defaultPath;
+    return '';
+  }
+
+  /**
    * Run sdkmanager command
    */
   private async runSDKManager(
@@ -175,28 +208,53 @@ export class AndroidSDKManager {
       throw new Error('sdkmanager not found. Install cmdline-tools first.');
     }
 
+    const javaHome = await this.getEffectiveJavaHome();
+
     return new Promise((resolve, reject) => {
       const proc = spawn(binPath, args, {
         env: {
           ...process.env,
+          ...(javaHome && {
+            JAVA_HOME: javaHome,
+            PATH: `${path.join(javaHome, 'bin')}${path.delimiter}${process.env.PATH || ''}`,
+          }),
           ANDROID_HOME: this.sdkRoot,
           ANDROID_SDK_ROOT: this.sdkRoot,
-          // Accept licenses automatically
-          JAVA_OPTS:
-            '-Dcom.android.sdkmanager.toolsdir=' + toolsRoot,
+          JAVA_OPTS: '-Dcom.android.sdkmanager.toolsdir=' + toolsRoot,
         },
         shell: true,
       });
+
+      // Inactivity timeout — fires only if there is NO output for 5 minutes.
+      // This lets large downloads (system images ~1.5 GB) run as long as they need,
+      // while still catching a truly frozen/stuck process.
+      const INACTIVITY_MS = 5 * 60 * 1000;
+      let inactivityHandle: ReturnType<typeof setTimeout>;
+      const resetInactivity = () => {
+        clearTimeout(inactivityHandle);
+        inactivityHandle = setTimeout(() => {
+          proc.kill();
+          reject(
+            new Error(
+              'sdkmanager appears stuck (no output for 5 minutes).\n' +
+                'Try running manually: sdkmanager ' + args.join(' ')
+            )
+          );
+        }, INACTIVITY_MS);
+      };
+      resetInactivity();
 
       let output = '';
       let errorOutput = '';
 
       proc.stdout?.on('data', (data) => {
+        resetInactivity();
         output += data.toString();
       });
 
       // Parse stderr for progress updates
       proc.stderr?.on('data', (data) => {
+        resetInactivity();
         const text = data.toString();
         errorOutput += text;
 
@@ -223,6 +281,7 @@ export class AndroidSDKManager {
       });
 
       proc.on('close', (code) => {
+        clearTimeout(inactivityHandle);
         if (code === 0) {
           resolve(output);
         } else {
@@ -231,6 +290,7 @@ export class AndroidSDKManager {
       });
 
       proc.on('error', (err) => {
+        clearTimeout(inactivityHandle);
         reject(err);
       });
     });
@@ -242,6 +302,15 @@ export class AndroidSDKManager {
   async acceptLicenses(): Promise<void> {
     const spinner = startSpinner('Accepting SDK licenses...');
 
+    // Tick elapsed seconds so users know the process is alive
+    let elapsed = 0;
+    const ticker = setInterval(() => {
+      elapsed++;
+      spinner.text = `Accepting SDK licenses... (${elapsed}s elapsed)`;
+    }, 1000);
+
+    const cleanup = () => clearInterval(ticker);
+
     try {
       // Resolve tools path
       const { binPath, toolsRoot } = await this.resolveSDKToolsPath();
@@ -250,25 +319,40 @@ export class AndroidSDKManager {
         throw new Error('sdkmanager not found. Install cmdline-tools first.');
       }
 
+      const javaHome = await this.getEffectiveJavaHome();
+
       await new Promise<void>((resolve, reject) => {
         const proc = spawn(binPath, ['--licenses'], {
           env: {
             ...process.env,
+            ...(javaHome && {
+              JAVA_HOME: javaHome,
+              PATH: `${path.join(javaHome, 'bin')}${path.delimiter}${process.env.PATH || ''}`,
+            }),
             ANDROID_HOME: this.sdkRoot,
             ANDROID_SDK_ROOT: this.sdkRoot,
-            // ADD MISSING JAVA_OPTS (critical fix)
-            JAVA_OPTS:
-              '-Dcom.android.sdkmanager.toolsdir=' + toolsRoot,
+            JAVA_OPTS: '-Dcom.android.sdkmanager.toolsdir=' + toolsRoot,
           },
-          // ADD explicit stdio configuration
           stdio: ['pipe', 'pipe', 'pipe'],
           shell: true,
         });
 
+        // 5-minute timeout — kills the process and gives an actionable error
+        const TIMEOUT_MS = 5 * 60 * 1000;
+        const timeoutHandle = setTimeout(() => {
+          proc.kill();
+          reject(
+            new Error(
+              'Accepting SDK licenses timed out after 5 minutes.\n' +
+                'Try running manually: sdkmanager --licenses'
+            )
+          );
+        }, TIMEOUT_MS);
+
         // Check if stdin is writable before writing
         if (proc.stdin) {
-          const success = proc.stdin.write('y\n'.repeat(100));
-          if (!success) {
+          const wrote = proc.stdin.write('y\n'.repeat(100));
+          if (!wrote) {
             // Handle backpressure - wait for drain
             proc.stdin.once('drain', () => {
               proc.stdin?.end();
@@ -277,6 +361,7 @@ export class AndroidSDKManager {
             proc.stdin.end();
           }
         } else {
+          clearTimeout(timeoutHandle);
           reject(new Error('stdin not available'));
           return;
         }
@@ -288,7 +373,16 @@ export class AndroidSDKManager {
         });
 
         proc.on('close', (code) => {
-          if (code === 0 || code === null) {
+          clearTimeout(timeoutHandle);
+          // sdkmanager --licenses exits with 1 on Windows when all licenses are already
+          // accepted ("nothing new to accept") — treat as success unless stderr contains
+          // a hard failure keyword
+          const isHardFailure =
+            errorOutput.includes('Exception') ||
+            errorOutput.includes('FAILED') ||
+            errorOutput.includes('Could not find') ||
+            errorOutput.includes('Error:');
+          if (code === 0 || code === null || (code === 1 && !isHardFailure)) {
             resolve();
           } else {
             reject(
@@ -298,12 +392,15 @@ export class AndroidSDKManager {
         });
 
         proc.on('error', (err) => {
+          clearTimeout(timeoutHandle);
           reject(err);
         });
       });
 
+      cleanup();
       stopSpinner(spinner, true, 'SDK licenses accepted');
     } catch (error) {
+      cleanup();
       stopSpinner(spinner, false, 'Failed to accept licenses');
       throw error;
     }
@@ -311,14 +408,22 @@ export class AndroidSDKManager {
 
   /**
    * Install an SDK component
+   * @param skipLicenses - Skip accepting licenses (use when licenses were already accepted
+   *                       in the calling context, e.g. installRequiredComponents)
    */
-  async installComponent(component: string, progressLabel?: string): Promise<void> {
+  async installComponent(
+    component: string,
+    progressLabel?: string,
+    { skipLicenses = false }: { skipLicenses?: boolean } = {}
+  ): Promise<void> {
     const label = progressLabel || `Installing ${component}`;
     const spinner = startSpinner(label);
 
     try {
-      // Accept licenses first
-      await this.acceptLicenses();
+      // Accept licenses if not already handled by the caller
+      if (!skipLicenses) {
+        await this.acceptLicenses();
+      }
 
       // Install component with progress updates
       await this.runSDKManager(['--install', component], (percent, message) => {
@@ -401,12 +506,20 @@ export class AndroidSDKManager {
     info('Installing required Android SDK components...');
     console.log();
 
+    // Accept licenses once up-front instead of once per component,
+    // avoiding 6 separate JVM cold-starts (saves ~30–90 seconds on Windows)
+    await this.acceptLicenses();
+
     for (let i = 0; i < REQUIRED_SDK_COMPONENTS.length; i++) {
       const component = REQUIRED_SDK_COMPONENTS[i];
       const overallProgress = `[${i + 1}/${REQUIRED_SDK_COMPONENTS.length}]`;
 
       try {
-        await this.installComponent(component, `${overallProgress} Installing ${component}`);
+        await this.installComponent(
+          component,
+          `${overallProgress} Installing ${component}`,
+          { skipLicenses: true }
+        );
       } catch (error) {
         warning(`Failed to install ${component}: ${(error as Error).message}`);
       }

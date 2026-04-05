@@ -93,7 +93,7 @@ Summary:
 ✗ 1 error
 
 ⚠ Recommendation:
-Run "jetstart create <project-name> --full-install" to install missing dependencies
+Run "jetstart create <project-name> --full-install" to install missing dependencies automatically
 ```
 
 
@@ -298,17 +298,17 @@ For more details, see the [Client App Documentation](../packages/client.md).
 
 ## Installation Modes
 
-JetStart offers different installation modes based on your needs:
+JetStart offers two ways to handle dependencies during project creation:
 
-### Interactive Mode (Default)
+### Standard Mode (Default)
 
 ```bash
 jetstart create my-app
 ```
 
-- Prompts you for each missing dependency
-- Lets you choose what to install
-- Provides installation guidance
+- Automatically checks for missing dependencies (Java, Android SDK)
+- Prompts you before installing anything new
+- Provides installation guidance if you prefer to do it manually
 
 ### Full Automated Mode
 
@@ -319,16 +319,6 @@ jetstart create my-app --full-install
 - Installs all missing dependencies automatically
 - No prompts or user interaction
 - Fastest way to get started
-
-### Skip Mode
-
-```bash
-jetstart create my-app --skip-install
-```
-
-- Skips all dependency checks
-- Assumes you have everything installed
-- Useful for experienced developers
 
 ## Updating JetStart
 

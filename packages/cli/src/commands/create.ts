@@ -14,7 +14,7 @@ import { prompt } from '../utils/prompt';
 import { generateProjectTemplate } from '../utils/template';
 import { isValidProjectName, isValidPackageName } from '@jetstart/shared';
 import { CreateOptions } from '../types';
-import { detectJava, installJava, isJavaCompatible } from '../utils/java';
+import { detectJava, installJava, isJavaCompatible, getDefaultJDKPath } from '../utils/java';
 import { createSDKManager, REQUIRED_SDK_COMPONENTS } from '../utils/android-sdk';
 import { findAndroidSDK } from '../utils/system-tools';
 
@@ -23,14 +23,35 @@ import { findAndroidSDK } from '../utils/system-tools';
  */
 async function runFullInstallation(): Promise<void> {
   info('Starting full automated installation...');
+  info('⏱  This typically takes 10–20 minutes on first run (downloads ~1–2 GB).');
+  info('   Keep this terminal open — the spinner will show elapsed time on slow steps.');
   console.log();
 
   // Check and install Java
   const java = await detectJava();
   if (!java || !(await isJavaCompatible(java.version))) {
-    await installJava();
+    try {
+      await installJava();
+    } catch (err) {
+      warning('Automated Java installation failed.');
+      info('Please download and install JDK 17 manually from:');
+      info('👉 https://adoptium.net/temurin/releases/?version=17');
+      info('After installing, you may need to restart your terminal.');
+      console.log();
+   
+    }
   } else {
     success(`Java ${java.version} already installed`);
+    // detectJava() doesn't set process.env.JAVA_HOME — only installJava() does.
+    // sdkmanager requires JAVA_HOME, so ensure it's set for all child processes.
+    if (!process.env.JAVA_HOME) {
+      const javaHome = java.path || getDefaultJDKPath();
+      if (await fs.pathExists(javaHome)) {
+        process.env.JAVA_HOME = javaHome;
+        process.env.PATH = `${path.join(javaHome, 'bin')}${path.delimiter}${process.env.PATH || ''}`;
+        info(`JAVA_HOME set to: ${javaHome}`);
+      }
+    }
   }
 
   // Check and install Android SDK
@@ -38,19 +59,43 @@ async function runFullInstallation(): Promise<void> {
   const sdkRoot = await findAndroidSDK();
 
   if (!sdkRoot) {
-    info('Installing Android SDK components...');
+    info('Android SDK not found. Installing...');
     await sdkManager.installCmdlineTools();
   } else {
     success(`Android SDK found at ${sdkRoot}`);
+    // Check if cmdline-tools are installed within this SDK
+    if (!(await sdkManager.hasCmdlineTools())) {
+      info('Android cmdline-tools missing. Installing...');
+      await sdkManager.installCmdlineTools();
+    }
   }
 
-  // Install required SDK components
+  // Accept licenses once before the loop (avoids a JVM cold-start per component)
+  await sdkManager.acceptLicenses();
+
+  // Install required SDK components — errors per component are non-fatal so a
+  // single large download failure (e.g. system-images on a slow connection)
+  // doesn't abort project creation. All critical build components come first.
+  const failedComponents: string[] = [];
   for (const component of REQUIRED_SDK_COMPONENTS) {
-    await sdkManager.installComponent(component);
+    try {
+      await sdkManager.installComponent(component, undefined, { skipLicenses: true });
+    } catch (err) {
+      warning(`Failed to install ${component}: ${(err as Error).message}`);
+      warning(`  → Install manually later: sdkmanager "${component}"`);
+      failedComponents.push(component);
+    }
   }
 
   console.log();
-  success('All dependencies installed successfully!');
+  if (failedComponents.length === 0) {
+    success('All dependencies installed successfully!');
+  } else {
+    warning(`${failedComponents.length} component(s) failed to install (see above).`);
+    info('You can install them manually later with:');
+    failedComponents.forEach(c => info(`  sdkmanager "${c}"`));
+    info('Project creation will continue with the components that were installed.');
+  }
   console.log();
 }
 
@@ -74,7 +119,15 @@ async function runInteractiveInstallation(): Promise<void> {
     ]);
 
     if (shouldInstall) {
-      await installJava();
+      try {
+        await installJava();
+      } catch (err) {
+        warning('Automated Java installation failed.');
+        info('Please download and install JDK 17 manually from:');
+        info('👉 https://adoptium.net/temurin/releases/?version=17');
+        info('After installing, you may need to restart your terminal.');
+        console.log();
+      }
     } else {
       warning('Java installation skipped. You may need to install it manually.');
     }
@@ -118,6 +171,22 @@ async function runInteractiveInstallation(): Promise<void> {
     }
   } else {
     success(`Android SDK found at ${sdkRoot}`);
+    const sdkManager = createSDKManager();
+    // Check if cmdline-tools are installed within this SDK
+    if (!(await sdkManager.hasCmdlineTools())) {
+      const { shouldInstall } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'shouldInstall',
+          message: 'Android cmdline-tools missing. Would you like to install them?',
+          default: true,
+        },
+      ]);
+
+      if (shouldInstall) {
+        await sdkManager.installCmdlineTools();
+      }
+    }
   }
 
   console.log();
@@ -147,41 +216,34 @@ export async function createCommand(name: string, options: CreateOptions) {
     if (options.fullInstall) {
       await runFullInstallation();
     } else {
-      // Interactive mode: ask user
-      const { shouldCheckDeps } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'shouldCheckDeps',
-          message: 'Check and install dependencies?',
-          default: true,
-        },
-      ]);
-
-      if (shouldCheckDeps) {
-        await runInteractiveInstallation();
-      } else {
-        // If user skips system dependencies, also skip project dependencies to be consistent
-        options.skipInstall = true;
-      }
+      await runInteractiveInstallation();
     }
 
     // Get package name
     let packageName = options.package;
     if (!packageName) {
       const defaultPackage = `com.jetstart.${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-      const answer = await prompt({
-        type: 'input',
-        name: 'packageName',
-        message: 'Package name:',
-        default: defaultPackage,
-        validate: (input: string) => {
-          if (!isValidPackageName(input)) {
-            return 'Invalid package name. Use format: com.company.app';
-          }
-          return true;
-        },
-      });
-      packageName = answer.packageName;
+
+      // In --full-install (automated) mode or when stdin is not a TTY, skip the
+      // interactive prompt and use the default. User can override with --package.
+      if (options.fullInstall || !process.stdin.isTTY) {
+        packageName = defaultPackage;
+        info(`Using default package name: ${chalk.cyan(packageName)}`);
+      } else {
+        const answer = await prompt({
+          type: 'input',
+          name: 'packageName',
+          message: 'Package name:',
+          default: defaultPackage,
+          validate: (input: string) => {
+            if (!isValidPackageName(input)) {
+              return 'Invalid package name. Use format: com.company.app';
+            }
+            return true;
+          },
+        });
+        packageName = answer.packageName;
+      }
     }
 
     // Validate package name
@@ -212,17 +274,6 @@ export async function createCommand(name: string, options: CreateOptions) {
       }
 
       stopSpinner(spinner, true, 'Project structure created');
-
-      // Install dependencies
-      if (!options.skipInstall) {
-        const installSpinner = startSpinner('Installing dependencies...');
-        
-        // In a real implementation, we'd run npm/gradle here
-        // For now, we'll simulate it
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        stopSpinner(installSpinner, true, 'Dependencies installed');
-      }
 
       console.log();
       success(`Successfully created project: ${chalk.cyan(name)}`);

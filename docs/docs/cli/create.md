@@ -26,13 +26,12 @@ jetstart create <name> [options]
 |---|---|---|
 | `-p, --package <name>` | prompted | Android package name (e.g. `com.example.app`) — reverse-domain format, at least two segments |
 | `-t, --template <name>` | `default` | Project template to use |
-| `--skip-install` | `false` | Skip all dependency checks |
 | `--full-install` | `false` | Non-interactive: auto-install all missing dependencies (Java, Android SDK) |
 
 ## Examples
 
 ```bash
-# Basic — prompts for package name, checks dependencies interactively
+# Basic — prompts for package name, checks dependencies automatically
 jetstart create my-app
 
 # Provide package name up front
@@ -40,20 +39,17 @@ jetstart create my-app --package com.example.myapp
 
 # Fully automated — no prompts, installs everything
 jetstart create my-app --package com.example.myapp --full-install
-
-# Skip dependency checks (assume everything is installed)
-jetstart create my-app --package com.example.myapp --skip-install
 ```
 
 ## What Happens
 
 ### 1. Dependency Check
 
-By default, `create` checks for:
+JetStart automatically checks for:
 - **Java/JDK 17+** — required for Gradle and hot reload compilation
 - **Android SDK** — required for building APKs and running the hot reload DEX pipeline
 
-If any dependency is missing, you are prompted to install it. Use `--full-install` to skip the prompts and install everything automatically.
+If a dependency is missing, you will be prompted to install it. Use `--full-install` to skip the prompt and install everything automatically.
 
 ### 2. Package Name
 
